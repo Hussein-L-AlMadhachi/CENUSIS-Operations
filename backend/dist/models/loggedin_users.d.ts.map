@@ -1,0 +1,1 @@
+{"version":3,"file":"loggedin_users.d.ts","sourceRoot":"","sources":["../../src/models/loggedin_users.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,YAAY,EAAc,KAAK,MAAM,EAAE,MAAM,SAAS,CAAC;AAShE,qBAAa,aAAc,SAAQ,YAAY;gBAE9B,GAAG,EAAC,MAAM;IAUjB,MAAM;CAcf;AAID,eAAO,MAAM,cAAc,eAAyB,CAAC"}
