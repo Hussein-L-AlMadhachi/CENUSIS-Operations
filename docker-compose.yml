@@ -57,9 +57,9 @@ services:
     container_name: cenusis-frontend
     restart: unless-stopped
     ports:
-      # Bind to all network interfaces (0.0.0.0) - accessible over network
+      # HTTP - Always enabled
       - "80:80"
-      # For HTTPS, uncomment:
+      # HTTPS - Uncomment when you have SSL certificates
       # - "443:443"
     depends_on:
       - backend
@@ -68,6 +68,13 @@ services:
     environment:
       # Optional: Set server name for nginx
       NGINX_HOST: ${NGINX_HOST:-localhost}
+    # Uncomment to mount SSL certificates
+    # volumes:
+    #   # Option 1: Self-signed certificates (for testing)
+    #   - ./ssl/cert.crt:/etc/nginx/ssl/cert.crt:ro
+    #   - ./ssl/cert.key:/etc/nginx/ssl/cert.key:ro
+    #   # Option 2: Let's Encrypt certificates (for production)
+    #   # - /etc/letsencrypt:/etc/letsencrypt:ro
 
 volumes:
   postgres_data:

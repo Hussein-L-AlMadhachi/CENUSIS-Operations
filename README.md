@@ -10,19 +10,23 @@ CENUSIS Ops is a web application that provides a platform for university faculty
 - Frontend: React
 - Backend: Nodejs Express
 - Database: PostgreSQL
-- Deployment: Docker + Docker-Compose [check for instructions](DOCKER-QUICKREF.md)
+- Deployment: Docker + Docker-Compose
 
 ## Architecture
 
 there 3 containers
 
-1. for PostgreSQL called `postgres` container exposed to `backend` only
-2. for backend called `backend` container exposed to the `frontend` only
-3. for frontend there is `frontend` container exposed to the Internet
+1. for PostgreSQL called `cenusis-postgres` container exposed to `cenusis-backend` only
+2. for backend called `cenusis-backend` container exposed to the `cenusis-frontend` only
+3. for frontend there is `cenusis-frontend` container exposed to the Internet
 
-the container `frontend` exposes backend endpoints and frontend pages to the Internet using NGINX
+the container `cenusis-frontend` exposes backend endpoints and frontend pages to the Internet using NGINX
 
 ## install
+
+first log in to the server using ssh
+
+then access
 
 clone this repository on the server
 
@@ -36,16 +40,19 @@ cd CENUSIS-Operations
 
 Download the latest docker image release from [releases](https://github.com/Hussein-L-AlMadhachi/CENUSIS-Ops/releases) and upload it to the server using ssh
 
-then extract it
+then extract it on the server
 ```bash
 tar -xzvf file-you-downloaded-from-releases.tar.gz
 ```
+
+> Note: all the following commands must be executed on the server not your local machine
 
 to start all the containers run in the cloned directory
 ```bash
 sudo docker-compose up -d
 ```
 
+> on ssh docker-compose doesn't echo when executed on the server
 
 now our database is empty. to create the tables inside it
 
@@ -67,3 +74,5 @@ sudo docker-compose exec backend node /app/dist/cli/admin.js
 ```
 
 now you can navigate to the servers ip on your local network and access the platform
+
+> NOTE: containers use unencrypted http for now
