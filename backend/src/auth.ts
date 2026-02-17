@@ -20,7 +20,6 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 export function generate_auth_validtor_for_roles(role: string): Validator {
     return (req: Request) => {
-        console.log(req.cookies);
         try {
             if (!req?.cookies) {
                 return { success: false };
@@ -28,24 +27,19 @@ export function generate_auth_validtor_for_roles(role: string): Validator {
 
             const token = req.cookies["auth-token"];
             const decoded = jwt.verify(token, JWT_SECRET) as TokenMetadata;
-            console.log(decoded);
 
 
             if (typeof decoded.user_id !== "number" || typeof decoded.role !== "string") {
-                console.log("user id not number or role not string");
                 return {
                     success: false
                 }
             }
 
             if (decoded.role !== role) {
-                console.log("user role not match got: ", decoded.role, " != expected: ", role);
                 return {
                     success: false
                 }
             }
-
-            console.log("user role match got: ", decoded.role, " == expected: ", role);
 
             return {
                 success: true,

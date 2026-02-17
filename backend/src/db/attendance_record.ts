@@ -20,7 +20,7 @@ export class AttendanceRecord extends PG_Table {
 
                 created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-                FOREIGN KEY (subject) REFERENCES ${this.sql(subjects.table_name)}(id)
+                FOREIGN KEY (subject) REFERENCES ${this.sql(subjects.table_name)}(id) ON DELETE CASCADE
             );
         `;
     }

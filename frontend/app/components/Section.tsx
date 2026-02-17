@@ -7,7 +7,7 @@ interface SectionProps {
 
 export function Section({ children, className = '' }: SectionProps) {
     return (
-        <section className={`pb-12 md:pb-16 lg:pb-20 ${className}`}>
+        <section id="section" className={`pb-12 md:pb-16 lg:pb-20 ${""}`}>
         {children}
         </section>
     );
@@ -17,7 +17,7 @@ export function Section({ children, className = '' }: SectionProps) {
 
 export function Subsection({ children, className = '' }: SectionProps) {
     return (
-        <div className={`pb-6 md:pb-8 lg:pb-10 ${className}`}>
+        <div id="subsection" className={`pb-6 md:pb-8 lg:pb-0 ${""}`}>
         {children}
         </div>
     );

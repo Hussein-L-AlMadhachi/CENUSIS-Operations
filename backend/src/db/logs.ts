@@ -27,7 +27,7 @@ export class ActivityLogs extends PG_Table {
                 ip                     VARCHAR(15) NOT NULL,
 
                 created_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES ${this.sql(loggedin_users.table_name)}(id)
+                FOREIGN KEY (user_id) REFERENCES ${this.sql(loggedin_users.table_name)}(id) ON DELETE CASCADE
             );
         `;
 

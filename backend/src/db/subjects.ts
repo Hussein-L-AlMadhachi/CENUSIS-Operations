@@ -48,7 +48,7 @@ export class Subjects extends PG_Table {
                     CHECK (total_hours > 0),
                     CHECK (hours_weekly > 0 AND hours_weekly <= total_hours),
 
-                    FOREIGN KEY (teacher) REFERENCES ${sql(this.table_name)}(id)
+                    FOREIGN KEY (teacher) REFERENCES ${sql(this.table_name)}(id) ON DELETE CASCADE
                 );
             `;
 
@@ -74,20 +74,20 @@ export class Subjects extends PG_Table {
     }
 
     async filterByYear(year: number) {
-        return await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id WHERE year=${year}`;
+        return await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id WHERE year=${year} order by subject_name`;
     }
 
     async listAll() {
-        return await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id`;
+        return await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id order by subject_name`;
     }
 
 
     async filterByClassDegree(degree: string, class_id: number) {
-        return await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id WHERE degree=${degree} AND class=${class_id}`;
+        return await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id WHERE degree=${degree} AND class=${class_id} order by subject_name`;
     }
 
     async filterByDegree(degree: string) {
-        return await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id WHERE degree=${degree}`;
+        return await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id WHERE degree=${degree} order by subject_name`;
     }
 
     async findByName(name: string) {
@@ -97,14 +97,14 @@ export class Subjects extends PG_Table {
     async filterByTeacherClassDegree(teacher_id: number, degree: string, class_id: number) {
         return await this.sql`select ${this.sql(columns2select)} FROM subjects
             JOIN teaching_staff ON subjects.teacher = teaching_staff.id
-            WHERE teacher=${teacher_id} AND degree=${degree} AND class=${class_id}`;
+            WHERE teacher=${teacher_id} AND degree=${degree} AND class=${class_id} order by subject_name`;
     }
 
 
     async filterByTeacherDegree(teacher_id: number, degree: string) {
         return await this.sql`select ${this.sql(columns2select)} FROM subjects
             JOIN teaching_staff ON subjects.teacher = teaching_staff.id
-            WHERE teacher=${teacher_id} AND degree=${degree}`;
+            WHERE teacher=${teacher_id} AND degree=${degree} order by subject_name`;
     }
 
 

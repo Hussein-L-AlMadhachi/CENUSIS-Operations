@@ -1,1 +1,0 @@
-{"version":3,"file":"subjects.d.ts","sourceRoot":"","sources":["../../../src/models/subjects.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,QAAQ,EAAE,KAAK,MAAM,EAAE,MAAM,SAAS,CAAC;AAIhD,qBAAa,QAAS,SAAQ,QAAQ;gBAEtB,GAAG,EAAE,MAAM;IAOjB,MAAM;IAiCN,YAAY,CAAC,IAAI,EAAE,MAAM;IAIzB,eAAe,CAAC,UAAU,EAAE,MAAM;IAIlC,YAAY,CAAC,IAAI,EAAE,MAAM;CAIlC"}

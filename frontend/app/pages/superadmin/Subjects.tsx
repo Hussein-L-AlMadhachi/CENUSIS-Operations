@@ -34,7 +34,7 @@ function Options({ onAddClick }: OptionsProps) {
         <ul className="menu bg-base-200 lg:menu-horizontal rounded-box gap-1 menu-vertical max-md:w-full">
 
             <li>
-                <button className="btn" onClick={onAddClick}>
+                <button className="btn btn-lg" onClick={onAddClick}>
                     <UserRoundPlus size={18} /> إضافة مادة
                 </button>
             </li>
@@ -129,7 +129,6 @@ function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubjectModalProps) {
 }
 
 
-
 function MainContent(): JSX.Element {
 
     const [data_1st, setData_1st] = useState<SubjectData[]>([]);
@@ -142,12 +141,15 @@ function MainContent(): JSX.Element {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     const fetchData = () => {
-        superAdminRPC.fetch_ta_subject_list("بكالوريوس", 1).then((data) => setData_1st(data));
-        superAdminRPC.fetch_ta_subject_list("بكالوريوس", 2).then((data) => setData_2nd(data));
-        superAdminRPC.fetch_ta_subject_list("بكالوريوس", 3).then((data) => setData_3rd(data));
-        superAdminRPC.fetch_ta_subject_list("بكالوريوس", 4).then((data) => setData_4th(data));
-        superAdminRPC.fetch_ta_subject_list("ماجستير").then((data) => setData_master(data));
-        superAdminRPC.fetch_ta_subject_list("دكتوراه").then((data) => setData_phd(data));
+        superAdminRPC.filterSubjectsByClassDegree("بكالوريوس", 1).then((data) => setData_1st(data));
+        superAdminRPC.filterSubjectsByClassDegree("بكالوريوس", 2).then((data) => setData_2nd(data));
+        superAdminRPC.filterSubjectsByClassDegree("بكالوريوس", 3).then((data) => setData_3rd(data));
+        superAdminRPC.filterSubjectsByClassDegree("بكالوريوس", 4).then((data) => setData_4th(data));
+
+        superAdminRPC.filterSubjectsByDegree("ماجستير").then((data) => setData_master(data));
+
+        superAdminRPC.filterSubjectsByDegree("دكتوراه").then((data) => setData_phd(data));
+
     };
 
     useEffect(() => {
@@ -174,11 +176,17 @@ function MainContent(): JSX.Element {
 
             return (
                 <div className="flex flex-col flex-nowrap gap-1">
-                    <a href={`/teacher/enrolled/${row.teacher}/${row.id}`} className="btn btn-xs  w-32">
+                    <a href={`/superadmin/enrolled/${row.teacher}/${row.id}`} className="btn btn-xs  w-32">
                         عرض الطلاب
                     </a>
-                    <a href={`/teacher/attendance/${row.id}`} className="btn btn-xs w-32">
+                    <a href={`/superadmin/permissions/${row.id}`} className="btn btn-xs w-32">
+                        عرض الصلاحيات
+                    </a>
+                    <a href={`/superadmin/attendance/${row.id}`} className="btn btn-xs w-32">
                         عرض سجل الغياب
+                    </a>
+                    <a href={`/superadmin/grades/${row.id}`} className="btn btn-xs w-32">
+                        عرض درجات السعي
                     </a>
                 </div>
             )
@@ -191,7 +199,7 @@ function MainContent(): JSX.Element {
                 <Options onAddClick={() => setIsAddModalOpen(true)} />
             </Subsection>
             <Subsection>
-                <Tabs group="students" tabs={
+                <Tabs className="w-full" group="students" tabs={
                     [
                         {
                             label: "المرحلة الأولى", content: <EditableTable
@@ -267,16 +275,15 @@ function MainContent(): JSX.Element {
 }
 
 
-///
 
 
-export function TA_SubjectsPage(): JSX.Element {
-    useValidRoute(["teacher"], "/login");
+export function SuperSubjectsPage(): JSX.Element {
+    useValidRoute(["superadmin"], "/login");
 
     return <>
         <MainLayout
             main={MainContent}
-            title={"المواد المختبرية"}
+            title={"المواد الدراسية"}
             sidebar={sidebar_pages}
         />
     </>

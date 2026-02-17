@@ -30,7 +30,7 @@ export class TeachingStaff extends PG_Table {
                     registered_at                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
                     CHECK(hours_available >= 0),
-                    FOREIGN KEY (login_credentials) REFERENCES ${sql(loggedin_users.table_name)}(id)
+                    FOREIGN KEY (login_credentials) REFERENCES ${sql(loggedin_users.table_name)}(id) ON DELETE CASCADE
                 )
             `;
 

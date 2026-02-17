@@ -29,9 +29,9 @@ interface OptionsProps {
 
 
 function Options({ onAddClick }: OptionsProps) {
-    return <div className="flex justify-between flex-wrap">
-        <div className="text-4xl px-5"> إدارة المواد الدراسية </div>
-        <ul className="menu bg-base-200 lg:menu-horizontal rounded-box gap-1">
+    return <div id="options" className="menu lg:menu-horizontal menu-vertical w-full justify-between">
+        <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> إدارة المواد الدراسية </div>
+        <ul className="menu bg-base-200 lg:menu-horizontal rounded-box gap-1 menu-vertical max-md:w-full">
 
             <li>
                 <button className="btn btn-lg" onClick={onAddClick}>
@@ -178,12 +178,6 @@ function MainContent(): JSX.Element {
                 <div className="flex flex-col flex-nowrap gap-1">
                     <a href={`/admin/enrolled/${row.teacher}/${row.id}`} className="btn btn-xs  w-32">
                         عرض الطلاب
-                    </a>
-                    <a href={`/admin/attendance/${row.id}`} className="btn btn-xs w-32">
-                        عرض سجل الغياب
-                    </a>
-                    <a href={`/admin/grades/${row.id}`} className="btn btn-xs w-32">
-                        عرض درجات السعي
                     </a>
                     <a href={`/admin/permissions/${row.id}`} className="btn btn-xs w-32">
                         عرض الصلاحيات

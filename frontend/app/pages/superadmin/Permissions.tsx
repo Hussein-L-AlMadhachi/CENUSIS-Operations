@@ -1,6 +1,6 @@
 import { type JSX, useState, useEffect } from "react";
 import { ArrowRightFromLine, UserRoundPlus } from "lucide-react";
-import { Link, useParams } from "wouter";
+
 // layouts
 import { MainLayout } from "@/layout/MainLayout";
 
@@ -14,22 +14,9 @@ import { Section, Subsection } from "@/components/Section";
 import { useValidRoute } from "@/hooks/useValidRoute";
 
 // Globals
-import { type AttendanceRecordData, teacherRPC } from "@/rpc";
-import { DatePicker } from "@/components/DatePciker";
+import { type SubjectAccessControlData, superAdminRPC } from "@/rpc";
 import { sidebar_pages } from "./sidebar_pages";
-
-
-
-
-
-
-
-function dateToYMD(date: Date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // months are 0-indexed
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
+import { Link, useParams } from "wouter";
 
 
 
@@ -41,19 +28,17 @@ interface OptionsProps {
     onAddClick: () => void;
 }
 
-
-
 function Options({ onAddClick }: OptionsProps) {
     return <div id="options" className="menu lg:menu-horizontal menu-vertical w-full justify-between">
-        <Link href={`/teacher/subjects`} className="btn btn-md btn-ghost btn-circle">
+        <Link href="/superadmin/subjects" className="btn btn-md btn-ghost btn-circle">
             <ArrowRightFromLine />
         </Link>
-        <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> إدارة سجل الحضور </div>
+        <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> إدارة الصلاحيات </div>
         <ul className="menu bg-base-200 lg:menu-horizontal rounded-box gap-1 menu-vertical max-md:w-full">
 
             <li>
                 <button className="btn" onClick={onAddClick}>
-                    <UserRoundPlus size={18} /> إضافة سجل جديد للمحاضرة
+                    <UserRoundPlus size={18} /> إضافة صلاحيات
                 </button>
             </li>
 
@@ -63,51 +48,57 @@ function Options({ onAddClick }: OptionsProps) {
 
 
 
-interface AddAttendanceRecordModalProps {
+
+
+
+
+interface AddPermissionEntryModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
-    subjectId: number;
 }
 
-function AddAttendanceRecordModal({ isOpen, onClose, onSuccess, subjectId }: AddAttendanceRecordModalProps) {
-    const handleAddAttendanceRecord = async (data: any) => {
+function AddPermissionEntryModal({ isOpen, onClose, onSuccess }: AddPermissionEntryModalProps) {
+    const handleAddPermissionEntry = async (data: any) => {
+        console.log(data)
+        if (!data.teacher_name || !data.subject_name) {
+            throw "يجب ملئ جميع الحقول";
+        }
 
         try {
-            await teacherRPC.createDailyAttendanceRecord(subjectId, data.date);
+            await superAdminRPC.grantAccess(data.subject_name, data.teacher_name);
             onSuccess();
             onClose();
         } catch (error) {
             throw `حدث خطأ أثناء إضافة الحساب ${error}`;
         }
-
     };
 
     return (
         <Modal isOpen={isOpen} className="w-full flex flex-col justify-center max-w-lg">
-            <h3 className="font-bold text-lg mb-4 text-center">إضافة سجل حضور يومي</h3>
+            <h3 className="font-bold text-lg mb-4 text-center">إضافة أستاذ مساعد</h3>
 
             <DynamicForm
                 key={isOpen ? "open" : "closed"}
                 template={[
-                    { title: "التاريخ", key: "date", type: "date" }
+                    {
+                        title: "اسم الحساب",
+                        key: "teacher_name",
+                        type: "autocomplete",
+                        fetchSuggestions: (q) => superAdminRPC.autocompleteTeacher(q)
+                    },
+                    {
+                        title: "اسم المادة",
+                        key: "subject_name",
+                        type: "autocomplete",
+                        fetchSuggestions: (q) => superAdminRPC.autocompleteSubject(q)
+                    },
                 ]}
-                onSubmit={handleAddAttendanceRecord}
+                onSubmit={handleAddPermissionEntry}
                 submitLabel="حفظ"
-                customComponents={{
-                    "date": ({ value, onChange }) => {
-                        return <DatePicker
-                            date={value ? new Date(value) : null}
-                            setDate={(date) => {
-                                if (date) onChange(dateToYMD(date));
-                            }}
-                            className="input input-bordered w-full"
-                        />
-                    }
-                }}
             />
 
-            <button className="btn btn-ghost w-full mt-4" onClick={onClose}>إلغاء</button>
+            <button className="btn btn-ghost w-2xs mt-4" onClick={onClose}>إلغاء</button>
         </Modal>
     );
 }
@@ -122,29 +113,28 @@ function MainContent(): JSX.Element {
 
     const subject_id = parseInt(params.subject_id);
 
-    const [data, setData] = useState<AttendanceRecordData[]>([]);
+    const [data, setData] = useState<SubjectAccessControlData[]>([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
     const fetchData = () => {
-        teacherRPC.fetchDailyAttendanceRecordsForTheSubject(subject_id).then((data) => setData(data));
+        superAdminRPC.fetchSubjectAccessControl(subject_id).then((data) => { setData(data); console.log("fetched data", data) });
     };
 
     useEffect(() => {
         fetchData();
     }, []);
 
-    const customRenderers: Record<string, (row: AttendanceRecordData) => JSX.Element> = {
-        "@view_absentees": (row: AttendanceRecordData) => {
+
+    const customRenderers: Record<string, (row: SubjectAccessControlData) => JSX.Element> = {
+        "@revoke": (row: SubjectAccessControlData) => {
 
             return (
                 <div className="flex flex-col flex-nowrap">
-                    <Link href={`/teacher/absented/${row.id}`} className="btn btn-xs">
-                        الطلاب الغائبون
-                    </Link>
+                    <button className="btn btn-error btn-xs w-10 text-white" onClick={() => superAdminRPC.revokeAccess(subject_id, row.loggedin_user!).then(() => fetchData())}> ازالة </button>
                 </div>
             )
         },
     }
+
 
     return <>
         <Section>
@@ -155,31 +145,33 @@ function MainContent(): JSX.Element {
 
                 <EditableTable
                     data={data || []}
-                    headers={{ "date": "التاريخ", "created_at": "تاريخ الرفع", "@view_absentees": "" }}
+                    headers={{ "subject_name": "اسم المادة", "user_name": "اسم الحساب", "@revoke": "" }}
+                    onDelete={(id: number) => {
+                        superAdminRPC.revokeAccess(subject_id, id).then(() => fetchData());
+                    }}
                     customRenderers={customRenderers}
                 />
 
             </Subsection>
         </Section>
 
-        <AddAttendanceRecordModal
+        <AddPermissionEntryModal
             isOpen={isAddModalOpen}
             onClose={() => setIsAddModalOpen(false)}
             onSuccess={fetchData}
-            subjectId={subject_id}
         />
     </>;
 }
 
 
 
-export function TeachersAttendancePage(): JSX.Element {
-    useValidRoute(["teacher"], "/login");
+export function SuperPermissionsPage(): JSX.Element {
+    useValidRoute(["superadmin"], "/login");
 
     return <>
         <MainLayout
             main={MainContent}
-            title={"حضور الطلاب"}
+            title={"صلاحيات الأستاذ مساعد"}
             sidebar={sidebar_pages}
         />
     </>

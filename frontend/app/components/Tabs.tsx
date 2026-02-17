@@ -9,11 +9,12 @@ interface TabsProps {
     tabs: TabItem[];
     group: string;
     defaultCheckedIndex?: number;
+    className?: string;
 }
 
-const Tabs: React.FC<TabsProps> = ({ tabs, group = "34", defaultCheckedIndex = 0 }) => {
+const Tabs: React.FC<TabsProps> = ({ tabs, group = "34", defaultCheckedIndex = 0, className }) => {
     return (
-        <div className="tabs tabs-border">
+        <div className={`tabs tabs-border ${className || ""}`}>
             {tabs.map((tab, index) => (
                 <React.Fragment key={index}>
                     <input

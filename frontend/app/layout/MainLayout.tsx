@@ -27,7 +27,7 @@ export function MainLayout(props: MainLayoutProps): JSX.Element {
     return <div className="drawer lg:drawer-open w-full">
 
         <input id="my-drawer-4" type="checkbox" className="drawer-toggle" />
-        <div className="drawer-content">
+        <div className="drawer-content overflow-x-hidden max-w-full">
 
             {/* Navbar */}
             <nav className="navbar w-[calc(100%-16px)] mr-4 bg-base-300 rounded-full rounded-l-none mt-2 justify-between items-center">
@@ -38,13 +38,13 @@ export function MainLayout(props: MainLayoutProps): JSX.Element {
 
                 <div className="px-6 text-lg text-gray-600">{props.title}</div>
 
-                <button className="max-sm:pl-20 btn-sm btn-outline btn-circle" onClick={logoutHandler}>
+                <button className="sm:pl-20 btn-sm btn-outline btn-circle" onClick={logoutHandler}>
                     <LockKeyhole size={20} strokeWidth={1.5} />
                 </button>
             </nav>
 
             {/* Page content */}
-            <div className="py-8 sm:px-16 px-6"> <props.main /> </div>
+            <div className="py-8 sm:px-16 px-4 max-w-full overflow-hidden"> <props.main /> </div>
         </div>
 
         <div className="drawer-side is-drawer-close:overflow-visible">

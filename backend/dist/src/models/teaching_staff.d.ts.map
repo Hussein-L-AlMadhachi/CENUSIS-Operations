@@ -1,1 +1,0 @@
-{"version":3,"file":"teaching_staff.d.ts","sourceRoot":"","sources":["../../../src/models/teaching_staff.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,QAAQ,EAAE,KAAK,MAAM,EAAE,MAAM,SAAS,CAAC;AAKhD,qBAAa,aAAc,SAAQ,QAAQ;gBAE3B,GAAG,EAAE,MAAM;IAMvB,4EAA4E;IAEtE,MAAM;IA0BC,YAAY,CAAC,aAAa,EAAE,MAAM;IAUlC,UAAU,CAAC,eAAe,EAAE,MAAM;CAKlD"}

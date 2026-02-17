@@ -22,8 +22,8 @@ export class SubjectsAccessControl extends PG_Table {
                 does_fill_grades        BOOLEAN NOT NULL,
                 is_original_owner       BOOLEAN DEFAULT FALSE,
 
-                FOREIGN KEY (subject) REFERENCES ${this.sql(subjects.table_name)}(id),
-                FOREIGN KEY (loggedin_user) REFERENCES ${this.sql(loggedin_users.table_name)}(id)
+                FOREIGN KEY (subject) REFERENCES ${this.sql(subjects.table_name)}(id) ON DELETE CASCADE,
+                FOREIGN KEY (loggedin_user) REFERENCES ${this.sql(loggedin_users.table_name)}(id) ON DELETE CASCADE
             );
         `;
 

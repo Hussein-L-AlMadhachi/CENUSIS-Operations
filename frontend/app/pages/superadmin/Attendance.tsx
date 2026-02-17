@@ -1,5 +1,5 @@
 import { type JSX, useState, useEffect } from "react";
-import { ArrowRightFromLine, UserRoundPlus } from "lucide-react";
+import { UserRoundPlus, ArrowRightFromLine } from "lucide-react";
 import { Link, useParams } from "wouter";
 // layouts
 import { MainLayout } from "@/layout/MainLayout";
@@ -14,7 +14,7 @@ import { Section, Subsection } from "@/components/Section";
 import { useValidRoute } from "@/hooks/useValidRoute";
 
 // Globals
-import { type AttendanceRecordData, teacherRPC } from "@/rpc";
+import { type AttendanceRecordData, superAdminRPC } from "@/rpc";
 import { DatePicker } from "@/components/DatePciker";
 import { sidebar_pages } from "./sidebar_pages";
 
@@ -45,7 +45,7 @@ interface OptionsProps {
 
 function Options({ onAddClick }: OptionsProps) {
     return <div id="options" className="menu lg:menu-horizontal menu-vertical w-full justify-between">
-        <Link href={`/teacher/subjects`} className="btn btn-md btn-ghost btn-circle">
+        <Link href="/superadmin/subjects" className="btn btn-md btn-ghost btn-circle">
             <ArrowRightFromLine />
         </Link>
         <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> إدارة سجل الحضور </div>
@@ -74,13 +74,12 @@ function AddAttendanceRecordModal({ isOpen, onClose, onSuccess, subjectId }: Add
     const handleAddAttendanceRecord = async (data: any) => {
 
         try {
-            await teacherRPC.createDailyAttendanceRecord(subjectId, data.date);
+            await superAdminRPC.createDailyAttendanceRecord(subjectId, data.date);
             onSuccess();
             onClose();
         } catch (error) {
             throw `حدث خطأ أثناء إضافة الحساب ${error}`;
         }
-
     };
 
     return (
@@ -126,7 +125,7 @@ function MainContent(): JSX.Element {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     const fetchData = () => {
-        teacherRPC.fetchDailyAttendanceRecordsForTheSubject(subject_id).then((data) => setData(data));
+        superAdminRPC.fetchDailyAttendanceRecordsForTheSubject(subject_id).then((data) => setData(data));
     };
 
     useEffect(() => {
@@ -138,7 +137,7 @@ function MainContent(): JSX.Element {
 
             return (
                 <div className="flex flex-col flex-nowrap">
-                    <Link href={`/teacher/absented/${row.id}`} className="btn btn-xs">
+                    <Link href={`/admin/absented/${row.id}`} className="btn btn-xs">
                         الطلاب الغائبون
                     </Link>
                 </div>
@@ -173,8 +172,8 @@ function MainContent(): JSX.Element {
 
 
 
-export function TeachersAttendancePage(): JSX.Element {
-    useValidRoute(["teacher"], "/login");
+export function SuperAttendancePage(): JSX.Element {
+    useValidRoute(["superadmin"], "/login");
 
     return <>
         <MainLayout

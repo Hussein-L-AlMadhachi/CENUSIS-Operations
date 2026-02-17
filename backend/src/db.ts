@@ -20,10 +20,10 @@ import { SubjectsAccessControl } from './db/subjects_access_control.js';
 
 // Initialize your application
 export const app = new PG_App({
-    host: 'localhost',
-    database: 'cenusis_ops',
-    username: 'dev',
-    password: '12345678'
+    host: process.env.DB_HOST || 'localhost',
+    database: process.env.DB_NAME || 'cenusis_ops',
+    username: process.env.DB_USER || 'dev',
+    password: process.env.DB_PASSWORD || '12345678'
 });
 
 

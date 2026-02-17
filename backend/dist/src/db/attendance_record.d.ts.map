@@ -1,1 +1,0 @@
-{"version":3,"file":"attendance_record.d.ts","sourceRoot":"","sources":["../../../src/db/attendance_record.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,QAAQ,EAAE,KAAK,MAAM,EAAE,MAAM,SAAS,CAAC;AAEhD,OAAO,KAAK,QAAQ,MAAM,UAAU,CAAC;AAGrC,qBAAa,gBAAiB,SAAQ,QAAQ;gBAE9B,GAAG,EAAE,MAAM;IAKjB,MAAM;IAeN,aAAa,CAAC,UAAU,EAAE,MAAM;IAIhC,MAAM,CAAC,oBAAoB,EAAE,MAAM;CAI5C"}

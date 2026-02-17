@@ -30,12 +30,12 @@ interface OptionsProps {
 
 
 function Options({ onAddClick }: OptionsProps) {
-    return <div className="flex justify-between flex-wrap">
+    return <div id="options" className="menu lg:menu-horizontal menu-vertical w-full justify-between">
         <Link href="/teacher/subjects" className="btn btn-md btn-ghost btn-circle">
             <ArrowRightFromLine />
         </Link>
-        <div className="text-4xl"> الطلبة المسجلين </div>
-        <ul className="menu bg-base-200 lg:menu-horizontal rounded-box gap-1">
+        <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> الطلبة المسجلين </div>
+        <ul className="menu bg-base-200 lg:menu-horizontal rounded-box gap-1 menu-vertical max-md:w-full">
 
             <li>
                 <button className="btn" onClick={onAddClick}>

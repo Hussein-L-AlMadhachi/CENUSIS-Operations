@@ -16,7 +16,7 @@ export function LoginPage() {
     const navigate = useGetRoleFirstPageURL({
         "admin": "/admin/teachers",
         "teacher": "/teacher/subjects",
-        "superadmin": "superadmin"
+        "superadmin": "/superadmin/teachers"
     })
 
     async function login() {

@@ -102,13 +102,19 @@ export async function updateSelf(metadata: Metadata, data: any) {
     data["teacher_normalized_name"] = normalize_arabic(data["teacher_name"]);
 
     await teaching_staff.update(uid, { teacher_name: data.teacher_name, teacher_normalized_name: data.teacher_normalized_name });
+    await loggedin_users.update(uid, { username: data.teacher_name, normalized_username: data.teacher_normalized_name });
     return uid;
 }
 
 
 export async function deleteUser(metadata: Metadata, id: number) {
+    const teacher = (await teaching_staff.fetch(id))[0];
+    if (!teacher) {
+        throw new Error("التدريسي غير موجود");
+    }
+
     await teaching_staff.delete(id);
-    await loggedin_users.delete(id);
+    await loggedin_users.delete(teacher.login_credentials);
 }
 
 

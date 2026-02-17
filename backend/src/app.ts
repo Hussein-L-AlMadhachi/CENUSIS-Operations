@@ -107,19 +107,6 @@ adminRPC.add(deleteEnrollment);
 adminRPC.add(fetchSingleEnrollment);
 adminRPC.add(fetchEnrollmentsForSubject);
 
-// attendance RPC
-adminRPC.add(fetchDailyAttendanceRecordsForTheSubject);
-adminRPC.add(createDailyAttendanceRecord);
-adminRPC.add(markStudentAbsent);
-
-// absented RPC
-adminRPC.add(removeAbsence);
-adminRPC.add(markStudentAbsent);
-adminRPC.add(fetchAbsentStudents);
-
-// grading
-adminRPC.add(fetchStudentCourseworkGradesPerStudying)
-
 //subjects access control
 adminRPC.add(fetchSubjectAccessControl);
 adminRPC.add(revokeAccess);

@@ -15,7 +15,7 @@ import { AutocompleteText } from "@/components/AutocompleteText";
 import { useValidRoute } from "@/hooks/useValidRoute";
 
 // Globals
-import { type teacherData, adminRPC } from "@/rpc";
+import { type teacherData, superAdminRPC } from "@/rpc";
 import { sidebar_pages } from "./sidebar_pages";
 
 
@@ -43,7 +43,7 @@ function Options({ onAddClick }: OptionsProps) {
                     <AutocompleteText
                         placeholder="بحث..."
                         fetchSuggestions={async (query: string) => {
-                            return await adminRPC.autocompleteTeacher(query);
+                            return await superAdminRPC.autocompleteTeacher(query);
                         }}
                         onSelect={(selected: string) => {
                             console.log("User selected:", selected);
@@ -70,7 +70,7 @@ function AddTeacherModal({ isOpen, onClose, onSuccess }: AddTeacherModalProps) {
         }
 
         try {
-            await adminRPC.registerTeacher(data);
+            await superAdminRPC.registerTeacher(data);
             onSuccess();
             onClose();
         } catch (error) {
@@ -104,7 +104,7 @@ function MainContent(): JSX.Element {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     const fetchData = () => {
-        adminRPC.fetchTeachers().then((data) => setData(data));
+        superAdminRPC.fetchTeachers().then((data) => setData(data));
     };
 
     useEffect(() => {
@@ -123,10 +123,10 @@ function MainContent(): JSX.Element {
                     data={data || []}
                     headers={{ "teacher_name": "الاسم", ":edit:": "" }}
                     onDelete={(id: number) => {
-                        adminRPC.deleteUser(id).then(() => fetchData());
+                        superAdminRPC.deleteUser(id).then(() => fetchData());
                     }}
                     onSave={(data: any) => {
-                        adminRPC.updateUser(data.id, data).then(() => fetchData());
+                        superAdminRPC.updateUser(data.id, data).then(() => fetchData());
                     }}
                     formTemplate={[
                         { title: "الاسم الكامل", key: "teacher_name", type: "text" },
@@ -147,8 +147,8 @@ function MainContent(): JSX.Element {
 
 
 
-export function TeachersPage(): JSX.Element {
-    useValidRoute(["admin"], "/login");
+export function SuperTeachersPage(): JSX.Element {
+    useValidRoute(["superadmin"], "/login");
 
     return <>
         <MainLayout

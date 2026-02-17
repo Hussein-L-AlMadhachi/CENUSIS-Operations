@@ -14,7 +14,7 @@ import { Section, Subsection } from "@/components/Section";
 import { useValidRoute } from "@/hooks/useValidRoute";
 
 // Globals
-import { type EnrollmentData, adminRPC, type studentData } from "@/rpc";
+import { type EnrollmentData, superAdminRPC, type studentData } from "@/rpc";
 import { Link, useParams } from "wouter";
 import { sidebar_pages } from "./sidebar_pages";
 
@@ -31,7 +31,7 @@ interface OptionsProps {
 
 function Options({ onAddClick }: OptionsProps) {
     return <div id="options" className="menu lg:menu-horizontal menu-vertical w-full justify-between">
-        <Link href="/admin/subjects" className="btn btn-md btn-ghost btn-circle">
+        <Link href="/superadmin/subjects" className="btn btn-md btn-ghost btn-circle">
             <ArrowRightFromLine />
         </Link>
         <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> الطلبة المسجلين </div>
@@ -64,7 +64,7 @@ function EnrollModal({ isOpen, onClose, onSuccess, subjectId, teacherId }: Enrol
 
         try {
             // Find student by name to get ID
-            const student: studentData = await adminRPC.findStudentByName(data.student_name);
+            const student: studentData = await superAdminRPC.findStudentByName(data.student_name);
             console.log(">>>", student);
             if (!student || !student.id) {
                 throw "الطالب غير موجود";
@@ -85,7 +85,7 @@ function EnrollModal({ isOpen, onClose, onSuccess, subjectId, teacherId }: Enrol
                 finals_grade_percent: Number(data.finals_grade_percent || 0),
             };
 
-            await adminRPC.newEnrollment(enrollmentData);
+            await superAdminRPC.newEnrollment(enrollmentData);
             onSuccess();
             onClose();
         } catch (error) {
@@ -104,7 +104,7 @@ function EnrollModal({ isOpen, onClose, onSuccess, subjectId, teacherId }: Enrol
                         title: "اسم الطالب",
                         key: "student_name",
                         type: "autocomplete",
-                        fetchSuggestions: (q) => adminRPC.autocompleteStudent(q)
+                        fetchSuggestions: (q) => superAdminRPC.autocompleteStudent(q)
                     },
                     {
                         title: "السنة الدراسية",
@@ -151,7 +151,7 @@ function MainContent(): JSX.Element {
 
     const fetchData = () => {
         if (subjectId) {
-            adminRPC.fetchEnrollmentsForSubject(subjectId).then((data) => {
+            superAdminRPC.fetchEnrollmentsForSubject(subjectId).then((data) => {
                 setData(data);
                 console.log(">>>", data);
             });
@@ -179,7 +179,7 @@ function MainContent(): JSX.Element {
                         ":edit:": ""
                     }}
                     onDelete={(id: number) => {
-                        adminRPC.deleteEnrollment(id).then(() => fetchData());
+                        superAdminRPC.deleteEnrollment(id).then(() => fetchData());
                     }}
                     onSave={async (id: number, form_data: any) => {
                         try {
@@ -187,13 +187,13 @@ function MainContent(): JSX.Element {
 
                             // If name changed, we need to find the new ID
                             if (form_data.student_name) {
-                                const student = await adminRPC.findStudentByName(form_data.student_name);
+                                const student = await superAdminRPC.findStudentByName(form_data.student_name);
                                 if (student && student.id) {
                                     updates.student_id = student.id;
                                     updates.student_name = student.name;
                                 }
                             }
-                            await adminRPC.updateEnrollment(id, updates);
+                            await superAdminRPC.updateEnrollment(id, updates);
                             fetchData();
                         } catch (e) {
                             console.error("Update failed", e);
@@ -205,7 +205,7 @@ function MainContent(): JSX.Element {
                             title: "اسم الطالب",
                             key: "student_name",
                             type: "autocomplete",
-                            fetchSuggestions: (q) => adminRPC.autocompleteStudent(q)
+                            fetchSuggestions: (q) => superAdminRPC.autocompleteStudent(q)
                         },
                         { title: "ساعات الغياب", key: "hours_missed", type: "number", min: 0 },
                         { title: "نسبة درجة السعي المئوية", key: "coursework_grade_percent", type: "number", min: 0, max: 100 },
@@ -229,8 +229,8 @@ function MainContent(): JSX.Element {
 
 
 
-export function StudyingPage(): JSX.Element {
-    useValidRoute(["admin"], "/login");
+export function SuperStudyingPage(): JSX.Element {
+    useValidRoute(["superadmin"], "/login");
 
     return <>
         <MainLayout

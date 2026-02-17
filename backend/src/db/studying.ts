@@ -42,9 +42,9 @@ export class Studying extends PG_Table {
                     CHECK (coursework_grade <= coursework_grade_percent AND coursework_grade >= 0),
                     CHECK (hours_missed >= 0),
 
-                    FOREIGN KEY (student) REFERENCES ${sql(students.table_name)}(id),
-                    FOREIGN KEY (subject) REFERENCES ${sql(subjects.table_name)}(id),
-                    FOREIGN KEY (teacher) REFERENCES ${sql(teaching_staff.table_name)}(id)
+                    FOREIGN KEY (student) REFERENCES ${sql(students.table_name)}(id) ON DELETE CASCADE,
+                    FOREIGN KEY (subject) REFERENCES ${sql(subjects.table_name)}(id) ON DELETE CASCADE,
+                    FOREIGN KEY (teacher) REFERENCES ${sql(teaching_staff.table_name)}(id) ON DELETE CASCADE
                 )
             `;
 

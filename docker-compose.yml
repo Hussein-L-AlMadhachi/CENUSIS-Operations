@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: cenusis-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-cenusis_ops}
+      POSTGRES_USER: ${DB_USER:-dev}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-12345678}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Database is NOT exposed externally - only accessible via internal network
+    # Uncomment the following lines if you need direct database access for debugging:
+    # ports:
+    #   - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-dev} -d ${DB_NAME:-cenusis_ops}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cenusis-network
+
+  # Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cenusis-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-cenusis_ops}
+      DB_USER: ${DB_USER:-dev}
+      DB_PASSWORD: ${DB_PASSWORD:-12345678}
+    # Backend is NOT exposed externally - only accessible via nginx proxy
+    # Uncomment the following lines if you need direct backend access for debugging:
+    # ports:
+    #   - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cenusis-network
+
+  # Frontend/Nginx Service - ONLY service exposed to the network
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cenusis-frontend
+    restart: unless-stopped
+    ports:
+      # Bind to all network interfaces (0.0.0.0) - accessible over network
+      - "80:80"
+      # For HTTPS, uncomment:
+      # - "443:443"
+    depends_on:
+      - backend
+    networks:
+      - cenusis-network
+    environment:
+      # Optional: Set server name for nginx
+      NGINX_HOST: ${NGINX_HOST:-localhost}
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  cenusis-network:
+    driver: bridge

@@ -14,9 +14,10 @@ import { Section, Subsection } from "@/components/Section";
 import { useValidRoute } from "@/hooks/useValidRoute";
 
 // Globals
-import { type AbsentedData, teacherRPC } from "@/rpc";
+import { type AbsentedData, superAdminRPC } from "@/rpc";
 import { Link, useParams } from "wouter";
 import { sidebar_pages } from "./sidebar_pages";
+import { navigate } from "wouter/use-browser-location";
 
 
 
@@ -32,7 +33,7 @@ interface OptionsProps {
 
 function Options({ onAddClick }: OptionsProps) {
     return <div id="options" className="menu lg:menu-horizontal menu-vertical w-full justify-between">
-        <Link href={`/teacher/subjects`} className="btn btn-md btn-ghost btn-circle">
+        <Link href={`/superadmin/subjects`} className="btn btn-md btn-ghost btn-circle">
             <ArrowRightFromLine />
         </Link>
         <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> إدارة الغيابات </div>
@@ -57,6 +58,8 @@ interface AddAbsentStudentModalProps {
     record_id: number;
 }
 
+
+
 function AddAbsentStudentModal({ isOpen, onClose, onSuccess, record_id }: AddAbsentStudentModalProps) {
     const handleAddAbsentStudent = async (data: any) => {
         if (!data.student_name || !data.hours_absent) {
@@ -64,7 +67,7 @@ function AddAbsentStudentModal({ isOpen, onClose, onSuccess, record_id }: AddAbs
         }
 
         try {
-            await teacherRPC.markStudentAbsent({
+            await superAdminRPC.markStudentAbsent({
                 attendance_record_id: record_id, student_name: data.student_name,
                 hours_absent: data.hours_absent
             });
@@ -73,6 +76,8 @@ function AddAbsentStudentModal({ isOpen, onClose, onSuccess, record_id }: AddAbs
         } catch (error) {
             throw `حدث خطأ أثناء إضافة الحساب ${error}`;
         }
+
+        navigate("/admin/subjects")
     };
 
     return (
@@ -82,7 +87,7 @@ function AddAbsentStudentModal({ isOpen, onClose, onSuccess, record_id }: AddAbs
             <DynamicForm
                 key={isOpen ? "open" : "closed"}
                 template={[
-                    { title: "اسم الطالب", key: "student_name", type: "autocomplete", fetchSuggestions: async (query: string) => await teacherRPC.autocompleteStudent(query) },
+                    { title: "اسم الطالب", key: "student_name", type: "autocomplete", fetchSuggestions: async (query: string) => await superAdminRPC.autocompleteStudent(query) },
                     { title: "ساعات الغياب", key: "hours_absent", type: "number" }
                 ]}
                 onSubmit={handleAddAbsentStudent}
@@ -97,6 +102,7 @@ function AddAbsentStudentModal({ isOpen, onClose, onSuccess, record_id }: AddAbs
 
 
 function MainContent(): JSX.Element {
+
     const params = useParams<{ attendance_record: string }>();
     if (!params.attendance_record) {
         throw "invalid attendance record"
@@ -108,7 +114,7 @@ function MainContent(): JSX.Element {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     const fetchData = () => {
-        teacherRPC.fetchAbsentStudents(attendance_record_id).then((data) => setData(data));
+        superAdminRPC.fetchAbsentStudents(attendance_record_id).then((data) => setData(data));
     };
 
     useEffect(() => {
@@ -124,7 +130,7 @@ function MainContent(): JSX.Element {
 
             return (
                 <div className="flex flex-col flex-nowrap">
-                    <button onClick={() => teacherRPC.removeAbsence(row.id!).then(() => fetchData())} className="btn btn-xs">
+                    <button onClick={() => superAdminRPC.removeAbsence(row.id!).then(() => navigate("/admin/subjects/"))} className="btn btn-xs">
                         حذف
                     </button>
                 </div>
@@ -155,6 +161,7 @@ function MainContent(): JSX.Element {
             record_id={attendance_record_id}
         />
     </>;
+
 }
 
 
@@ -163,8 +170,8 @@ function MainContent(): JSX.Element {
 
 
 
-export function TeachersAbsentedPage(): JSX.Element {
-    useValidRoute(["teacher"], "/login");
+export function SuperAbsentedPage(): JSX.Element {
+    useValidRoute(["superadmin"], "/login");
 
     return <>
         <MainLayout

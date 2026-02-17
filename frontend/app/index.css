@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @plugin "daisyui" {
-  themes: light --default, dark --prefersdark, dim;
+  themes: light --default, dark --prefersdark, nord;
 }
 
 /* Cairo Font Family - Complete Weight Setup */
@@ -75,7 +75,9 @@
   line-height: 1.5;
   font-weight: 400;
 
-  width: 100vw;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
