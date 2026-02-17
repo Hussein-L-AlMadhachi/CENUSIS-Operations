@@ -6,7 +6,9 @@
         "db:create": "tsc && node ./dist/cli/create.js",
         "db:admin": "tsc && node ./dist/cli/admin.js",
         "db:alter": "tsc && node ./dist/cli/alter.js",
-        "dev": "tsc && node ./dist/src/main.js"
+        "dev": "tsc && node ./dist/src/main.js",
+        "build": "tsc",
+        "start": "node ./dist/src/main.js"
     },
     "dependencies": {
         "@types/cookie-parser": "^1.4.10",
