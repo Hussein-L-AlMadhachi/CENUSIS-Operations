@@ -16,7 +16,8 @@
         "exceljs": "^4.4.0",
         "jsonwebtoken": "^9.0.2",
         "multer": "^2.0.2",
-        "pg-norm": "^0.1.5"
+        "pg-norm": "^0.1.5",
+        "typescript": "^5.9.3"
     },
     "devDependencies": {
         "@types/bcrypt": "^6.0.0",

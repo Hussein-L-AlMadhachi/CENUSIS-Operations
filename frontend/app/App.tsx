@@ -9,8 +9,6 @@ import { StudentsPage } from "@/pages/admin/Students";
 import { SubjectsPage } from "@/pages/admin/Subjects";
 
 import { StudyingPage } from "@/pages/admin/Studying";
-import { AttendancePage } from "@/pages/admin/Attendance";
-import { AbsentedPage } from "@/pages/admin/Absented";
 
 import { PermissionsPage } from "@/pages/admin/Permissions";
 import { TeachersSubjectsPage } from "./pages/teacher/Subjects";
