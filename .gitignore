@@ -5,5 +5,5 @@ node_modules
 reports/
 backend/dist/*
 frontend/dist/*
-backend/node_modules/*
-frontend/node_modules/*
+bbackend/node_modules/*
+ffrontend/node_modules/*
