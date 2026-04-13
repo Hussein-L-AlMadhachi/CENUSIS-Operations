@@ -87,7 +87,6 @@ const subjectFormTemplate: DynamicFormTemplate[] = [
             { label: "الثاني", value: 2 },
         ], condition: { key: "degree", value: "بكالوريوس" }
     },
-    { title: "عدد ساعات في الكورس", key: "total_hours", type: "number", min: 0 },
     { title: "عدد الساعات اسبوعياً", key: "hours_weekly", type: "number", min: 0 },
     { title: "التدريسي", key: "teacher_name", type: "autocomplete", fetchSuggestions: teacherRPC.autocompleteTeacher },
 ];
@@ -108,13 +107,13 @@ function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubjectModalProps) {
             onSuccess();
             onClose();
         } catch (error) {
-            throw `حدث خطأ أثناء إضافة الحساب: ${error}`;
+            throw `حدث خطأ أثناء إضافة المادة: ${error}`;
         }
     };
 
     return (
         <Modal isOpen={isOpen} className="w-full flex flex-col justify-center max-w-lg">
-            <h3 className="font-bold text-lg mb-4 text-center">إضافة طالب جديد</h3>
+            <h3 className="font-bold text-lg mb-4 text-center">إضافة مادة جديدة</h3>
 
             <DynamicForm
                 key={isOpen ? "open" : "closed"}

@@ -1,6 +1,6 @@
 import { PG_Table, type PG_App } from "pg-norm";
 import { subjects } from "../db.js";
-import type postgres from "postgres";
+
 
 
 export class AttendanceRecord extends PG_Table {

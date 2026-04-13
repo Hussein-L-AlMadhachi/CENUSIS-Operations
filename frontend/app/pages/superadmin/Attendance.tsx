@@ -137,7 +137,7 @@ function MainContent(): JSX.Element {
 
             return (
                 <div className="flex flex-col flex-nowrap">
-                    <Link href={`/admin/absented/${row.id}`} className="btn btn-xs">
+                    <Link href={`/superadmin/absented/${row.id}`} className="btn btn-xs">
                         الطلاب الغائبون
                     </Link>
                 </div>

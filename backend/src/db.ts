@@ -1,20 +1,22 @@
 import { PG_App } from 'pg-norm';
 
 // tables
-import { Studying } from './db/studying.js';
-import { StudentsTable } from './db/students.js';
-import { Subjects } from './db/subjects.js';
-import { LoggedinUsers } from './db/loggedin_users.js';
-import { TeachingStaff } from './db/teaching_staff.js';
-import { Absented } from './db/absented.js';
-import { AttendanceRecord } from './db/attendance_record.js';
+import { Studying } from './models/studying.js';
+import { StudentsTable } from './models/students.js';
+import { Subjects } from './models/subjects.js';
+import { LoggedinUsers } from './models/loggedin_users.js';
+import { TeachingStaff } from './models/teaching_staff.js';
+import { Absented } from './models/absented.js';
+import { AttendanceRecord } from './models/attendance_record.js';
 
 // views
-import { StudentAbsenceView } from './db/views/students_absence_view.js';
-import { AttendanceRecordView } from './db/views/attendance_record_view.js';
-import { ActivityLogs } from './db/logs.js';
-import { EnrollmentView } from './db/views/enrollment_view.js';
-import { SubjectsAccessControl } from './db/subjects_access_control.js';
+import { StudentAbsenceView } from './models/views/students_absence_view.js';
+import { AttendanceRecordView } from './models/views/attendance_record_view.js';
+import { ActivityLogs } from './models/logs.js';
+import { EnrollmentView } from './models/views/enrollment_view.js';
+import { SubjectsAccessControl } from './models/subjects_access_control.js';
+import { MiniAppsTable } from './models/miniapps.js';
+import { MiniAppPermissionsTable } from './models/minimaps_permissions.js';
 
 
 
@@ -40,6 +42,8 @@ export const student_absence_view = new StudentAbsenceView(app);
 export const activity_logs = new ActivityLogs(app);
 export const enrollment_view = new EnrollmentView(app);
 export const subjects_access_control = new SubjectsAccessControl(app);
+export const miniapps = new MiniAppsTable(app);
+export const miniapp_permissions = new MiniAppPermissionsTable(app);
 
 app.register(loggedin_users);
 app.register(teaching_staff);

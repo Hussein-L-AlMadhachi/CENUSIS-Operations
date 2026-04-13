@@ -1,4 +1,4 @@
-import { teaching_staff, subjects } from "../db.js";
+import { studying, teaching_staff, subjects } from "../db.js";
 import type { Metadata } from "enders-sync";
 import type postgres from "postgres"
 import { error } from "console";
@@ -15,7 +15,7 @@ import { loose_validate_params, validate_params } from "../helpers/validate_para
 export async function newSubject(metadata: Metadata, data: any) {
 
     validate_params(data, [
-        "subject_name", "degree", "class", "total_hours", "hours_weekly", "teacher_name", "semester"
+        "subject_name", "degree", "class", "hours_weekly", "teacher_name", "semester"
     ]);
 
     if (typeof data["teacher_name"] !== "string") {
@@ -50,6 +50,16 @@ export async function newSubject(metadata: Metadata, data: any) {
     if (!subject) {
         throw error("Subject is already in the database");
     }
+
+    await studying.autoInsertStudentsForSubject(
+        data["teacher"],
+        subject.id as number,
+        data["degree"],
+        data["class"],
+        new Date().getFullYear(),
+        0,
+        0
+    );
 
     return subject.id;
 }
@@ -100,8 +110,18 @@ export async function deleteSubject(metadata: Metadata, id: number) {
     await subjects.delete(id);
 }
 
+export async function autocompleteStudentsBySubject(metadata: Metadata, searched_name: string, subject_id: number) {
+    const result = await subjects.autocompleteStudentsBySubject(searched_name, subject_id);
+    if (!result) {
+        return [];
+    }
 
+    const flattened_result: string[] = result.map((user) => {
+        return user.student_name;
+    });
 
+    return flattened_result;
+}
 // Fetching and filtering
 
 export async function fetchSingleSubject(metadata: Metadata, id: number) {

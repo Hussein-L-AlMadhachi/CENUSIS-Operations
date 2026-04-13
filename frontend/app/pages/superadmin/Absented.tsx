@@ -77,7 +77,7 @@ function AddAbsentStudentModal({ isOpen, onClose, onSuccess, record_id }: AddAbs
             throw `حدث خطأ أثناء إضافة الحساب ${error}`;
         }
 
-        navigate("/admin/subjects")
+        navigate("/superadmin/subjects")
     };
 
     return (
@@ -130,7 +130,7 @@ function MainContent(): JSX.Element {
 
             return (
                 <div className="flex flex-col flex-nowrap">
-                    <button onClick={() => superAdminRPC.removeAbsence(row.id!).then(() => navigate("/admin/subjects/"))} className="btn btn-xs">
+                    <button onClick={() => superAdminRPC.removeAbsence(row.id!).then(() => navigate("/superadmin/subjects/"))} className="btn btn-xs">
                         حذف
                     </button>
                 </div>

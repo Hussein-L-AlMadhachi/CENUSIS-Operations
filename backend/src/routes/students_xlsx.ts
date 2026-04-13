@@ -45,31 +45,19 @@ studentsXlsxRouter.post('/api/students/import', upload.single('file'), async (re
         const buffer: any = req.file.buffer;
 
         const students_js_obj = await decodeXlsx(buffer, [
-            "الطالب", "سنة التسجيل", "الدرجة العلمية", "المرحلة", "الجنس",
+            "الاسم", "سنة التسجيل", "الدرجة العلمية", "المرحلة",
         ]);
 
         const loaded_students_record = translateHeaders<any>(students_js_obj, {
-            "الطالب": "student_name",
+            "الاسم": "student_name",
             "سنة التسجيل": "joined_year",
             "الدرجة العلمية": "degree",
             "المرحلة": "class",
-            "الجنس": "sex",
         })
 
         for (const student of loaded_students_record) {
             try {
-                // this function is intended to be called remotely by the frontend so you need {auth:{}}
-                // to satisfy the function RPC auth require which is unnecessary here since by not using RPC 
-                // we are no longer authenticating using RPC Auth 
-                // (doesn't work in all functions so check function implementation if necessary)
-
-                try {
-                    const existingStudent = await findStudentByName({ auth: {} }, normalize_arabic(student.student_name));
-                    await updateStudent({ auth: {} }, existingStudent.id, student);
-                } catch (e) {
-                    // if student not found, create new one
-                    await newStudent({ auth: {} }, student);
-                }
+                students.InsertOrUpdate( student.student_name, student.joined_year, student.degree, student.class );
             } catch (e) {
                 console.error(`Error processing student ${student.student_name}:`, e);
                 res.status(500).json({ success: false, error: e!.toString() });

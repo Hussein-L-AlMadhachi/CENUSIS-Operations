@@ -1,10 +1,11 @@
 import { PG_Table, type PG_App } from "pg-norm";
+import { students, studying } from "../db.js";
 
 
 
 const columns2select = [
     "subjects.id", "subjects.subject_name", "subjects.subject_normalized_name", "subjects.teacher",
-    "subjects.degree", "subjects.class", "subjects.total_hours", "subjects.hours_weekly",
+    "subjects.degree", "subjects.class", "subjects.hours_weekly",
     "subjects.is_attending_required", "subjects.semester", "teaching_staff.teacher_name"
 ];
 
@@ -15,7 +16,7 @@ export class Subjects extends PG_Table {
     constructor(app: PG_App) {
         super(app, "subjects", [
             "id", "subject_name", "subject_normalized_name", "teacher",
-            "degree", "class", "total_hours", "hours_weekly",
+            "degree", "class", "hours_weekly",
             "is_attending_required", "semester"
         ]);
     }
@@ -36,8 +37,6 @@ export class Subjects extends PG_Table {
 
                     degree                      VARCHAR(150) NOT NULL,
                     class                       INTEGER NOT NULL,
-
-                    total_hours                 INTEGER NOT NULL,
                     hours_weekly                INTEGER NOT NULL,
 
                     is_attending_required       BOOLEAN DEFAULT FALSE,
@@ -68,7 +67,18 @@ export class Subjects extends PG_Table {
         return await this.sql`
             SELECT subject_name, word_similarity(${searched_name}, subject_normalized_name) AS similarity
             FROM ${this.sql(this.table_name)}
-            WHERE word_similarity(${searched_name}, subject_normalized_name) > 0.3
+            WHERE word_similarity(${searched_name}, subject_normalized_name) > 0.3 AND subject_normalized_name % ${searched_name}
+            ORDER BY similarity DESC LIMIT 10;
+        `;
+    }
+
+    public async autocompleteStudentsBySubject(searched_name: string, subject_id: number) {
+        return await this.sql`
+            SELECT STUDIER.student_name, word_similarity(${searched_name}, STUDIER.student_normalized_name) AS similarity
+            FROM ${this.sql(students.table_name)} AS STUDIER
+            JOIN ${this.sql(studying.table_name)} AS STUDYING ON STUDIER.id = STUDYING.student
+            WHERE word_similarity(${searched_name}, STUDIER.student_normalized_name) > 0.3
+            AND STUDYING.subject = ${subject_id}
             ORDER BY similarity DESC LIMIT 10;
         `;
     }

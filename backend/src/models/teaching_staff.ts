@@ -50,7 +50,7 @@ export class TeachingStaff extends PG_Table {
         return await this.sql`
             SELECT teacher_name, word_similarity(${searched_name}, teacher_normalized_name) AS similarity
             FROM ${this.sql(this.table_name)}
-            WHERE word_similarity(${searched_name}, teacher_normalized_name) > 0.3
+            WHERE word_similarity(${searched_name}, teacher_normalized_name) > 0.3  AND teacher_normalized_name % ${searched_name}
             ORDER BY similarity DESC LIMIT 10;
         `;
     }

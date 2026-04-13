@@ -76,9 +76,8 @@ interface loggedIn {
 
 
 export async function logout(metadata: Metadata) {
-    metadata.res!.cookie("auth-token", "", {
-        httpOnly: true
-    });
+    metadata.res!.cookie("auth-token", "");
+    metadata.res!.cookie("auth-role", "");
 }
 
 
@@ -167,3 +166,4 @@ export function isValidSuperadminNoRPC(req: Request, res: Response) {
 
     return _auth;
 }
+

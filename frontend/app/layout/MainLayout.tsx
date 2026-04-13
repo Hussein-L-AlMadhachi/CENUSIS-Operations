@@ -6,7 +6,7 @@ import { Link } from "wouter"
 import UniLogo from "../../public/Assets/logo.jpg"
 import { publicRPC } from "@/rpc";
 import { navigate } from "wouter/use-browser-location";
-
+import { ThemeController } from "@/components/ThemeController";
 
 
 
@@ -35,8 +35,9 @@ export function MainLayout(props: MainLayoutProps): JSX.Element {
                     {/* Sidebar toggle icon */}
                     <ArrowLeftFromLine size={20} strokeWidth={1.5} />
                 </label>
+                <ThemeController></ThemeController>
 
-                <div className="px-6 text-lg text-gray-600">{props.title}</div>
+                <div className="px-6 text-lg">{props.title}</div>
 
                 <button className="sm:pl-20 btn-sm btn-outline btn-circle" onClick={logoutHandler}>
                     <LockKeyhole size={20} strokeWidth={1.5} />
@@ -69,7 +70,6 @@ export function MainLayout(props: MainLayoutProps): JSX.Element {
                             </Link>
                         </li>
                     ))}
-
                 </ul>
 
             </div>

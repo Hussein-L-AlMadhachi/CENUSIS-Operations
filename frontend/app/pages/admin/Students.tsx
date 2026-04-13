@@ -116,11 +116,6 @@ const studentFormTemplate: DynamicFormTemplate[] = [
             { label: "الثالثة", value: 3 },
             { label: "الرابعة", value: 4 }
         ], condition: { key: "degree", value: "بكلوريوس" }, defaultValue: 1
-    },
-    {
-        title: "الجنس", key: "sex", type: "select", options: [
-            { label: "ذكر", value: "ذكر" }, { label: "أنثى", value: "انثى" }
-        ]
     }
 ];
 
@@ -128,7 +123,7 @@ function AddStudentModal({ isOpen, onClose, onSuccess }: AddStudentModalProps) {
     const handleAddTeacher = async (data: any) => {
 
         try {
-            useValidParams(data, ["student_name", "joined_year", "degree", "sex"])
+            useValidParams(data, ["student_name", "joined_year", "degree"])
             if (data.degree !== "بكلوريوس") {
                 data["class"] = 1;
             }
@@ -143,7 +138,7 @@ function AddStudentModal({ isOpen, onClose, onSuccess }: AddStudentModalProps) {
 
     return (
         <Modal isOpen={isOpen} className="w-full flex flex-col justify-center max-w-lg">
-            <h3 className="font-bold text-lg mb-4 text-center">إضافة حساب تدريسي جديد</h3>
+            <h3 className="font-bold text-lg mb-4 text-center">إضافة طالب جديد</h3>
 
             <DynamicForm
                 key={isOpen ? "open" : "closed"}
@@ -209,7 +204,8 @@ function MainContent(): JSX.Element {
                 <Tabs group="students" tabs={
                     [
                         {
-                            label: "المرحلة الأولى", content: <EditableTable
+                            label: "المرحلة الأولى", 
+                            content: <EditableTable
                                 data={data_1st || []}
                                 headers={headers}
                                 onDelete={handleDeleteStudent}

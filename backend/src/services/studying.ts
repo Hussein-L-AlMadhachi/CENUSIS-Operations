@@ -148,7 +148,13 @@ export async function autoFillStudentsByDegreeClass(
     }
 
     await studying.autoInsertStudentsForSubject(
-        subject_id, degree, class_number, studying_year, coursework_grade_percent, finals_grade_percent
+        subject.teacher as number,
+        subject_id,
+        degree,
+        class_number,
+        studying_year,
+        coursework_grade_percent,
+        finals_grade_percent
     );
 }
 

@@ -9,7 +9,7 @@ export class StudentsTable extends PG_Table {
     constructor(app: PG_App) {
         super(app, "students", [
             "id", "student_name", "student_normalized_name", "joined_year",
-            "degree", "class", "sex", "years_retaken", "years_failed"
+            "degree", "class", "years_retaken", "years_failed"
         ]);
     }
 
@@ -50,6 +50,7 @@ export class StudentsTable extends PG_Table {
         return await this.sql`
             SELECT student_name, word_similarity(${searched_name}, student_normalized_name) AS similarity
             FROM ${this.sql(this.table_name)}
+            WHERE word_similarity(${searched_name}, student_normalized_name) > 0.3  AND student_normalized_name % ${searched_name}
             ORDER BY similarity DESC LIMIT 10;
         `;
     }
@@ -115,6 +116,19 @@ export class StudentsTable extends PG_Table {
     public async filterStudentsByDegree(degree: string) {
         return await this.sql`
             SELECT ${this.sql(this.visibles)} FROM ${this.sql(this.table_name)} WHERE degree = ${degree};
+        `;
+    }
+
+    public async InsertOrUpdate( name:string, joined_year:string , degree:string, class_number:number ) {
+        return await this.sql`
+            INSERT INTO ${this.sql(this.table_name)} (student_name, student_normalized_name, joined_year, degree, class)
+            VALUES (${name}, ${normalize_arabic(name)} , ${joined_year}, ${degree}, ${class_number})
+            ON CONFLICT (student_normalized_name) 
+            DO UPDATE SET
+                student_name = EXCLUDED.student_name,
+                joined_year = EXCLUDED.joined_year,
+                degree = EXCLUDED.degree,
+                class = EXCLUDED.class;
         `;
     }
 

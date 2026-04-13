@@ -15,7 +15,7 @@ import { AutocompleteText } from "@/components/AutocompleteText";
 import { useValidRoute } from "@/hooks/useValidRoute";
 
 // Globals
-import { type SubjectData, superAdminRPC } from "@/rpc";
+import { type SubjectData, teacherRPC } from "@/rpc";
 import { useValidParams } from "@/hooks/useValidParams";
 import Tabs from "@/components/Tabs";
 import { sidebar_pages } from "./sidebar_pages";
@@ -44,7 +44,7 @@ function Options({ onAddClick }: OptionsProps) {
                     <Search size={18} />
                     <AutocompleteText
                         placeholder="ابحث عن مادة..."
-                        fetchSuggestions={superAdminRPC.autocompleteSubject}
+                        fetchSuggestions={teacherRPC.autocompleteSubject}
                         onSelect={(selected) => {
                             console.log("User selected:", selected);
                         }}
@@ -89,7 +89,7 @@ const subjectFormTemplate: DynamicFormTemplate[] = [
     },
     { title: "عدد ساعات في الكورس", key: "total_hours", type: "number", min: 0 },
     { title: "عدد الساعات اسبوعياً", key: "hours_weekly", type: "number", min: 0 },
-    { title: "التدريسي", key: "teacher_name", type: "autocomplete", fetchSuggestions: superAdminRPC.autocompleteTeacher },
+    { title: "التدريسي", key: "teacher_name", type: "autocomplete", fetchSuggestions: teacherRPC.autocompleteTeacher },
 ];
 
 function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubjectModalProps) {
@@ -104,7 +104,7 @@ function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubjectModalProps) {
                 data["class"] = 1;
             }
 
-            await superAdminRPC.newSubject(data);
+            await teacherRPC.newSubject(data);
             onSuccess();
             onClose();
         } catch (error) {
@@ -142,12 +142,12 @@ function MainContent(): JSX.Element {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     const fetchData = () => {
-        superAdminRPC.fetch_ta_subject_list("بكالوريوس", 1).then((data) => setData_1st(data));
-        superAdminRPC.fetch_ta_subject_list("بكالوريوس", 2).then((data) => setData_2nd(data));
-        superAdminRPC.fetch_ta_subject_list("بكالوريوس", 3).then((data) => setData_3rd(data));
-        superAdminRPC.fetch_ta_subject_list("بكالوريوس", 4).then((data) => setData_4th(data));
-        superAdminRPC.fetch_ta_subject_list("ماجستير").then((data) => setData_master(data));
-        superAdminRPC.fetch_ta_subject_list("دكتوراه").then((data) => setData_phd(data));
+        teacherRPC.fetch_ta_subject_list("بكالوريوس", 1).then((data) => setData_1st(data));
+        teacherRPC.fetch_ta_subject_list("بكالوريوس", 2).then((data) => setData_2nd(data));
+        teacherRPC.fetch_ta_subject_list("بكالوريوس", 3).then((data) => setData_3rd(data));
+        teacherRPC.fetch_ta_subject_list("بكالوريوس", 4).then((data) => setData_4th(data));
+        teacherRPC.fetch_ta_subject_list("ماجستير").then((data) => setData_master(data));
+        teacherRPC.fetch_ta_subject_list("دكتوراه").then((data) => setData_phd(data));
     };
 
     useEffect(() => {
@@ -155,11 +155,11 @@ function MainContent(): JSX.Element {
     }, []);
 
     const handleUpdateSubject = async (id: number, data: any) => {
-        await superAdminRPC.updateSubject(id, data).then(() => fetchData());
+        await teacherRPC.updateSubject(id, data).then(() => fetchData());
     };
 
     const handleDeleteSubject = async (id: number) => {
-        await superAdminRPC.deleteSubject(id).then(() => fetchData());
+        await teacherRPC.deleteSubject(id).then(() => fetchData());
     };
 
     const table_headers = {

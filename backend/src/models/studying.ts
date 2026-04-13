@@ -29,9 +29,6 @@ export class Studying extends PG_Table {
                     coursework_grade_percent        INTEGER NOT NULL,
                     finals_grade_percent            INTEGER NOT NULL,
 
-                    exam_retakes                    INTEGER DEFAULT 0,
-                    semester_retakes                INTEGER DEFAULT 0,
-
                     hours_missed                    INTEGER DEFAULT 0,
                     coursework_grade                INTEGER DEFAULT 0, -- not visible so it doesn't get leaked or changed by generic fetchers/updaters
 
@@ -41,6 +38,8 @@ export class Studying extends PG_Table {
                     CHECK (finals_grade_percent BETWEEN 0 AND 100),
                     CHECK (coursework_grade <= coursework_grade_percent AND coursework_grade >= 0),
                     CHECK (hours_missed >= 0),
+
+                    UNIQUE (student, subject),
 
                     FOREIGN KEY (student) REFERENCES ${sql(students.table_name)}(id) ON DELETE CASCADE,
                     FOREIGN KEY (subject) REFERENCES ${sql(subjects.table_name)}(id) ON DELETE CASCADE,
@@ -107,13 +106,14 @@ export class Studying extends PG_Table {
     }
 
     public async autoInsertStudentsForSubject(
-        subject_id: number, degree: string, _class: number, studying_year: number,
+        teacher_id: number, subject_id: number, degree: string, _class: number, studying_year: number,
         coursework_grade_percent: number, finals_grade_percent: number
     ) {
         await this.sql`
             INSERT INTO ${this.sql(this.table_name)} 
-                (student, subject, studying_year, coursework_grade_percent, finals_grade_percent)
+                (teacher, student, subject, studying_year, coursework_grade_percent, finals_grade_percent)
             SELECT
+                ${teacher_id} AS teacher,
                 STUDENT.id,
                 ${subject_id} AS subject,
                 ${studying_year} AS studying_year,
@@ -121,6 +121,7 @@ export class Studying extends PG_Table {
                 ${finals_grade_percent} AS finals_grade_percent
             FROM ${students.table_name} AS STUDENT
             WHERE STUDENT.degree = ${degree} AND STUDENT.class = ${_class}
+            ON CONFLICT (student, subject) DO NOTHING
         `;
     }
 

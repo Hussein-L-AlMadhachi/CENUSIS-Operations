@@ -87,6 +87,8 @@ export interface SubjectAccessControlData {
 interface AdminsRPC {
     load(): Promise<void>;
 
+    autocompleteStudentsBySubject(searched_name: string, subject_id: number): Promise<string[]>;
+
     login(username: string, password: string): Promise<Loggedin>;
     registerTeacher(data: teacherData): Promise<number>;
 
@@ -151,6 +153,8 @@ interface AdminsRPC {
 
 interface TeachersRPC {
     load(): Promise<void>;
+
+    autocompleteStudentsBySubject(searched_name: string, subject_id: number): Promise<string[]>;
 
     logout(): Promise<void>;
     login(username: string, password: string): Promise<Loggedin>;
@@ -218,6 +222,8 @@ interface TeachersRPC {
 
 interface SuperAdminRPC {
     load(): Promise<void>;
+
+    autocompleteStudentsBySubject(searched_name: string, subject_id: number): Promise<string[]>;
 
     login(username: string, password: string): Promise<Loggedin>;
     registerTeacher(data: teacherData): Promise<number>;

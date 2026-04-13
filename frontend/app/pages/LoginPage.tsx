@@ -21,13 +21,14 @@ export function LoginPage() {
 
     async function login() {
         setIsLoading(true);
+        const data = await publicRPC.login(username, password);
+
+        // Expires in one hour (3600 seconds) just like the JWT token
+        document.cookie = `auth-role=${data.role}; max-age=3600;`;
+
+        navigate(data.role);
+
         try {
-            const data = await publicRPC.login(username, password);
-
-            // Expires in one hour (3600 seconds) just like the JWT token
-            document.cookie = `auth-role=${data.role}; max-age=3600;`;
-
-            navigate(data.role);
         } catch {
             setErrorMsg("اسم المستخدم وكلمة السر غير صحيحين.")
         } finally {

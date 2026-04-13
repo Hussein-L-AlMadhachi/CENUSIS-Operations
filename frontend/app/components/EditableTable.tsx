@@ -199,7 +199,7 @@ export function EditableTable<T extends { id?: number }>(props: Props<T>) {
                         submitLabel="حفظ التعديلات"
                         initialData={editFormData}
                     />
-                    <div className="grid grid-cols-[repeat(2,1fr)] grid-rows-[100px] gap-y-[10px] gap-x-[10px]">
+                    <div className="grid grid-cols-[repeat(2,1fr)] grid-rows-[100px] gap-y-2.5 gap-x-2.5">
                         <button className="row-1 col-1 btn btn-outline mt-4" onClick={handleCancelClick}>إلغاء</button>
                         <button className="row-1 col-2 btn btn-error mt-4" onClick={handleDeleteClick}>حذف</button>
                     </div>

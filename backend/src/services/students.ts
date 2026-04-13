@@ -15,11 +15,8 @@ import { loose_validate_params, validate_params } from "../helpers/validate_para
 export async function newStudent(metadata: Metadata, data: any) {
 
     validate_params(data, [
-        "student_name", "joined_year", "degree", "class", "sex"
+        "student_name", "joined_year", "degree", "class"
     ]);
-    if (data["sex"] !== "ذكر" && data["sex"] !== "انثى") {
-        throw new Error("sex must be 'ذكر' or 'انثى'");
-    }
 
     if (data["degree"] !== "بكلوريوس" && data["degree"] !== "ماجستير" && data["degree"] !== "دكتوراه") {
         throw new Error("degree must be 'بكلوريوس' or 'ماجستير' or 'دكتوراه'");
