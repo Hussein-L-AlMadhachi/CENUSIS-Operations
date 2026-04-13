@@ -45,11 +45,12 @@ studentsXlsxRouter.post('/api/students/import', upload.single('file'), async (re
         const buffer: any = req.file.buffer;
 
         const students_js_obj = await decodeXlsx(buffer, [
-            "الاسم", "سنة التسجيل", "الدرجة العلمية", "المرحلة",
+            "الاسم", "الطالب", "سنة التسجيل", "الدرجة العلمية", "المرحلة",
         ]);
 
         const loaded_students_record = translateHeaders<any>(students_js_obj, {
             "الاسم": "student_name",
+            "الطالب": "student_name",
             "سنة التسجيل": "joined_year",
             "الدرجة العلمية": "degree",
             "المرحلة": "class",
@@ -57,7 +58,16 @@ studentsXlsxRouter.post('/api/students/import', upload.single('file'), async (re
 
         for (const student of loaded_students_record) {
             try {
-                students.InsertOrUpdate( student.student_name, student.joined_year, student.degree, student.class );
+                if (!student?.student_name) {
+                    continue;
+                }
+
+                await students.InsertOrUpdate(
+                    String(student.student_name),
+                    String(student.joined_year ?? new Date().getFullYear()),
+                    String(student.degree ?? ''),
+                    Number(student.class ?? 1)
+                );
             } catch (e) {
                 console.error(`Error processing student ${student.student_name}:`, e);
                 res.status(500).json({ success: false, error: e!.toString() });

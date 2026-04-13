@@ -38,8 +38,10 @@ const ARABIC_TRANSALTION: { [key: string]: string } = {
 };
 
 
-export function normalize_arabic(text: string): string {
-    return text
+export function normalize_arabic(text: unknown): string {
+    const safeText = String(text ?? '');
+
+    return safeText
         .split('')
         .map(letter => ARABIC_TRANSALTION[letter] || letter)
         .join('');

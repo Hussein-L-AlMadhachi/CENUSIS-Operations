@@ -39,6 +39,8 @@ export interface SubjectData {
     is_attending_required: boolean;
     teacher_name: string;
     teacher?: string;
+    grading_system_id?: number;
+    grading_system_name?: string;
 }
 
 export interface EnrollmentData {
@@ -74,6 +76,19 @@ export interface GradesDate {
     coursework_grade?: number;
     teacher_name?: string;
     student_name?: string;
+}
+
+export interface GradingSystemFieldData {
+    max_grade: number;
+    min_grade: number;
+    field_name: string;
+}
+
+export interface GradingSystemData {
+    id?: number;
+    name: string;
+    normalized_name?: string;
+    fields: GradingSystemFieldData[];
 }
 
 export interface SubjectAccessControlData {
@@ -121,6 +136,15 @@ interface AdminsRPC {
     filterSubjectsByDegree(degree: string): Promise<SubjectData[]>;
     autocompleteSubject(name: string): Promise<string[]>;
     findSubjectByName(name: string): Promise<SubjectData[]>;
+
+    // grading systems
+    newGradingSystem(data: GradingSystemData): Promise<number>;
+    updateGradingSystem(id: number, data: Partial<GradingSystemData>): Promise<number>;
+    deleteGradingSystem(id: number): Promise<void>;
+    fetchSingleGradingSystem(id: number): Promise<GradingSystemData>;
+    fetchGradingSystems(): Promise<GradingSystemData[]>;
+    autocompleteGradingSystem(name: string): Promise<string[]>;
+    findGradingSystemByName(name: string): Promise<GradingSystemData>;
 
     // students "studying" relationship management
     newEnrollment(data: EnrollmentData): Promise<number>;
@@ -190,6 +214,15 @@ interface TeachersRPC {
     autocompleteSubject(name: string): Promise<string[]>;
     findSubjectByName(name: string): Promise<SubjectData[]>;
 
+    // grading systems
+    newGradingSystem(data: GradingSystemData): Promise<number>;
+    updateGradingSystem(id: number, data: Partial<GradingSystemData>): Promise<number>;
+    deleteGradingSystem(id: number): Promise<void>;
+    fetchSingleGradingSystem(id: number): Promise<GradingSystemData>;
+    fetchGradingSystems(): Promise<GradingSystemData[]>;
+    autocompleteGradingSystem(name: string): Promise<string[]>;
+    findGradingSystemByName(name: string): Promise<GradingSystemData>;
+
     // TA subject tracking
     fetch_ta_subject_list(degree: string, subject_class?: number): Promise<SubjectData[]>;
 
@@ -257,6 +290,15 @@ interface SuperAdminRPC {
     filterSubjectsByDegree(degree: string): Promise<SubjectData[]>;
     autocompleteSubject(name: string): Promise<string[]>;
     findSubjectByName(name: string): Promise<SubjectData[]>;
+
+    // grading systems
+    newGradingSystem(data: GradingSystemData): Promise<number>;
+    updateGradingSystem(id: number, data: Partial<GradingSystemData>): Promise<number>;
+    deleteGradingSystem(id: number): Promise<void>;
+    fetchSingleGradingSystem(id: number): Promise<GradingSystemData>;
+    fetchGradingSystems(): Promise<GradingSystemData[]>;
+    autocompleteGradingSystem(name: string): Promise<string[]>;
+    findGradingSystemByName(name: string): Promise<GradingSystemData>;
 
     // students "studying" relationship management
     newEnrollment(data: EnrollmentData): Promise<number>;

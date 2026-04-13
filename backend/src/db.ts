@@ -8,6 +8,7 @@ import { LoggedinUsers } from './models/loggedin_users.js';
 import { TeachingStaff } from './models/teaching_staff.js';
 import { Absented } from './models/absented.js';
 import { AttendanceRecord } from './models/attendance_record.js';
+import { GradingSystems } from './models/grading_systems.js';
 
 // views
 import { StudentAbsenceView } from './models/views/students_absence_view.js';
@@ -37,6 +38,7 @@ export const subjects = new Subjects(app);
 export const studying = new Studying(app);
 export const absented = new Absented(app);
 export const attendance_record = new AttendanceRecord(app);
+export const grading_systems = new GradingSystems(app);
 export const attendance_record_view = new AttendanceRecordView(app);
 export const student_absence_view = new StudentAbsenceView(app);
 export const activity_logs = new ActivityLogs(app);
@@ -48,6 +50,7 @@ export const miniapp_permissions = new MiniAppPermissionsTable(app);
 app.register(loggedin_users);
 app.register(teaching_staff);
 app.register(students);
+app.register(grading_systems);
 app.register(subjects);
 app.register(studying);
 app.register(attendance_record);

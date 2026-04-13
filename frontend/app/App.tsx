@@ -11,6 +11,7 @@ import { SubjectsPage } from "@/pages/admin/Subjects";
 import { StudyingPage } from "@/pages/admin/Studying";
 
 import { PermissionsPage } from "@/pages/admin/Permissions";
+import { GradingSystemsPage } from "@/pages/admin/GradingSystems";
 import { TeachersSubjectsPage } from "./pages/teacher/Subjects";
 import { TeachersAttendancePage } from "./pages/teacher/Attendance";
 import { TeachersAbsentedPage } from "./pages/teacher/Absented";
@@ -30,6 +31,7 @@ import { SuperAbsentedPage } from "@/pages/superadmin/Absented";
 
 import { SuperPermissionsPage } from "@/pages/superadmin/Permissions";
 import { SuperGradesPage } from "./pages/superadmin/Grades";
+import { SuperGradingSystemsPage } from "./pages/superadmin/GradingSystems";
 
 
 
@@ -42,6 +44,7 @@ export default function App(): JSX.Element {
             <Route path="/admin/teachers" component={TeachersPage} />
             <Route path="/admin/students" component={StudentsPage} />
             <Route path="/admin/subjects" component={SubjectsPage} />
+            <Route path="/admin/grading-systems" component={GradingSystemsPage} />
             <Route path="/admin/enrolled/:teacher/:id" component={StudyingPage} />
             <Route path="/admin/permissions/:subject_id" component={PermissionsPage} />
 
@@ -56,6 +59,7 @@ export default function App(): JSX.Element {
             <Route path="/superadmin/teachers" component={SuperTeachersPage} />
             <Route path="/superadmin/students" component={SuperStudentsPage} />
             <Route path="/superadmin/subjects" component={SuperSubjectsPage} />
+            <Route path="/superadmin/grading-systems" component={SuperGradingSystemsPage} />
             <Route path="/superadmin/enrolled/:teacher/:id" component={SuperStudyingPage} />
             <Route path="/superadmin/permissions/:subject_id" component={SuperPermissionsPage} />
             <Route path="/superadmin/attendance/:subject_id" component={SuperAttendancePage} />

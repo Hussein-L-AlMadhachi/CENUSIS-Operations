@@ -65,6 +65,7 @@ interface AddSubjectModalProps {
 
 const subjectFormTemplate: DynamicFormTemplate[] = [
     { title: "اسم المادة", key: "subject_name", type: "text" },
+    { title: "نظام الدرجات", key: "grading_system_name", type: "autocomplete", fetchSuggestions: teacherRPC.autocompleteGradingSystem },
     {
         title: "الدرجة العلمية", key: "degree",
         type: "select", options: [
@@ -97,7 +98,7 @@ function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubjectModalProps) {
         try {
             useValidParams(data, [
                 "subject_name", "degree", "class", "total_hours", "hours_weekly",
-                "semester", "teacher_name"]
+                "semester", "teacher_name", "grading_system_name"]
             );
             if (data.degree !== "بكالوريوس") {
                 data["class"] = 1;
@@ -165,6 +166,7 @@ function MainContent(): JSX.Element {
 
     const table_headers = {
         "subject_name": "الاسم",
+        "grading_system_name": "نظام الدرجات",
         "teacher_name": "التدريسي", "degree": "الدرجة العلمية", "class": "المرحلة",
         "semester": "الكورس", "@view_students": "",
         ":edit:": ""

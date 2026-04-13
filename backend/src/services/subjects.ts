@@ -1,4 +1,4 @@
-import { studying, teaching_staff, subjects } from "../db.js";
+import { grading_systems, studying, teaching_staff, subjects } from "../db.js";
 import type { Metadata } from "enders-sync";
 import type postgres from "postgres"
 import { error } from "console";
@@ -8,6 +8,30 @@ import { error } from "console";
 import { normalize_arabic } from "../helpers/normalize_arabic.js";
 import { loose_validate_params, validate_params } from "../helpers/validate_params.js";
 
+async function resolveGradingSystemId(data: Record<string, any>) {
+    if (typeof data["grading_system_id"] === "number") {
+        const [gradingSystem] = await grading_systems.fetch(data["grading_system_id"]);
+
+        if (!gradingSystem) {
+            throw new Error("grading system not found");
+        }
+
+        return gradingSystem.id as number;
+    }
+
+    if (typeof data["grading_system_name"] === "string") {
+        const gradingSystem = await grading_systems.findByName(normalize_arabic(data["grading_system_name"]));
+
+        if (!gradingSystem) {
+            throw new Error("grading system not found");
+        }
+
+        return gradingSystem.id as number;
+    }
+
+    throw new Error("grading_system_id or grading_system_name is required");
+}
+
 
 
 // insert
@@ -15,7 +39,7 @@ import { loose_validate_params, validate_params } from "../helpers/validate_para
 export async function newSubject(metadata: Metadata, data: any) {
 
     validate_params(data, [
-        "subject_name", "degree", "class", "hours_weekly", "teacher_name", "semester"
+        "subject_name", "degree", "class", "total_hours", "hours_weekly", "teacher_name", "semester", "grading_system_name"
     ]);
 
     if (typeof data["teacher_name"] !== "string") {
@@ -24,10 +48,20 @@ export async function newSubject(metadata: Metadata, data: any) {
 
     data["semester"] = Number(data["semester"]);
     data["class"] = Number(data["class"]);
+    data["total_hours"] = Number(data["total_hours"]);
+    data["hours_weekly"] = Number(data["hours_weekly"]);
     console.log(data);
 
     if (typeof data["semester"] !== "number" || data["semester"] < 1 || data["semester"] > 2) {
         throw new Error("Unexpected error: semester cannot be anythin but a number between 1 and 2");
+    }
+
+    if (typeof data["total_hours"] !== "number" || data["total_hours"] <= 0) {
+        throw new Error("Unexpected error: total_hours must be a positive number");
+    }
+
+    if (typeof data["hours_weekly"] !== "number" || data["hours_weekly"] <= 0 || data["hours_weekly"] > data["total_hours"]) {
+        throw new Error("Unexpected error: hours_weekly must be a positive number and not exceed total_hours");
     }
 
     // check to which teacher the subject is assigned
@@ -41,6 +75,9 @@ export async function newSubject(metadata: Metadata, data: any) {
 
     data["teacher"] = teacher.id as number;
     delete data["teacher_name"];
+
+    data["grading_system_id"] = await resolveGradingSystemId(data);
+    delete data["grading_system_name"];
 
     data["subject_normalized_name"] = normalize_arabic(data["subject_name"]);
 
@@ -75,7 +112,7 @@ export async function updateSubject(metadata: Metadata, id: number, data: any) {
     delete data["id"];
 
     loose_validate_params(data, [
-        "subject_name", "degree", "class", "total_hours", "hours_weekly", "is_attending_required", "teacher_name", "semester"
+        "subject_name", "degree", "class", "total_hours", "hours_weekly", "is_attending_required", "teacher_name", "semester", "grading_system_name"
     ]);
 
 
@@ -89,6 +126,9 @@ export async function updateSubject(metadata: Metadata, id: number, data: any) {
 
     data["teacher"] = teacher.id as number;
     delete data["teacher_name"];
+
+    data["grading_system_id"] = await resolveGradingSystemId(data);
+    delete data["grading_system_name"];
 
     if (typeof id !== "number") {
         throw new Error("Unexpected error: user_id cannot be anythin but a number");

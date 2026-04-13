@@ -19,6 +19,10 @@ import {
     filterSubjectsByClassDegree, filterSubjectsByDegree, findSubjectByName, newSubject, updateSubject
 } from './services/subjects.js';
 import {
+    autocompleteGradingSystem, deleteGradingSystem, fetchGradingSystems,
+    fetchSingleGradingSystem, findGradingSystemByName, newGradingSystem, updateGradingSystem
+} from './services/grading_systems.js';
+import {
     deleteEnrollment, fetchCourseworkGradesWithDataForSubject, fetchEnrollmentsForSubject, fetchSingleEnrollment,
     newEnrollment, updateEnrollment
 } from './services/studying.js';
@@ -100,6 +104,15 @@ adminRPC.add(filterSubjectsByDegree);
 adminRPC.add(autocompleteSubject);
 adminRPC.add(findSubjectByName);
 
+// grading systems RPC
+adminRPC.add(newGradingSystem);
+adminRPC.add(updateGradingSystem);
+adminRPC.add(deleteGradingSystem);
+adminRPC.add(fetchSingleGradingSystem);
+adminRPC.add(fetchGradingSystems);
+adminRPC.add(autocompleteGradingSystem);
+adminRPC.add(findGradingSystemByName);
+
 // enrollments RPC
 adminRPC.add(newEnrollment);
 adminRPC.add(updateEnrollment);
@@ -153,6 +166,15 @@ superRPC.add(filterSubjectsByClassDegree);
 superRPC.add(filterSubjectsByDegree);
 superRPC.add(autocompleteSubject);
 superRPC.add(findSubjectByName);
+
+// grading systems RPC
+superRPC.add(newGradingSystem);
+superRPC.add(updateGradingSystem);
+superRPC.add(deleteGradingSystem);
+superRPC.add(fetchSingleGradingSystem);
+superRPC.add(fetchGradingSystems);
+superRPC.add(autocompleteGradingSystem);
+superRPC.add(findGradingSystemByName);
 
 // enrollments RPC
 superRPC.add(newEnrollment);
@@ -227,6 +249,15 @@ teachersRPC.add(filterSubjectsByClassDegree);
 teachersRPC.add(filterSubjectsByDegree);
 teachersRPC.add(autocompleteSubject);
 teachersRPC.add(findSubjectByName);
+
+// grading systems RPC
+teachersRPC.add(newGradingSystem);
+teachersRPC.add(updateGradingSystem);
+teachersRPC.add(deleteGradingSystem);
+teachersRPC.add(fetchSingleGradingSystem);
+teachersRPC.add(fetchGradingSystems);
+teachersRPC.add(autocompleteGradingSystem);
+teachersRPC.add(findGradingSystemByName);
 
 // enrollments RPC
 teachersRPC.add(newEnrollment);

@@ -5,8 +5,9 @@ import { students, studying } from "../db.js";
 
 const columns2select = [
     "subjects.id", "subjects.subject_name", "subjects.subject_normalized_name", "subjects.teacher",
-    "subjects.degree", "subjects.class", "subjects.hours_weekly",
-    "subjects.is_attending_required", "subjects.semester", "teaching_staff.teacher_name"
+    "subjects.degree", "subjects.class", "subjects.total_hours", "subjects.hours_weekly",
+    "subjects.is_attending_required", "subjects.semester", "subjects.grading_system_id",
+    "teaching_staff.teacher_name", "grading_systems.name AS grading_system_name"
 ];
 
 
@@ -16,8 +17,8 @@ export class Subjects extends PG_Table {
     constructor(app: PG_App) {
         super(app, "subjects", [
             "id", "subject_name", "subject_normalized_name", "teacher",
-            "degree", "class", "hours_weekly",
-            "is_attending_required", "semester"
+            "degree", "class", "total_hours", "hours_weekly",
+            "is_attending_required", "semester", "grading_system_id"
         ]);
     }
 
@@ -37,18 +38,47 @@ export class Subjects extends PG_Table {
 
                     degree                      VARCHAR(150) NOT NULL,
                     class                       INTEGER NOT NULL,
+                    total_hours                 INTEGER NOT NULL,
                     hours_weekly                INTEGER NOT NULL,
 
                     is_attending_required       BOOLEAN DEFAULT FALSE,
                     semester                    INTEGER NOT NULL,
+                    grading_system_id           INTEGER,
 
                     CHECK (semester BETWEEN 1 AND 2),
                     CHECK (class BETWEEN 1 AND 4),
                     CHECK (total_hours > 0),
                     CHECK (hours_weekly > 0 AND hours_weekly <= total_hours),
 
-                    FOREIGN KEY (teacher) REFERENCES ${sql(this.table_name)}(id) ON DELETE CASCADE
+                    FOREIGN KEY (teacher) REFERENCES teaching_staff(id) ON DELETE CASCADE,
+                    FOREIGN KEY (grading_system_id) REFERENCES grading_systems(id) ON DELETE RESTRICT
                 );
+            `;
+
+            await sql`
+                ALTER TABLE ${sql(this.table_name)}
+                ADD COLUMN IF NOT EXISTS total_hours INTEGER
+            `;
+
+            await sql`
+                ALTER TABLE ${sql(this.table_name)}
+                ADD COLUMN IF NOT EXISTS grading_system_id INTEGER
+            `;
+
+            await sql`
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1
+                        FROM pg_constraint
+                        WHERE conname = 'subjects_grading_system_id_fkey'
+                    ) THEN
+                        ALTER TABLE ${sql(this.table_name)}
+                        ADD CONSTRAINT subjects_grading_system_id_fkey
+                        FOREIGN KEY (grading_system_id) REFERENCES grading_systems(id) ON DELETE RESTRICT;
+                    END IF;
+                END
+                $$;
             `;
 
             await sql`
@@ -59,6 +89,11 @@ export class Subjects extends PG_Table {
             await sql`
                 CREATE INDEX IF NOT EXISTS  ${sql(`idx_${this.table_name}_teacher`)}
                     ON ${sql(this.table_name)} (teacher);
+            `;
+
+            await sql`
+                CREATE INDEX IF NOT EXISTS ${sql(`idx_${this.table_name}_grading_system_id`)}
+                    ON ${sql(this.table_name)} (grading_system_id);
             `;
         });
     }
@@ -84,29 +119,30 @@ export class Subjects extends PG_Table {
     }
 
     async filterByYear(year: number) {
-        return await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id WHERE year=${year} order by subject_name`;
+        return await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id WHERE year=${year} order by subject_name`;
     }
 
     async listAll() {
-        return await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id order by subject_name`;
+        return await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id order by subject_name`;
     }
 
 
     async filterByClassDegree(degree: string, class_id: number) {
-        return await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id WHERE degree=${degree} AND class=${class_id} order by subject_name`;
+        return await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id WHERE degree=${degree} AND class=${class_id} order by subject_name`;
     }
 
     async filterByDegree(degree: string) {
-        return await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id WHERE degree=${degree} order by subject_name`;
+        return await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id WHERE degree=${degree} order by subject_name`;
     }
 
     async findByName(name: string) {
-        return (await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id WHERE subject_normalized_name=${name}`)[0];
+        return (await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id WHERE subject_normalized_name=${name}`)[0];
     }
 
     async filterByTeacherClassDegree(teacher_id: number, degree: string, class_id: number) {
         return await this.sql`select ${this.sql(columns2select)} FROM subjects
             JOIN teaching_staff ON subjects.teacher = teaching_staff.id
+            LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id
             WHERE teacher=${teacher_id} AND degree=${degree} AND class=${class_id} order by subject_name`;
     }
 
@@ -114,6 +150,7 @@ export class Subjects extends PG_Table {
     async filterByTeacherDegree(teacher_id: number, degree: string) {
         return await this.sql`select ${this.sql(columns2select)} FROM subjects
             JOIN teaching_staff ON subjects.teacher = teaching_staff.id
+            LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id
             WHERE teacher=${teacher_id} AND degree=${degree} order by subject_name`;
     }
 
