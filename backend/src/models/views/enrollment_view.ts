@@ -9,7 +9,7 @@ export class EnrollmentView extends PG_Table {
     constructor(app: PG_App) {
         super(app, "enrollment_view", [
             "id", "created_at", "teacher_name", "subject_name", "degree", "class", "semester",
-            "hours_missed", "coursework_grade", "coursework_grade_percent", "finals_grade_percent",
+            "hours_missed", "grade_fields",
             "has_failed", "is_attending_required", "is_submitted", "teacher_id", "subject_id",
             "student_id", "student_name"]);
     }
@@ -25,9 +25,7 @@ export class EnrollmentView extends PG_Table {
                 SELECT 
                     ${Studying}.id,
                     ${Studying}.hours_missed,
-                    ${Studying}.coursework_grade,
-                    ${Studying}.coursework_grade_percent,
-                    ${Studying}.finals_grade_percent,
+                    ${Studying}.grade_fields,
                     ${Studying}.has_failed,
                     ${Studying}.is_submitted,
 

@@ -18,6 +18,8 @@ export interface DynamicFormTemplate {
     min?: number;
     max?: number;
     disabled?: boolean;
+    subformTemplate?: DynamicFormTemplate[];
+    addLabel?: string;
 }
 
 
@@ -63,6 +65,49 @@ export function DynamicForm(props: DynamicFormProps) {
 
     const handleChange = (key: string, value: any) => {
         setData((prev: any) => ({ ...prev, [key]: value }));
+    };
+
+    const getDefaultSubformRow = (template: DynamicFormTemplate[]) => {
+        const row: Record<string, any> = {};
+
+        template.forEach((subfield) => {
+            const key = subfield.key || subfield.title;
+
+            if (subfield.defaultValue !== undefined) {
+                row[key] = subfield.defaultValue;
+                return;
+            }
+
+            if (subfield.type === "number") {
+                row[key] = 0;
+                return;
+            }
+
+            row[key] = "";
+        });
+
+        return row;
+    };
+
+    const updateSubformRow = (fieldKey: string, rowIndex: number, key: string, value: any) => {
+        const currentRows = Array.isArray(data[fieldKey]) ? [...data[fieldKey]] : [];
+        currentRows[rowIndex] = {
+            ...(currentRows[rowIndex] || {}),
+            [key]: value
+        };
+        handleChange(fieldKey, currentRows);
+    };
+
+    const addSubformRow = (fieldKey: string, template: DynamicFormTemplate[]) => {
+        const currentRows = Array.isArray(data[fieldKey]) ? [...data[fieldKey]] : [];
+        currentRows.push(getDefaultSubformRow(template));
+        handleChange(fieldKey, currentRows);
+    };
+
+    const removeSubformRow = (fieldKey: string, rowIndex: number) => {
+        const currentRows = Array.isArray(data[fieldKey]) ? [...data[fieldKey]] : [];
+        currentRows.splice(rowIndex, 1);
+        handleChange(fieldKey, currentRows);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -173,6 +218,92 @@ export function DynamicForm(props: DynamicFormProps) {
                                         ghost={false}
                                         expand={true}
                                     />
+                                )}
+                                {field.type === "subform" && field.subformTemplate && (
+                                    <div className="w-full rounded-box border border-base-content/10 p-3 space-y-3">
+                                        <div className="overflow-x-auto">
+                                            <table className="table table-xs">
+                                                <thead>
+                                                    <tr>
+                                                        {field.subformTemplate.map((subfield, subfieldIndex) => (
+                                                            <th key={`${field.key || field.title}-header-${subfieldIndex}`}>{subfield.title}</th>
+                                                        ))}
+                                                        <th className="w-14"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {(Array.isArray(data[field.key || field.title]) ? data[field.key || field.title] : []).map((row: any, rowIndex: number) => (
+                                                        <tr key={`${field.key || field.title}-row-${rowIndex}`}>
+                                                            {field.subformTemplate!.map((subfield, subfieldIndex) => {
+                                                                const subKey = subfield.key || subfield.title;
+                                                                const value = row?.[subKey] ?? "";
+
+                                                                if (subfield.type === "number") {
+                                                                    return <td key={`${field.key || field.title}-cell-${rowIndex}-${subfieldIndex}`}>
+                                                                        <input
+                                                                            type="number"
+                                                                            className="input input-bordered input-xs w-24"
+                                                                            min={subfield.min}
+                                                                            max={subfield.max}
+                                                                            value={value}
+                                                                            onChange={(e) => updateSubformRow(field.key || field.title, rowIndex, subKey, Number(e.target.value))}
+                                                                            disabled={field.disabled || subfield.disabled}
+                                                                        />
+                                                                    </td>;
+                                                                }
+
+                                                                if (subfield.type === "select" && subfield.options) {
+                                                                    return <td key={`${field.key || field.title}-cell-${rowIndex}-${subfieldIndex}`}>
+                                                                        <select
+                                                                            className="select select-bordered select-xs w-28"
+                                                                            value={value}
+                                                                            onChange={(e) => {
+                                                                                const selected = subfield.options?.find((opt) => String(opt.value) === e.target.value);
+                                                                                updateSubformRow(field.key || field.title, rowIndex, subKey, selected ? selected.value : e.target.value);
+                                                                            }}
+                                                                            disabled={field.disabled || subfield.disabled}
+                                                                        >
+                                                                            {subfield.options.map((opt, k) => (
+                                                                                <option key={k} value={opt.value}>{opt.label}</option>
+                                                                            ))}
+                                                                        </select>
+                                                                    </td>;
+                                                                }
+
+                                                                return <td key={`${field.key || field.title}-cell-${rowIndex}-${subfieldIndex}`}>
+                                                                    <input
+                                                                        type="text"
+                                                                        className="input input-bordered input-xs w-36"
+                                                                        value={value}
+                                                                        onChange={(e) => updateSubformRow(field.key || field.title, rowIndex, subKey, e.target.value)}
+                                                                        disabled={field.disabled || subfield.disabled}
+                                                                    />
+                                                                </td>;
+                                                            })}
+                                                            <td>
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-xs btn-error btn-outline"
+                                                                    onClick={() => removeSubformRow(field.key || field.title, rowIndex)}
+                                                                    disabled={field.disabled}
+                                                                >
+                                                                    حذف
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="btn btn-xs btn-outline"
+                                            onClick={() => addSubformRow(field.key || field.title, field.subformTemplate!)}
+                                            disabled={field.disabled}
+                                        >
+                                            {field.addLabel || "إضافة صف"}
+                                        </button>
+                                    </div>
                                 )}
                                 {CustomComponent && (
                                     <CustomComponent

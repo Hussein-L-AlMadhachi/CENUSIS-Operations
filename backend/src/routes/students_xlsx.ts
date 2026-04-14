@@ -1,9 +1,8 @@
-import ExcelJS from 'exceljs';
 import multer, { memoryStorage } from 'multer';
 import { Router } from 'express';
 
 
-import { decodeXlsx, encodeXlsx } from '../helpers/xlsx_codec.js';
+import { decodeXlsx } from '../helpers/xlsx_codec.js';
 import { translateHeaders } from "../helpers/headers_translate.js"
 
 
@@ -11,7 +10,7 @@ import { translateHeaders } from "../helpers/headers_translate.js"
 import { newStudent, findStudentByName, updateStudent } from '../services/students.js';
 import { isValidAdminNoRPC, isValidSuperadminNoRPC, isValidTeacherNoRPC } from '../auth.js';
 import { normalize_arabic } from '../helpers/normalize_arabic.js';
-import { students, studying, subjects } from '../db.js';
+import { students, studying, subjects, grading_systems } from '../db.js';
 
 
 
@@ -95,12 +94,18 @@ studentsXlsxRouter.post('/api/grades/import/:subjectid', upload.single('file'), 
     });
 
     const subject_id = parseInt(req.params.subjectid)
+    let existingSubject;
     try {
-        const [existingSubject] = await subjects.fetch(subject_id);
+        [existingSubject] = await subjects.fetch(subject_id);
     } catch (e) {
         console.error(`Error processing subject ${subject_id}:`, e);
         res.status(400).json({ success: false, error: "Invalid subject id" });
         return
+    }
+
+    if (!existingSubject) {
+        res.status(400).json({ success: false, error: "Invalid subject id" });
+        return;
     }
 
     try {
@@ -108,7 +113,7 @@ studentsXlsxRouter.post('/api/grades/import/:subjectid', upload.single('file'), 
         const superadmin_auth = isValidSuperadminNoRPC(req, res);
         const teacher_auth = isValidTeacherNoRPC(req, res);
 
-        if (!admin_auth || !superadmin_auth || !teacher_auth) {
+        if (!admin_auth && !superadmin_auth && !teacher_auth) {
             res.status(401).json({
                 success: false,
                 error: "unauthorized"
@@ -123,37 +128,54 @@ studentsXlsxRouter.post('/api/grades/import/:subjectid', upload.single('file'), 
             });
         }
 
-        const workbook = new ExcelJS.Workbook();
-
         // Cast to any to bypass TypeScript error
         const buffer: any = req.file.buffer;
 
+        // Fetch the subject to get the grading system
+        const grading_system_id = existingSubject?.grading_system_id;
+
+        let fieldNames: string[] = [];
+        if (grading_system_id) {
+            const [gs] = await grading_systems.fetch(grading_system_id);
+            if (gs?.fields) {
+                fieldNames = (gs.fields as { field_name: string }[]).map(f => f.field_name);
+            }
+        }
+
         const students_js_obj = await decodeXlsx(buffer, [
-            "الطالب", "السعي"
+            "الطالب",
+            ...fieldNames,
         ]);
 
-        const loaded_students_record_array = translateHeaders<any>(students_js_obj, {
-            "الطالب": "student_name",
-            "السعي": "coursework_grade"
-        })
+        console.log( "SSS", students_js_obj )
 
-        for (const student of loaded_students_record_array) {
+        const headerTranslations: Record<string, string> = {
+            "الطالب": "student_name",
+        };
+        for (const fieldName of fieldNames) {
+            headerTranslations[fieldName] = fieldName;
+        }
+
+        const loaded_students_record_array = translateHeaders<any>(students_js_obj, headerTranslations);
+
+        for (const row of loaded_students_record_array) {
             try {
 
-                const existingStudent = await students.findByName(normalize_arabic(student.student_name) || "");
-                const [existingSubject] = await subjects.fetch(subject_id);
+                const existingStudent = await students.findByName(normalize_arabic(row.student_name) || "");
 
-                if (!existingStudent || !existingSubject) {
+                if (!existingStudent) {
                     throw new Error("Student or subject not found");
                 }
 
-                await studying.setCourseworkGrade(student.coursework_grade, existingStudent.id, subject_id);
+                const grade_fields = fieldNames.map(name => ({
+                    name,
+                    grade: Number(row[name] ?? 0)
+                }));
+
+                await studying.setGradeFields(grade_fields, existingSubject.id as number, existingStudent.id as number);
 
             } catch (e) {
-                console.error(`Error processing student ${student.student_name}:`, e);
-                // Continue to next student but log error
-                // Optional: collect errors to return partial success?
-                // For now just log
+                console.error(`Error processing student ${row.student_name}:`, e);
             }
         }
 

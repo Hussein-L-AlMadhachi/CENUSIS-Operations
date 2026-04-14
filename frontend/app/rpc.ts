@@ -43,6 +43,11 @@ export interface SubjectData {
     grading_system_name?: string;
 }
 
+export interface GradeField {
+    name: string;
+    grade: number;
+}
+
 export interface EnrollmentData {
     id?: number;
     teacher_id?: number;
@@ -55,8 +60,7 @@ export interface EnrollmentData {
     semester_retakes?: number;
     studying_year?: number;
     hours_missed?: number;
-    coursework_grade_percent?: number;
-    finals_grade_percent?: number;
+    grade_fields?: GradeField[];
 }
 
 export interface AttendanceRecordData {
@@ -73,7 +77,7 @@ export interface AbsentedData {
 
 export interface GradesDate {
     id?: number;
-    coursework_grade?: number;
+    grade_fields?: GradeField[];
     teacher_name?: string;
     student_name?: string;
 }
@@ -167,7 +171,7 @@ interface AdminsRPC {
     removeAbsence(absented_id: number): Promise<void>;
 
     // grading
-    fetchStudentCourseworkGradesPerStudying(studying_id: number): Promise<GradesDate[]>;
+    fetchStudentGradeFieldsPerStudying(studying_id: number): Promise<GradesDate[]>;
 
     // TA access control
     fetchSubjectAccessControl(subject_id: number): Promise<SubjectAccessControlData[]>;
@@ -247,7 +251,7 @@ interface TeachersRPC {
     removeAbsence(absented_id: number): Promise<void>;
 
     // grading
-    fetchStudentCourseworkGradesPerStudying(studying_id: number): Promise<GradesDate[]>;
+    fetchStudentGradeFieldsPerStudying(studying_id: number): Promise<GradesDate[]>;
 
     fetchSubjectsByTeacher(degree: string, subject_class?: number): Promise<SubjectData[]>;
 }
@@ -321,7 +325,7 @@ interface SuperAdminRPC {
     removeAbsence(absented_id: number): Promise<void>;
 
     // grading
-    fetchStudentCourseworkGradesPerStudying(studying_id: number): Promise<GradesDate[]>;
+    fetchStudentGradeFieldsPerStudying(studying_id: number): Promise<GradesDate[]>;
 
     // TA access control
     fetchSubjectAccessControl(subject_id: number): Promise<SubjectAccessControlData[]>;
@@ -346,11 +350,56 @@ export const adminRPC = new RPC('/api/admin') as unknown as AdminsRPC;
 export const superAdminRPC = new RPC('/api/superadmin') as unknown as SuperAdminRPC;
 export const teacherRPC = new RPC('/api/teacher') as unknown as TeachersRPC;
 
+type GradeFieldsFetcher = (studying_id: number) => Promise<GradesDate[]>;
+
+function isAuthError(error: unknown): boolean {
+    const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+    return message.includes("unauthorized") || message.includes("forbidden") || message.includes("401") || message.includes("403");
+}
+
+function attachGradeFieldsFetcherFallback(client: any) {
+    if (typeof client.fetchStudentGradeFieldsPerStudying === "function") {
+        return;
+    }
+
+    client.fetchStudentGradeFieldsPerStudying = async (studying_id: number): Promise<GradesDate[]> => {
+        const candidates: any[] = [adminRPC, teacherRPC, superAdminRPC];
+        let lastAuthError: unknown = null;
+
+        for (const candidate of candidates) {
+            const fn = candidate.fetchStudentGradeFieldsPerStudying as GradeFieldsFetcher | undefined;
+            if (typeof fn !== "function") {
+                continue;
+            }
+
+            try {
+                return await fn.call(candidate, studying_id);
+            } catch (error) {
+                if (!isAuthError(error)) {
+                    throw error;
+                }
+
+                lastAuthError = error;
+            }
+        }
+
+        if (lastAuthError) {
+            throw lastAuthError;
+        }
+
+        throw new Error("fetchStudentGradeFieldsPerStudying is not available on loaded RPC endpoints");
+    };
+}
+
 export async function initializeRPC() {
   await publicRPC.load();
   await adminRPC.load();
   await superAdminRPC.load();
   await teacherRPC.load();
+
+    attachGradeFieldsFetcherFallback(adminRPC);
+    attachGradeFieldsFetcherFallback(teacherRPC);
+    attachGradeFieldsFetcherFallback(superAdminRPC);
 }
 
 await initializeRPC()

@@ -7,6 +7,7 @@ import { MainLayout } from "@/layout/MainLayout";
 // Components
 import { EditableTable } from "@/components/EditableTable";
 import { Section, Subsection } from "@/components/Section";
+import { buildGradeTable } from "@/helpers/grade_table";
 
 // Hooks
 import { useValidRoute } from "@/hooks/useValidRoute";
@@ -88,12 +89,14 @@ function MainContent(): JSX.Element {
     const [data, setData] = useState<GradesDate[]>([]);
 
     const fetchData = () => {
-        superAdminRPC.fetchStudentCourseworkGradesPerStudying(parseInt(params.studying_id)).then((data) => setData(data));
+        superAdminRPC.fetchStudentGradeFieldsPerStudying(parseInt(params.studying_id)).then((data) => setData(data));
     };
 
     useEffect(() => {
         fetchData();
     }, []);
+
+    const { headers, rows } = buildGradeTable(data || []);
 
     return <>
         <Section>
@@ -103,8 +106,8 @@ function MainContent(): JSX.Element {
             <Subsection>
 
                 <EditableTable
-                    data={data || []}
-                    headers={{ "student_name": "اسم الطالب", "coursework_grade": "درجة السعي" }}
+                    data={rows}
+                    headers={headers}
                 />
 
             </Subsection>

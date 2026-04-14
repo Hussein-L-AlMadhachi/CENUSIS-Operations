@@ -23,42 +23,6 @@ interface OptionsProps {
     onAddClick: () => void;
 }
 
-function stringifyFields(fields: GradingSystemFieldData[]): string {
-    return JSON.stringify(fields, null, 2);
-}
-
-function parseFields(fieldsJSON: string): GradingSystemFieldData[] {
-    let parsed: unknown;
-
-    try {
-        parsed = JSON.parse(fieldsJSON);
-    } catch {
-        throw "صيغة الحقول يجب أن تكون JSON صحيحة";
-    }
-
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-        throw "الحقول يجب أن تكون مصفوفة JSON وغير فارغة";
-    }
-
-    for (const field of parsed) {
-        if (typeof field !== "object" || field === null) {
-            throw "كل عنصر داخل الحقول يجب أن يكون كائناً";
-        }
-
-        const value = field as Record<string, unknown>;
-
-        if (typeof value.field_name !== "string" || value.field_name.trim() === "") {
-            throw "field_name مطلوب ويجب أن يكون نصاً";
-        }
-
-        if (!Number.isInteger(value.max_grade) || !Number.isInteger(value.min_grade)) {
-            throw "max_grade و min_grade يجب أن يكونا أعداداً صحيحة";
-        }
-    }
-
-    return parsed as GradingSystemFieldData[];
-}
-
 function Options({ onAddClick }: OptionsProps) {
     return <div id="options" className="menu lg:menu-horizontal menu-vertical w-full justify-between">
         <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> إدارة أنظمة الدرجات </div>
@@ -93,14 +57,13 @@ interface AddGradingSystemModalProps {
 }
 
 function AddGradingSystemModal({ isOpen, onClose, onSuccess }: AddGradingSystemModalProps) {
-    const handleAddGradingSystem = async (data: { name?: string, fields_json?: string }) => {
+    const handleAddGradingSystem = async (data: { name?: string, fields?: GradingSystemFieldData[] }) => {
         const name = data.name?.trim();
+        const fields = data.fields;
 
-        if (!name || !data.fields_json) {
+        if (!name || !Array.isArray(fields) || fields.length === 0) {
             throw "يجب ملئ جميع الحقول";
         }
-
-        const fields = parseFields(data.fields_json);
 
         await superAdminRPC.newGradingSystem({ name, fields });
         onSuccess();
@@ -115,18 +78,18 @@ function AddGradingSystemModal({ isOpen, onClose, onSuccess }: AddGradingSystemM
                 key={isOpen ? "open" : "closed"}
                 template={[
                     { title: "اسم النظام", key: "name", type: "text" },
-                    { title: "الحقول (JSON)", key: "fields_json", type: "json" }
+                    {
+                        title: "الحقول",
+                        key: "fields",
+                        type: "subform",
+                        addLabel: "إضافة حقل",
+                        subformTemplate: [
+                            { title: "اسم الحقل", key: "field_name", type: "text" },
+                            { title: "الحد الأدنى", key: "min_grade", type: "number", min: 0 },
+                            { title: "الحد الأعلى", key: "max_grade", type: "number", min: 0 }
+                        ]
+                    }
                 ]}
-                customComponents={{
-                    json: ({ value, onChange }) => (
-                        <textarea
-                            className="textarea textarea-bordered w-full h-44"
-                            value={typeof value === "string" ? value : ""}
-                            onChange={(e) => onChange(e.target.value)}
-                            placeholder={'[{"field_name":"quiz","min_grade":0,"max_grade":20}]'}
-                        />
-                    )
-                }}
                 onSubmit={handleAddGradingSystem}
                 submitLabel="حفظ"
             />
@@ -161,7 +124,26 @@ function MainContent(): JSX.Element {
                     customRenderers={{
                         "@fields": (row) => {
                             const fields = row.fields || [];
-                            return <div className="whitespace-pre-wrap text-xs">{stringifyFields(fields)}</div>;
+                            return <div className="overflow-x-auto">
+                                <table className="table table-xs">
+                                    <thead>
+                                        <tr>
+                                            <th>الحقل</th>
+                                            <th>من</th>
+                                            <th>إلى</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {fields.map((field, index) => (
+                                            <tr key={`field-${index}`}>
+                                                <td>{field.field_name}</td>
+                                                <td>{field.min_grade}</td>
+                                                <td>{field.max_grade}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>;
                         }
                     }}
                     onDelete={(id: number) => {
@@ -178,6 +160,20 @@ function MainContent(): JSX.Element {
                             fields: row.fields
                         }).then(() => fetchData());
                     }}
+                    formTemplate={[
+                        { title: "اسم النظام", key: "name", type: "text" },
+                        {
+                            title: "الحقول",
+                            key: "fields",
+                            type: "subform",
+                            addLabel: "إضافة حقل",
+                            subformTemplate: [
+                                { title: "اسم الحقل", key: "field_name", type: "text" },
+                                { title: "الحد الأدنى", key: "min_grade", type: "number", min: 0 },
+                                { title: "الحد الأعلى", key: "max_grade", type: "number", min: 0 }
+                            ]
+                        }
+                    ]}
                 />
             </Subsection>
         </Section>

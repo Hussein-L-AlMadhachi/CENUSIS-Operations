@@ -1,7 +1,6 @@
-import { grading_systems, studying, teaching_staff, subjects } from "../db.js";
+import { grading_systems, studying, teaching_staff, subjects, students } from "../db.js";
 import type { Metadata } from "enders-sync";
 import type postgres from "postgres"
-import { error } from "console";
 
 
 
@@ -39,8 +38,10 @@ async function resolveGradingSystemId(data: Record<string, any>) {
 export async function newSubject(metadata: Metadata, data: any) {
 
     validate_params(data, [
-        "subject_name", "degree", "class", "total_hours", "hours_weekly", "teacher_name", "semester", "grading_system_name"
+        "subject_name", "degree", "class", "hours_weekly", "teacher_name", "semester", "grading_system_name"
     ]);
+
+    console.log(data)
 
     if (typeof data["teacher_name"] !== "string") {
         throw new Error("Unexpected error: teacher_name cannot be anythin but a string");
@@ -48,16 +49,11 @@ export async function newSubject(metadata: Metadata, data: any) {
 
     data["semester"] = Number(data["semester"]);
     data["class"] = Number(data["class"]);
-    data["total_hours"] = Number(data["total_hours"]);
     data["hours_weekly"] = Number(data["hours_weekly"]);
     console.log(data);
 
     if (typeof data["semester"] !== "number" || data["semester"] < 1 || data["semester"] > 2) {
         throw new Error("Unexpected error: semester cannot be anythin but a number between 1 and 2");
-    }
-
-    if (typeof data["total_hours"] !== "number" || data["total_hours"] <= 0) {
-        throw new Error("Unexpected error: total_hours must be a positive number");
     }
 
     if (typeof data["hours_weekly"] !== "number" || data["hours_weekly"] <= 0 || data["hours_weekly"] > data["total_hours"]) {
@@ -80,23 +76,45 @@ export async function newSubject(metadata: Metadata, data: any) {
     delete data["grading_system_name"];
 
     data["subject_normalized_name"] = normalize_arabic(data["subject_name"]);
+    data["total_hours"] = data["hours_weekly"] * 15
 
-    console.log(data);
-    const [subject] = await subjects.insert(data);
-
-    if (!subject) {
-        throw error("Subject is already in the database");
+    const existingSubject = await subjects.findByName(data["subject_normalized_name"]);
+    if (existingSubject) {
+        throw new Error("Subject is already in the database");
     }
 
-    await studying.autoInsertStudentsForSubject(
-        data["teacher"],
-        subject.id as number,
-        data["degree"],
-        data["class"],
-        new Date().getFullYear(),
-        0,
-        0
-    );
+    console.log(data);
+    let subject: postgres.Row | undefined;
+    try {
+        [subject] = await subjects.insert(data);
+    } catch (err: any) {
+        if (err?.code === "23505") {
+            throw new Error("Subject is already in the database");
+        }
+
+        throw err;
+    }
+
+    if (!subject) {
+        throw new Error("Subject is already in the database");
+    }
+
+    const enrolledStudents = await students.filterStudentsByClassDegree(data["degree"], data["class"]);
+    for (const studentRecord of enrolledStudents) {
+        try {
+            await studying.insert({
+                teacher: data["teacher"],
+                student: studentRecord.id as number,
+                subject: subject.id as number,
+                studying_year: new Date().getFullYear(),
+            });
+        } catch (err: any) {
+            if (err?.code === "23505") {
+                continue;
+            }
+            throw err;
+        }
+    }
 
     return subject.id;
 }

@@ -81,8 +81,6 @@ function EnrollModal({ isOpen, onClose, onSuccess, subjectId, teacherId }: Enrol
                 exam_retakes: Number(data.exam_retakes || 0),
                 semester_retakes: Number(data.semester_retakes || 0),
                 hours_missed: Number(data.hours_missed || 0),
-                coursework_grade_percent: Number(data.coursework_grade_percent || 0),
-                finals_grade_percent: Number(data.finals_grade_percent || 0),
             };
 
             await superAdminRPC.newEnrollment(enrollmentData);
@@ -111,22 +109,6 @@ function EnrollModal({ isOpen, onClose, onSuccess, subjectId, teacherId }: Enrol
                         key: "studying_year",
                         type: "number",
                         defaultValue: new Date().getFullYear()
-                    },
-                    {
-                        title: "نسبة درجة السعي المئوية",
-                        key: "coursework_grade_percent",
-                        type: "number",
-                        min: 0,
-                        max: 100,
-                        defaultValue: 0
-                    },
-                    {
-                        title: "نسبة الامتحان النهائي المئوية",
-                        key: "finals_grade_percent",
-                        type: "number",
-                        min: 0,
-                        max: 100,
-                        defaultValue: 0
                     }
                 ]}
                 onSubmit={handleAddEnrollment}
@@ -173,8 +155,6 @@ function MainContent(): JSX.Element {
                     headers={{
                         "student_name": "اسم الطالب",
                         "hours_missed": "غيابات",
-                        "coursework_grade_percent": "نسبة درجة السعي المئوية",
-                        "finals_grade_percent": "نسبة درجة السعي المئوية",
                         "studying_year": "سنة",
                         ":edit:": ""
                     }}
@@ -208,8 +188,6 @@ function MainContent(): JSX.Element {
                             fetchSuggestions: (q) => superAdminRPC.autocompleteStudent(q)
                         },
                         { title: "ساعات الغياب", key: "hours_missed", type: "number", min: 0 },
-                        { title: "نسبة درجة السعي المئوية", key: "coursework_grade_percent", type: "number", min: 0, max: 100 },
-                        { title: "نسبة درجة السعي المئوية", key: "finals_grade_percent", type: "number", min: 0, max: 100 },
                         { title: "عدد المحاولات", key: "semester_retakes", type: "number", min: 0 },
                         { title: "السنة الدراسية", key: "studying_year", type: "number" }
                     ]}

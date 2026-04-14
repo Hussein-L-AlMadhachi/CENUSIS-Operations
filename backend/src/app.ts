@@ -32,7 +32,7 @@ import {
 import {
     createDailyAttendanceRecord, fetchDailyAttendanceRecordsForTheSubject
 } from './services/attendance_record.js';
-import { fetchStudentCourseworkGradesPerStudying } from './services/grading.js';
+import { fetchStudentGradeFieldsPerStudying } from './services/grading.js';
 import {
     fetch_ta_subject_list,
     fetchSubjectAccessControl, grantAccess, revokeAccess
@@ -120,6 +120,9 @@ adminRPC.add(deleteEnrollment);
 adminRPC.add(fetchSingleEnrollment);
 adminRPC.add(fetchEnrollmentsForSubject);
 
+// grading
+adminRPC.add(fetchStudentGradeFieldsPerStudying);
+
 //subjects access control
 adminRPC.add(fetchSubjectAccessControl);
 adminRPC.add(revokeAccess);
@@ -194,7 +197,7 @@ superRPC.add(markStudentAbsent);
 superRPC.add(fetchAbsentStudents);
 
 // grading
-superRPC.add(fetchStudentCourseworkGradesPerStudying)
+superRPC.add(fetchStudentGradeFieldsPerStudying)
 
 //subjects access control
 superRPC.add(fetchSubjectAccessControl);
@@ -277,7 +280,7 @@ teachersRPC.add(markStudentAbsent);
 teachersRPC.add(fetchAbsentStudents);
 
 // grading
-teachersRPC.add(fetchStudentCourseworkGradesPerStudying)
+teachersRPC.add(fetchStudentGradeFieldsPerStudying)
 
 //subjects access control
 teachersRPC.add(fetchSubjectAccessControl);

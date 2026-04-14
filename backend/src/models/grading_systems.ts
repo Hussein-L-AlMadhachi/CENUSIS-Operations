@@ -43,6 +43,7 @@ export class GradingSystems extends PG_Table {
         `)[0];
     }
 
+
     public async listAll() {
         return await this.sql`
             SELECT ${this.sql(this.visibles)} FROM ${this.sql(this.table_name)} ORDER BY name ASC;

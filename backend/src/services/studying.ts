@@ -20,7 +20,7 @@ export async function newEnrollment(metadata: Metadata, data: any) {
 
     validate_params(data, [
         "teacher_id", "student_id", "subject_id", "exam_retakes", "semester_retakes", "studying_year",
-        "hours_missed", "coursework_grade_percent", "finals_grade_percent"
+        "hours_missed"
     ]);
 
     data["teacher"] = data["teacher_id"] as number;
@@ -46,19 +46,27 @@ export async function newEnrollment(metadata: Metadata, data: any) {
 export async function updateEnrollment(metadata: Metadata, id: number, data: any) {
     loose_validate_params(data, [
         "teacher_id", "student_id", "subject_id", "exam_retakes", "semester_retakes", "studying_year",
-        "hours_missed", "coursework_grade_percent", "finals_grade_percent", "semester"
+        "hours_missed", "semester"
     ]);
 
     if (data["teacher_name"]) delete data["teacher_name"];
     if (data["student_name"]) delete data["student_name"];
 
-    if (data["teacher_id"]) data["teacher"] = data["teacher_id"];
-    if (data["student_id"]) data["student"] = data["student_id"];
+    if (data["teacher_id"] !== undefined) data["teacher"] = data["teacher_id"];
+    if (data["student_id"] !== undefined) data["student"] = data["student_id"];
+    if (data["subject_id"] !== undefined) data["subject"] = data["subject_id"];
+
+    delete data["teacher_id"];
+    delete data["student_id"];
+    delete data["subject_id"];
 
     if (data["semester"] !== undefined) {
         if (typeof data["semester"] !== "number" || data["semester"] < 1 || data["semester"] > 2) {
             throw new Error("Unexpected error: semester cannot be anythin but a number between 1 and 2");
         }
+
+        // `semester` is validated for callers but is not a column in `studying`.
+        delete data["semester"];
     }
 
     await studying.update(id, data);
@@ -119,10 +127,10 @@ export async function fetchCourseworkGradesWithDataForSubject(metadata: Metadata
 
 
 
-export async function setCourseworkGradeAndFinalsGrade(
-    metadata: Metadata, coursework_grade: number, student_id: number, subject_id: number
+export async function setGradeFields(
+    metadata: Metadata, grade_fields: { name: string; grade: number }[], student_id: number, subject_id: number
 ) {
-    await studying.setCourseworkGrade(coursework_grade, student_id, subject_id);
+    await studying.setGradeFields(grade_fields, subject_id, student_id);
 }
 
 
@@ -131,7 +139,7 @@ export async function setCourseworkGradeAndFinalsGrade(
 
 export async function autoFillStudentsByDegreeClass(
     metadata: Metadata, degree: string, class_number: number, subject_id: number,
-    studying_year: number, coursework_grade_percent: number, finals_grade_percent: number
+    studying_year: number
 ) {
     // verify subject id
     const [subject] = await subjects.fetch(subject_id);
@@ -147,14 +155,19 @@ export async function autoFillStudentsByDegreeClass(
         throw new Error("class number does not match");
     }
 
-    await studying.autoInsertStudentsForSubject(
-        subject.teacher as number,
-        subject_id,
-        degree,
-        class_number,
-        studying_year,
-        coursework_grade_percent,
-        finals_grade_percent
-    );
+    const enrolledStudents = await students.filterStudentsByClassDegree(degree, class_number);
+    let inserted = 0;
+
+    for (const student of enrolledStudents) {
+            await studying.insert({
+                teacher: subject.teacher as number,
+                student: student.id as number,
+                subject: subject_id,
+                studying_year,
+            });
+            inserted += 1;
+    }
+
+    return { inserted };
 }
 

@@ -7,7 +7,7 @@ const columns2select = [
     "subjects.id", "subjects.subject_name", "subjects.subject_normalized_name", "subjects.teacher",
     "subjects.degree", "subjects.class", "subjects.total_hours", "subjects.hours_weekly",
     "subjects.is_attending_required", "subjects.semester", "subjects.grading_system_id",
-    "teaching_staff.teacher_name", "grading_systems.name AS grading_system_name"
+    "teaching_staff.teacher_name"
 ];
 
 
@@ -119,28 +119,28 @@ export class Subjects extends PG_Table {
     }
 
     async filterByYear(year: number) {
-        return await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id WHERE year=${year} order by subject_name`;
+        return await this.sql`select ${this.sql(columns2select)}, grading_systems.name AS grading_system_name FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id WHERE year=${year} order by subject_name`;
     }
 
     async listAll() {
-        return await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id order by subject_name`;
+        return await this.sql`select ${this.sql(columns2select)}, grading_systems.name AS grading_system_name FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id order by subject_name`;
     }
 
 
     async filterByClassDegree(degree: string, class_id: number) {
-        return await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id WHERE degree=${degree} AND class=${class_id} order by subject_name`;
+        return await this.sql`select ${this.sql(columns2select)}, grading_systems.name AS grading_system_name FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id WHERE degree=${degree} AND class=${class_id} order by subject_name`;
     }
 
     async filterByDegree(degree: string) {
-        return await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id WHERE degree=${degree} order by subject_name`;
+        return await this.sql`select ${this.sql(columns2select)}, grading_systems.name AS grading_system_name FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id WHERE degree=${degree} order by subject_name`;
     }
 
     async findByName(name: string) {
-        return (await this.sql`select ${this.sql(columns2select)} FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id WHERE subject_normalized_name=${name}`)[0];
+        return (await this.sql`select ${this.sql(columns2select)}, grading_systems.name AS grading_system_name FROM subjects JOIN teaching_staff ON subjects.teacher = teaching_staff.id LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id WHERE subject_normalized_name=${name}`)[0];
     }
 
     async filterByTeacherClassDegree(teacher_id: number, degree: string, class_id: number) {
-        return await this.sql`select ${this.sql(columns2select)} FROM subjects
+        return await this.sql`select ${this.sql(columns2select)}, grading_systems.name AS grading_system_name FROM subjects
             JOIN teaching_staff ON subjects.teacher = teaching_staff.id
             LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id
             WHERE teacher=${teacher_id} AND degree=${degree} AND class=${class_id} order by subject_name`;
@@ -148,7 +148,7 @@ export class Subjects extends PG_Table {
 
 
     async filterByTeacherDegree(teacher_id: number, degree: string) {
-        return await this.sql`select ${this.sql(columns2select)} FROM subjects
+        return await this.sql`select ${this.sql(columns2select)}, grading_systems.name AS grading_system_name FROM subjects
             JOIN teaching_staff ON subjects.teacher = teaching_staff.id
             LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id
             WHERE teacher=${teacher_id} AND degree=${degree} order by subject_name`;

@@ -3,15 +3,15 @@ import { studying } from "../db.js";
 
 
 
-export async function fetchStudentCourseworkGradesPerStudying(metadata: Metadata, studying_id: number) {
-    const courseworkGrade = await studying.getCourseworkGrades(studying_id);
+export async function fetchStudentGradeFieldsPerStudying(metadata: Metadata, subject_id: number) {
+    const gradeFields = await studying.getGradeFields(subject_id);
 
-    console.log(courseworkGrade)
+    console.log(gradeFields)
 
-    if (!courseworkGrade) {
-        throw new Error("Coursework grade not found");
+    if (!gradeFields) {
+        throw new Error("Grade fields not found");
     }
 
-    return courseworkGrade;
+    return gradeFields;
 }
 
