@@ -33,19 +33,6 @@ function Options({ onAddClick }: OptionsProps) {
                     <UserRoundPlus size={18} /> إضافة نظام درجات
                 </button>
             </li>
-
-            <li>
-                <span>
-                    <Search size={18} />
-                    <AutocompleteText
-                        placeholder="بحث..."
-                        fetchSuggestions={superAdminRPC.autocompleteGradingSystem}
-                        onSelect={(selected: string) => {
-                            console.log("User selected:", selected);
-                        }}
-                    />
-                </span>
-            </li>
         </ul>
     </div>;
 }

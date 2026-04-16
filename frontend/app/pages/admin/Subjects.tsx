@@ -16,7 +16,7 @@ import { useValidRoute } from "@/hooks/useValidRoute";
 
 // Globals
 import { type SubjectData, adminRPC } from "@/rpc";
-import { useValidParams } from "@/hooks/useValidParams";
+import { useValidParams as validateParams } from "@/hooks/useValidParams";
 import Tabs from "@/components/Tabs";
 import { sidebar_pages } from "./sidebar_pages";
 
@@ -39,18 +39,7 @@ function Options({ onAddClick }: OptionsProps) {
                 </button>
             </li>
 
-            <li>
-                <span>
-                    <Search size={18} />
-                    <AutocompleteText
-                        placeholder="ابحث عن مادة..."
-                        fetchSuggestions={adminRPC.autocompleteSubject}
-                        onSelect={(selected) => {
-                            console.log("User selected:", selected);
-                        }}
-                    />
-                </span>
-            </li>
+
         </ul>
     </div>;
 }
@@ -93,10 +82,10 @@ const subjectFormTemplate: DynamicFormTemplate[] = [
 ];
 
 function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubjectModalProps) {
-    const handleAddSubject = async (data: any) => {
+    const handleAddSubject = async (data: SubjectData) => {
 
         try {
-            useValidParams(data, [
+            validateParams(data as unknown as Record<string, unknown>, [
                 "subject_name", "degree", "class", "total_hours", "hours_weekly",
                 "semester", "teacher_name", "grading_system_name"]
             );
@@ -156,7 +145,7 @@ function MainContent(): JSX.Element {
         fetchData();
     }, []);
 
-    const handleUpdateSubject = async (id: number, data: any) => {
+    const handleUpdateSubject = async (id: number, data: Partial<SubjectData>) => {
         await adminRPC.updateSubject(id, data).then(() => fetchData());
     };
 
@@ -179,9 +168,6 @@ function MainContent(): JSX.Element {
                 <div className="flex flex-col flex-nowrap gap-1">
                     <a href={`/admin/enrolled/${row.teacher}/${row.id}`} className="btn btn-xs  w-32">
                         عرض الطلاب
-                    </a>
-                    <a href={`/admin/permissions/${row.id}`} className="btn btn-xs w-32">
-                        عرض الصلاحيات
                     </a>
                 </div>
             )

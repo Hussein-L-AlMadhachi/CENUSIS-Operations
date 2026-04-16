@@ -28,35 +28,6 @@ interface OptionsProps {
 
 
 
-function Options({ onAddClick }: OptionsProps) {
-    return <div id="options" className="menu lg:menu-horizontal menu-vertical w-full justify-between">
-        <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> إدارة المواد الدراسية </div>
-        <ul className="menu bg-base-200 lg:menu-horizontal rounded-box gap-1 menu-vertical max-md:w-full">
-
-            <li>
-                <button className="btn" onClick={onAddClick}>
-                    <UserRoundPlus size={18} /> إضافة مادة
-                </button>
-            </li>
-
-            <li>
-                <span>
-                    <Search size={18} />
-                    <AutocompleteText
-                        placeholder="ابحث عن مادة..."
-                        fetchSuggestions={teacherRPC.autocompleteSubject}
-                        onSelect={(selected) => {
-                            console.log("User selected:", selected);
-                        }}
-                    />
-                </span>
-            </li>
-        </ul>
-    </div>;
-}
-
-
-
 interface AddSubjectModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -193,9 +164,6 @@ function MainContent(): JSX.Element {
 
     return <>
         <Section>
-            <Subsection>
-                <Options onAddClick={() => setIsAddModalOpen(true)} />
-            </Subsection>
             <Subsection>
                 <Tabs group="students" tabs={
                     [

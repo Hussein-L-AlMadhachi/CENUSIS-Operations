@@ -1,4 +1,4 @@
-import { type JSX, useState, useEffect } from "react";
+import { type JSX, useState, useEffect, useCallback } from "react";
 import { ArrowRightFromLine, UserRoundPlus } from "lucide-react";
 
 // layouts
@@ -56,8 +56,16 @@ interface EnrollModalProps {
     teacherId: number;
 }
 
+interface EnrollFormData {
+    student_name?: string;
+    studying_year?: number | string;
+    exam_retakes?: number | string;
+    semester_retakes?: number | string;
+    hours_missed?: number | string;
+}
+
 function EnrollModal({ isOpen, onClose, onSuccess, subjectId, teacherId }: EnrollModalProps) {
-    const handleAddEnrollment = async (data: any) => {
+    const handleAddEnrollment = async (data: EnrollFormData) => {
         if (!data.student_name) {
             throw "يجب اختيار طالب";
         }
@@ -78,8 +86,6 @@ function EnrollModal({ isOpen, onClose, onSuccess, subjectId, teacherId }: Enrol
 
                 // Required fields by backend with defaults for new enrollment
                 studying_year: Number(data.studying_year),
-                exam_retakes: Number(data.exam_retakes || 0),
-                semester_retakes: Number(data.semester_retakes || 0),
                 hours_missed: Number(data.hours_missed || 0),
             };
 
@@ -129,20 +135,17 @@ function MainContent(): JSX.Element {
     const [data, setData] = useState<EnrollmentData[]>([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-    console.log(">>>", data);
-
-    const fetchData = () => {
+    const fetchData = useCallback(() => {
         if (subjectId) {
             superAdminRPC.fetchEnrollmentsForSubject(subjectId).then((data) => {
                 setData(data);
-                console.log(">>>", data);
             });
         }
-    };
+    }, [subjectId]);
 
     useEffect(() => {
         fetchData();
-    }, [subjectId]);
+    }, [fetchData, subjectId]);
 
     return <>
         <Section>
@@ -161,9 +164,15 @@ function MainContent(): JSX.Element {
                     onDelete={(id: number) => {
                         superAdminRPC.deleteEnrollment(id).then(() => fetchData());
                     }}
-                    onSave={async (id: number, form_data: any) => {
+                    onSave={async (id: number, form_data: EnrollFormData) => {
                         try {
-                            const updates: Partial<EnrollmentData> = { ...form_data };
+                            const updates: Partial<EnrollmentData> = {
+                                ...form_data,
+                                studying_year: form_data.studying_year !== undefined ? Number(form_data.studying_year) : undefined,
+                                hours_missed: form_data.hours_missed !== undefined ? Number(form_data.hours_missed) : undefined,
+                                teacher_id: teacherId,
+                                subject_id: subjectId
+                            };
 
                             // If name changed, we need to find the new ID
                             if (form_data.student_name) {
@@ -177,7 +186,7 @@ function MainContent(): JSX.Element {
                             fetchData();
                         } catch (e) {
                             console.error("Update failed", e);
-                            alert("حدث خطأ أثناء التعديل");
+                            alert(`حدث خطأ أثناء التعديل: ${e}`);
                         }
                     }}
                     formTemplate={[
@@ -187,8 +196,6 @@ function MainContent(): JSX.Element {
                             type: "autocomplete",
                             fetchSuggestions: (q) => superAdminRPC.autocompleteStudent(q)
                         },
-                        { title: "ساعات الغياب", key: "hours_missed", type: "number", min: 0 },
-                        { title: "عدد المحاولات", key: "semester_retakes", type: "number", min: 0 },
                         { title: "السنة الدراسية", key: "studying_year", type: "number" }
                     ]}
                 />

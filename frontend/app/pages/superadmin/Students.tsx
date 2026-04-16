@@ -73,19 +73,6 @@ function Options({ onAddClick, onImportSuccess }: OptionsProps) {
                     <Upload size={18} /> إدخال البيانات من برنامج أكسل
                 </label>
             </li>
-
-            <li>
-                <span>
-                    <Search size={18} />
-                    <AutocompleteText
-                        placeholder=""
-                        fetchSuggestions={superAdminRPC.autocompleteStudent}
-                        onSelect={(selected) => {
-                            console.log("User selected:", selected);
-                        }}
-                    />
-                </span>
-            </li>
         </ul>
     </div>;
 }

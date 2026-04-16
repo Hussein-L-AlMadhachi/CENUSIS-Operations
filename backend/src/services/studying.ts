@@ -45,8 +45,8 @@ export async function newEnrollment(metadata: Metadata, data: any) {
 
 export async function updateEnrollment(metadata: Metadata, id: number, data: any) {
     loose_validate_params(data, [
-        "teacher_id", "student_id", "subject_id", "exam_retakes", "semester_retakes", "studying_year",
-        "hours_missed", "semester"
+        "teacher_id", "student_id", "subject_id", "studying_year",
+        "hours_missed"
     ]);
 
     if (data["teacher_name"]) delete data["teacher_name"];
@@ -60,13 +60,8 @@ export async function updateEnrollment(metadata: Metadata, id: number, data: any
     delete data["student_id"];
     delete data["subject_id"];
 
-    if (data["semester"] !== undefined) {
-        if (typeof data["semester"] !== "number" || data["semester"] < 1 || data["semester"] > 2) {
-            throw new Error("Unexpected error: semester cannot be anythin but a number between 1 and 2");
-        }
-
-        // `semester` is validated for callers but is not a column in `studying`.
-        delete data["semester"];
+    if (typeof data["studying_year"] !== "number" || data["studying_year"] < 1) {
+        throw new Error("Unexpected error: studying_year cannot be anythin but a positive number");
     }
 
     await studying.update(id, data);

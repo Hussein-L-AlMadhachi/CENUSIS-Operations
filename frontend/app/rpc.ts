@@ -56,8 +56,6 @@ export interface EnrollmentData {
     student_name?: string;
     subject_id?: number;
     subject_name?: string;
-    exam_retakes?: number;
-    semester_retakes?: number;
     studying_year?: number;
     hours_missed?: number;
     grade_fields?: GradeField[];

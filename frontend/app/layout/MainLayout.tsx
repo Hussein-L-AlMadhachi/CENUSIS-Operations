@@ -17,10 +17,11 @@ interface MainLayoutProps {
     title: string;
 }
 
-export async function logoutHandler() {
+async function logoutHandler() {
     await publicRPC.logout();
     navigate('/login');
-    document.cookie = `auth-role=logggedout;`;
+    document.cookie.split(";").forEach(function(c) { document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); });
+    window.location.reload(); // cookies start to act weird without a full page reload
 }
 
 export function MainLayout(props: MainLayoutProps): JSX.Element {

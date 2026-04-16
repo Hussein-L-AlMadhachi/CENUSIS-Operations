@@ -38,19 +38,6 @@ function Options({ onAddClick }: OptionsProps) {
                     <UserRoundPlus size={18} /> إضافة مادة
                 </button>
             </li>
-
-            <li>
-                <span>
-                    <Search size={18} />
-                    <AutocompleteText
-                        placeholder="ابحث عن مادة..."
-                        fetchSuggestions={teacherRPC.autocompleteSubject}
-                        onSelect={(selected) => {
-                            console.log("User selected:", selected);
-                        }}
-                    />
-                </span>
-            </li>
         </ul>
     </div>;
 }

@@ -36,21 +36,6 @@ function Options({ onAddClick }: OptionsProps) {
                     <UserRoundPlus size={18} /> إضافة حساب
                 </button>
             </li>
-
-            <li>
-                <span>
-                    <Search size={18} />
-                    <AutocompleteText
-                        placeholder="بحث..."
-                        fetchSuggestions={async (query: string) => {
-                            return await superAdminRPC.autocompleteTeacher(query);
-                        }}
-                        onSelect={(selected: string) => {
-                            console.log("User selected:", selected);
-                        }}
-                    />
-                </span>
-            </li>
         </ul>
     </div>;
 }
@@ -63,14 +48,22 @@ interface AddTeacherModalProps {
     onSuccess: () => void;
 }
 
+interface AddTeacherFormData {
+    teacher_name?: string;
+    password?: string;
+}
+
 function AddTeacherModal({ isOpen, onClose, onSuccess }: AddTeacherModalProps) {
-    const handleAddTeacher = async (data: any) => {
+    const handleAddTeacher = async (data: AddTeacherFormData) => {
         if (!data.teacher_name || !data.password) {
             throw "يجب ملئ جميع الحقول";
         }
 
         try {
-            await superAdminRPC.registerTeacher(data);
+            await superAdminRPC.registerTeacher({
+                name: data.teacher_name,
+                password: data.password
+            });
             onSuccess();
             onClose();
         } catch (error) {

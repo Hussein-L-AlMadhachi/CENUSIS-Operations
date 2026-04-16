@@ -9,7 +9,7 @@ export class StudentsTable extends PG_Table {
     constructor(app: PG_App) {
         super(app, "students", [
             "id", "student_name", "student_normalized_name", "joined_year",
-            "degree", "class", "years_retaken", "years_failed"
+            "degree", "class"
         ]);
     }
 
@@ -31,10 +31,6 @@ export class StudentsTable extends PG_Table {
 
                     degree                      VARCHAR(20) NOT NULL,
                     class                       INTEGER NOT NULL,
-
-                    years_retaken               INTEGER DEFAULT 0,
-                    years_failed                INTEGER DEFAULT 0
-
                 )
             `;
             await sql`

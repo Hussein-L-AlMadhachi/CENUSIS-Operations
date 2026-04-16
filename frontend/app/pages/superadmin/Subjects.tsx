@@ -1,5 +1,5 @@
 import { type JSX, useState, useEffect } from "react";
-import { UserRoundPlus, Search } from "lucide-react";
+import { UserRoundPlus } from "lucide-react";
 
 // layouts
 import { MainLayout } from "@/layout/MainLayout";
@@ -9,14 +9,13 @@ import { EditableTable } from "@/components/EditableTable";
 import { Modal } from "@/components/Modal";
 import { DynamicForm, type DynamicFormTemplate } from "@/components/DynamicForm";
 import { Section, Subsection } from "@/components/Section";
-import { AutocompleteText } from "@/components/AutocompleteText";
 
 // Hooks
 import { useValidRoute } from "@/hooks/useValidRoute";
 
 // Globals
 import { type SubjectData, superAdminRPC } from "@/rpc";
-import { useValidParams } from "@/hooks/useValidParams";
+import { useValidParams as validateParams } from "@/hooks/useValidParams";
 import Tabs from "@/components/Tabs";
 import { sidebar_pages } from "./sidebar_pages";
 
@@ -37,19 +36,6 @@ function Options({ onAddClick }: OptionsProps) {
                 <button className="btn btn-lg" onClick={onAddClick}>
                     <UserRoundPlus size={18} /> إضافة مادة
                 </button>
-            </li>
-
-            <li>
-                <span>
-                    <Search size={18} />
-                    <AutocompleteText
-                        placeholder="ابحث عن مادة..."
-                        fetchSuggestions={superAdminRPC.autocompleteSubject}
-                        onSelect={(selected) => {
-                            console.log("User selected:", selected);
-                        }}
-                    />
-                </span>
             </li>
         </ul>
     </div>;
@@ -93,10 +79,10 @@ const subjectFormTemplate: DynamicFormTemplate[] = [
 ];
 
 function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubjectModalProps) {
-    const handleAddSubject = async (data: any) => {
+    const handleAddSubject = async (data: SubjectData) => {
 
         try {
-            useValidParams(data, [
+            validateParams(data as unknown as Record<string, unknown>, [
                 "subject_name", "degree", "class", "total_hours", "hours_weekly",
                 "semester", "teacher_name", "grading_system_name"]
             );
@@ -156,7 +142,7 @@ function MainContent(): JSX.Element {
         fetchData();
     }, []);
 
-    const handleUpdateSubject = async (id: number, data: any) => {
+    const handleUpdateSubject = async (id: number, data: Partial<SubjectData>) => {
         await superAdminRPC.updateSubject(id, data).then(() => fetchData());
     };
 
@@ -179,9 +165,6 @@ function MainContent(): JSX.Element {
                 <div className="flex flex-col flex-nowrap gap-1">
                     <a href={`/superadmin/enrolled/${row.teacher}/${row.id}`} className="btn btn-xs  w-32">
                         عرض الطلاب
-                    </a>
-                    <a href={`/superadmin/permissions/${row.id}`} className="btn btn-xs w-32">
-                        عرض الصلاحيات
                     </a>
                     <a href={`/superadmin/attendance/${row.id}`} className="btn btn-xs w-32">
                         عرض سجل الغياب

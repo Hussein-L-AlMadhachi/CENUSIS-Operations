@@ -72,14 +72,22 @@ export async function registerAdmin(metadata: Metadata, name: string, password: 
 
 
 
-export async function updateUser(metadata: Metadata, uid: number, data: any) {
-    if (typeof uid !== "number") {
+export async function updateUser(metadata: Metadata, teacher_id: number, data: any) {
+    if (typeof teacher_id !== "number") {
         throw new Error("Unexpected error: user_id cannot be anythin but a number");
     }
 
     loose_validate_params(data, ["teacher_name", "password"]);
 
     data["teacher_normalized_name"] = normalize_arabic(data["teacher_name"]);
+
+    let teacher = await teaching_staff.fetch( teacher_id )
+
+    if (typeof(teacher) === undefined || teacher.length != 1) {
+        throw new Error("لا يوجد استاذ بهذا الاسم")
+    }
+
+    let uid = teacher[0]!.login_credentials
 
     if (data["password"]) {
         await changeTeacherPassword(metadata, uid, data["password"]);

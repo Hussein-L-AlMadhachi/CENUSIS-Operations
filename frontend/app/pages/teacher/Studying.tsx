@@ -78,8 +78,6 @@ function EnrollModal({ isOpen, onClose, onSuccess, subjectId, teacherId }: Enrol
 
                 // Required fields by backend with defaults for new enrollment
                 studying_year: Number(data.studying_year),
-                exam_retakes: Number(data.exam_retakes || 0),
-                semester_retakes: Number(data.semester_retakes || 0),
                 hours_missed: Number(data.hours_missed || 0),
             };
 
@@ -164,7 +162,7 @@ function MainContent(): JSX.Element {
                     }}
                     onSave={async (id: number, form_data: any) => {
                         try {
-                            const updates: Partial<EnrollmentData> = { ...form_data };
+                            const updates: Partial<EnrollmentData> = { ...form_data , subject_id:subjectId, teacher_id:teacherId};
 
                             // If name changed, we need to find the new ID
                             if (form_data.student_name) {
@@ -188,7 +186,6 @@ function MainContent(): JSX.Element {
                             type: "autocomplete",
                             fetchSuggestions: (q) => teacherRPC.autocompleteStudent(q)
                         },
-                        { title: "عدد المحاولات", key: "semester_retakes", type: "number", min: 0 },
                         { title: "السنة الدراسية", key: "studying_year", type: "number" }
                     ]}
                 />

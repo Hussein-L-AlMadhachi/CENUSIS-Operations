@@ -1,5 +1,5 @@
 import { type JSX, useState, useEffect } from "react";
-import { Search, UserRoundPlus, Upload } from "lucide-react";
+import { UserRoundPlus, Upload } from "lucide-react";
 
 // layouts
 import { MainLayout } from "@/layout/MainLayout";
@@ -9,14 +9,13 @@ import { EditableTable } from "@/components/EditableTable";
 import { Modal } from "@/components/Modal";
 import { DynamicForm, type DynamicFormTemplate } from "@/components/DynamicForm";
 import { Section, Subsection } from "@/components/Section";
-import { AutocompleteText } from "@/components/AutocompleteText";
 
 // Hooks
 import { useValidRoute } from "@/hooks/useValidRoute";
 
 // Globals
 import { type studentData, adminRPC } from "@/rpc";
-import { useValidParams } from "@/hooks/useValidParams";
+import { useValidParams as validateParams } from "@/hooks/useValidParams";
 import Tabs from "@/components/Tabs";
 import { sidebar_pages } from "./sidebar_pages";
 
@@ -73,19 +72,6 @@ function Options({ onAddClick, onImportSuccess }: OptionsProps) {
                     <Upload size={18} /> إدخال البيانات من برنامج أكسل
                 </label>
             </li>
-
-            <li>
-                <span>
-                    <Search size={18} />
-                    <AutocompleteText
-                        placeholder=""
-                        fetchSuggestions={adminRPC.autocompleteStudent}
-                        onSelect={(selected) => {
-                            console.log("User selected:", selected);
-                        }}
-                    />
-                </span>
-            </li>
         </ul>
     </div>;
 }
@@ -123,7 +109,7 @@ function AddStudentModal({ isOpen, onClose, onSuccess }: AddStudentModalProps) {
     const handleAddTeacher = async (data: any) => {
 
         try {
-            useValidParams(data, ["student_name", "joined_year", "degree"])
+            validateParams(data, ["student_name", "joined_year", "degree"])
             if (data.degree !== "بكلوريوس") {
                 data["class"] = 1;
             }

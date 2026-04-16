@@ -1,5 +1,5 @@
 import { type JSX, useState, useEffect } from "react";
-import { Search, UserRoundPlus } from "lucide-react";
+import { UserRoundPlus } from "lucide-react";
 
 // layouts
 import { MainLayout } from "@/layout/MainLayout";
@@ -9,7 +9,6 @@ import { EditableTable } from "@/components/EditableTable";
 import { Modal } from "@/components/Modal";
 import { DynamicForm } from "@/components/DynamicForm";
 import { Section, Subsection } from "@/components/Section";
-import { AutocompleteText } from "@/components/AutocompleteText";
 
 // Hooks
 import { useValidRoute } from "@/hooks/useValidRoute";
@@ -35,21 +34,6 @@ function Options({ onAddClick }: OptionsProps) {
                 <button className="btn btn-lg" onClick={onAddClick}>
                     <UserRoundPlus size={18} /> إضافة حساب
                 </button>
-            </li>
-
-            <li>
-                <span>
-                    <Search size={18} />
-                    <AutocompleteText
-                        placeholder="بحث..."
-                        fetchSuggestions={async (query: string) => {
-                            return await adminRPC.autocompleteTeacher(query);
-                        }}
-                        onSelect={(selected: string) => {
-                            console.log("User selected:", selected);
-                        }}
-                    />
-                </span>
             </li>
         </ul>
     </div>;
