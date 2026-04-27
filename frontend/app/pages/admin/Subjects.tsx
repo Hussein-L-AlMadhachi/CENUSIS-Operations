@@ -1,5 +1,5 @@
 import { type JSX, useState, useEffect } from "react";
-import { UserRoundPlus, Search } from "lucide-react";
+import { UserRoundPlus } from "lucide-react";
 
 // layouts
 import { MainLayout } from "@/layout/MainLayout";
@@ -9,7 +9,6 @@ import { EditableTable } from "@/components/EditableTable";
 import { Modal } from "@/components/Modal";
 import { DynamicForm, type DynamicFormTemplate } from "@/components/DynamicForm";
 import { Section, Subsection } from "@/components/Section";
-import { AutocompleteText } from "@/components/AutocompleteText";
 
 // Hooks
 import { useValidRoute } from "@/hooks/useValidRoute";
@@ -58,7 +57,7 @@ const subjectFormTemplate: DynamicFormTemplate[] = [
     {
         title: "الدرجة العلمية", key: "degree",
         type: "select", options: [
-            { label: "بكالوريوس", value: "بكالوريوس" },
+            { label: "بكلوريوس", value: "بكلوريوس" },
             { label: "ماجستير", value: "ماجستير" },
             { label: "دكتوراه", value: "دكتوراه" }
         ]
@@ -69,13 +68,13 @@ const subjectFormTemplate: DynamicFormTemplate[] = [
             { label: "الثانية", value: 2 },
             { label: "الثالثة", value: 3 },
             { label: "الرابعة", value: 4 }
-        ], condition: { key: "degree", value: "بكالوريوس" }
+        ], condition: { key: "degree", value: "بكلوريوس" }
     },
     {
         title: "الكورس", key: "semester", type: "select", options: [
             { label: "الأول", value: 1 },
             { label: "الثاني", value: 2 },
-        ], condition: { key: "degree", value: "بكالوريوس" }
+        ], condition: { key: "degree", value: "بكلوريوس" }
     },
     { title: "عدد الساعات اسبوعياً", key: "hours_weekly", type: "number", min: 0 },
     { title: "التدريسي", key: "teacher_name", type: "autocomplete", fetchSuggestions: adminRPC.autocompleteTeacher },
@@ -89,7 +88,7 @@ function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubjectModalProps) {
                 "subject_name", "degree", "class", "total_hours", "hours_weekly",
                 "semester", "teacher_name", "grading_system_name"]
             );
-            if (data.degree !== "بكالوريوس") {
+            if (data.degree !== "بكلوريوس") {
                 data["class"] = 1;
             }
 
@@ -130,10 +129,10 @@ function MainContent(): JSX.Element {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     const fetchData = () => {
-        adminRPC.filterSubjectsByClassDegree("بكالوريوس", 1).then((data) => setData_1st(data));
-        adminRPC.filterSubjectsByClassDegree("بكالوريوس", 2).then((data) => setData_2nd(data));
-        adminRPC.filterSubjectsByClassDegree("بكالوريوس", 3).then((data) => setData_3rd(data));
-        adminRPC.filterSubjectsByClassDegree("بكالوريوس", 4).then((data) => setData_4th(data));
+        adminRPC.filterSubjectsByClassDegree("بكلوريوس", 1).then((data) => setData_1st(data));
+        adminRPC.filterSubjectsByClassDegree("بكلوريوس", 2).then((data) => setData_2nd(data));
+        adminRPC.filterSubjectsByClassDegree("بكلوريوس", 3).then((data) => setData_3rd(data));
+        adminRPC.filterSubjectsByClassDegree("بكلوريوس", 4).then((data) => setData_4th(data));
 
         adminRPC.filterSubjectsByDegree("ماجستير").then((data) => setData_master(data));
 

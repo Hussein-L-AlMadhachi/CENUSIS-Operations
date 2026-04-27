@@ -58,11 +58,16 @@ interface AddAbsentStudentModalProps {
     record_id: number;
 }
 
+interface AddAbsentStudentFormData {
+    student_name?: string;
+    hours_absent?: number;
+}
+
 
 
 function AddAbsentStudentModal({ isOpen, onClose, onSuccess, record_id }: AddAbsentStudentModalProps) {
-    const handleAddAbsentStudent = async (data: any) => {
-        if (!data.student_name || !data.hours_absent) {
+    const handleAddAbsentStudent = async (data: AddAbsentStudentFormData) => {
+        if (!data.student_name || !data.hours_absent || typeof data.hours_absent !== "number") {
             throw "يجب ملئ جميع الحقول";
         }
 
@@ -76,8 +81,6 @@ function AddAbsentStudentModal({ isOpen, onClose, onSuccess, record_id }: AddAbs
         } catch (error) {
             throw `حدث خطأ أثناء إضافة الحساب ${error}`;
         }
-
-        navigate("/superadmin/subjects")
     };
 
     return (

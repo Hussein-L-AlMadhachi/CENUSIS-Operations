@@ -1,23 +1,17 @@
 import { PG_App } from 'pg-norm';
 
 // tables
-import { Studying } from './models/studying.js';
-import { StudentsTable } from './models/students.js';
-import { Subjects } from './models/subjects.js';
-import { LoggedinUsers } from './models/loggedin_users.js';
-import { TeachingStaff } from './models/teaching_staff.js';
-import { Absented } from './models/absented.js';
-import { AttendanceRecord } from './models/attendance_record.js';
-import { GradingSystems } from './models/grading_systems.js';
+import { Studying } from './Features/studying/studying.sql.js';
+import { StudentsTable } from './Features/students/students.sql.js';
+import { Subjects } from './Features/subjects/subjects.sql.js';
+import { LoggedinUsers } from './Features/loggedin_users/loggedin_users.sql.js';
+import { TeachingStaff } from './Features/teaching_staff/teaching_staff.sql.js';
+import { Absented } from './Features/absented/absented.sql.js';
+import { AttendanceRecord } from './Features/attendance_record/attendance_record.sql.js';
+import { GradingSystems } from './Features/grading_system/grading_systems.sql.js';
 
-// views
-import { StudentAbsenceView } from './models/views/students_absence_view.js';
-import { AttendanceRecordView } from './models/views/attendance_record_view.js';
-import { ActivityLogs } from './models/logs.js';
-import { EnrollmentView } from './models/views/enrollment_view.js';
-import { SubjectsAccessControl } from './models/subjects_access_control.js';
-import { MiniAppsTable } from './models/miniapps.js';
-import { MiniAppPermissionsTable } from './models/minimaps_permissions.js';
+import { MiniAppsTable } from './Features/miniapps/miniapps.sql.js';
+import { MiniAppPermissionsTable } from './Features/miniapp_permissions/minimaps_permissions.sql.js';
 
 
 
@@ -39,11 +33,6 @@ export const studying = new Studying(app);
 export const absented = new Absented(app);
 export const attendance_record = new AttendanceRecord(app);
 export const grading_systems = new GradingSystems(app);
-export const attendance_record_view = new AttendanceRecordView(app);
-export const student_absence_view = new StudentAbsenceView(app);
-export const activity_logs = new ActivityLogs(app);
-export const enrollment_view = new EnrollmentView(app);
-export const subjects_access_control = new SubjectsAccessControl(app);
 export const miniapps = new MiniAppsTable(app);
 export const miniapp_permissions = new MiniAppPermissionsTable(app);
 
@@ -55,50 +44,3 @@ app.register(subjects);
 app.register(studying);
 app.register(attendance_record);
 app.register(absented);
-//app.register(student_absence_view);
-//app.register(attendance_record_view);
-//app.register(enrollment_view);
-app.register(activity_logs);
-app.register(subjects_access_control);
-
-
-
-/**
- *  full connection options
- * 
- * {
- *      host                 : '',              // Postgres ip address[es] or domain name[s]
- *      port                 : 5432,            // Postgres server port[s]
- *      path                 : '',              // unix socket path (usually '/tmp')
- *      database             : '',              // Name of database to connect to
- *      username             : '',              // Username of database user
- *      password             : '',              // Password of database user
- *      ssl                  : false,           // true, prefer, require, tls.connect options
- *      max                  : 10,              // Max number of connections
- *      max_lifetime         : null,            // Max lifetime in seconds (more info below)
- *      idle_timeout         : 0,               // Idle connection timeout in seconds
- *      connect_timeout      : 30,              // Connect timeout in seconds
- *      prepare              : true,            // Automatic creation of prepared statements
- *      types                : [],              // Array of custom types, see more below
- *      onnotice             : fn,              // Default console.log, set false to silence NOTICE
- *      onparameter          : fn,              // (key, value) when server param change
- *      debug                : fn,              // Is called with (connection, query, params, types)
- *      socket               : fn,              // fn returning custom socket to use
- *      transform            : {
- *          undefined          : undefined,     // Transforms undefined values (eg. to null)
- *          column             : fn,            // Transforms incoming column names
- *          value              : fn,            // Transforms incoming row values
- *          row                : fn             // Transforms entire rows
- *      },
- *      connection           : {
- *          application_name   : 'postgres.js', // Default application_name
- *          ...                                 // Other connection parameters, see https://www.postgresql.org/docs/current/runtime-config-client.html
- *      },
- *      target_session_attrs : null,            // Use 'read-write' with multiple hosts to
- *                                              // ensure only connecting to primary
- *      fetch_types          : true,            // Automatically fetches types on connect
- *                                              // on initial connection.
- * }
- * 
- */
-

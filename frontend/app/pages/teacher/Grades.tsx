@@ -1,4 +1,4 @@
-import { type JSX, useState, useEffect } from "react";
+import { type JSX, useState, useEffect, useCallback } from "react";
 import { ArrowRightFromLine, Upload } from "lucide-react";
 
 // layouts
@@ -88,13 +88,17 @@ function MainContent(): JSX.Element {
 
     const [data, setData] = useState<GradesDate[]>([]);
 
-    const fetchData = () => {
-        teacherRPC.fetchStudentGradeFieldsPerStudying(parseInt(params.studying_id)).then((data) => setData(data));
-    };
+    const fetchData = useCallback(() => {
+        if (params.studying_id) {
+            teacherRPC.fetchStudentGradeFieldsPerStudying(parseInt(params.studying_id)).then((data) => {
+                setData(data);
+            });
+        }
+    }, [params.studying_id]);
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [fetchData]);
 
     const { headers, rows } = buildGradeTable(data || []);
 

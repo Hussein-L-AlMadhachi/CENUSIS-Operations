@@ -71,6 +71,7 @@ export interface AbsentedData {
     id?: number;
     hours_absent?: number;
     student_name?: string;
+    student_id?: number;
 }
 
 export interface GradesDate {
@@ -236,7 +237,6 @@ interface TeachersRPC {
     fetchEnrollmentsForSubject(subject_id: number): Promise<EnrollmentData[]>;
 
     // attendance management per record
-    markStudentAbsent(data: { attendance_record_id: number, hours_absent: number }): Promise<void>;
     deleteAttendanceRecordForTheDay(attendance_record_id: number): Promise<void>;
 
     // attendance records management
@@ -244,9 +244,9 @@ interface TeachersRPC {
     fetchDailyAttendanceRecordsForTheSubject(subject_id: number): Promise<AttendanceRecordData[]>;
 
     // attendance management per student
-    markStudentAbsent(data: { attendance_record_id: number, student_name: string, hours_absent: number }): Promise<void>;
     fetchAbsentStudents(attendance_record_id: number): Promise<AbsentedData[]>;
     removeAbsence(absented_id: number): Promise<void>;
+    markStudentAbsent(data: { attendance_record_id: number, student_id: number, hours_absent: number }): Promise<void>;
 
     // grading
     fetchStudentGradeFieldsPerStudying(studying_id: number): Promise<GradesDate[]>;
@@ -321,6 +321,7 @@ interface SuperAdminRPC {
     markStudentAbsent(data: { attendance_record_id: number, student_name: string, hours_absent: number }): Promise<void>;
     fetchAbsentStudents(attendance_record_id: number): Promise<AbsentedData[]>;
     removeAbsence(absented_id: number): Promise<void>;
+    updateAbsence(data: { absented_id: number, hours_absent: number }): Promise<void>;
 
     // grading
     fetchStudentGradeFieldsPerStudying(studying_id: number): Promise<GradesDate[]>;

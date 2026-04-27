@@ -1,5 +1,5 @@
 import type React from "react";
-import { type JSX } from "react";
+import { type JSX, useEffect, useState } from "react";
 import { ArrowLeftFromLine, LockKeyhole } from "lucide-react";
 import { Link } from "wouter"
 
@@ -25,9 +25,29 @@ async function logoutHandler() {
 }
 
 export function MainLayout(props: MainLayoutProps): JSX.Element {
-    return <div className="drawer lg:drawer-open w-full">
+    const [isDrawerOpen, setIsDrawerOpen] = useState(() =>
+        typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches
+    );
 
-        <input id="my-drawer-4" type="checkbox" className="drawer-toggle" />
+    useEffect(() => {
+        const desktopQuery = window.matchMedia("(min-width: 1024px)");
+        const updateDrawerDefault = () => setIsDrawerOpen(desktopQuery.matches);
+
+        updateDrawerDefault();
+        desktopQuery.addEventListener("change", updateDrawerDefault);
+
+        return () => desktopQuery.removeEventListener("change", updateDrawerDefault);
+    }, []);
+
+    return <div className="drawer sm:drawer-open w-full">
+
+        <input
+            id="my-drawer-4"
+            type="checkbox"
+            className="drawer-toggle"
+            checked={isDrawerOpen}
+            onChange={(event) => setIsDrawerOpen(event.target.checked)}
+        />
         <div className="drawer-content overflow-x-hidden max-w-full">
 
             {/* Navbar */}

@@ -55,7 +55,7 @@ const subjectFormTemplate: DynamicFormTemplate[] = [
     {
         title: "الدرجة العلمية", key: "degree",
         type: "select", options: [
-            { label: "بكالوريوس", value: "بكالوريوس" },
+            { label: "بكلوريوس", value: "بكلوريوس" },
             { label: "ماجستير", value: "ماجستير" },
             { label: "دكتوراه", value: "دكتوراه" }
         ]
@@ -66,13 +66,13 @@ const subjectFormTemplate: DynamicFormTemplate[] = [
             { label: "الثانية", value: 2 },
             { label: "الثالثة", value: 3 },
             { label: "الرابعة", value: 4 }
-        ], condition: { key: "degree", value: "بكالوريوس" }
+        ], condition: { key: "degree", value: "بكلوريوس" }
     },
     {
         title: "الكورس", key: "semester", type: "select", options: [
             { label: "الأول", value: 1 },
             { label: "الثاني", value: 2 },
-        ], condition: { key: "degree", value: "بكالوريوس" }
+        ], condition: { key: "degree", value: "بكلوريوس" }
     },
     { title: "عدد ساعات في الكورس", key: "total_hours", type: "number", min: 0 },
     { title: "عدد الساعات اسبوعياً", key: "hours_weekly", type: "number", min: 0 },
@@ -87,7 +87,7 @@ function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubjectModalProps) {
                 "subject_name", "degree", "class", "total_hours", "hours_weekly",
                 "semester", "teacher_name"]
             );
-            if (data.degree !== "بكالوريوس") {
+            if (data.degree !== "بكلوريوس") {
                 data["class"] = 1;
             }
 
@@ -129,10 +129,10 @@ function MainContent(): JSX.Element {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     const fetchData = () => {
-        teacherRPC.fetch_ta_subject_list("بكالوريوس", 1).then((data) => setData_1st(data));
-        teacherRPC.fetch_ta_subject_list("بكالوريوس", 2).then((data) => setData_2nd(data));
-        teacherRPC.fetch_ta_subject_list("بكالوريوس", 3).then((data) => setData_3rd(data));
-        teacherRPC.fetch_ta_subject_list("بكالوريوس", 4).then((data) => setData_4th(data));
+        teacherRPC.fetch_ta_subject_list("بكلوريوس", 1).then((data) => setData_1st(data));
+        teacherRPC.fetch_ta_subject_list("بكلوريوس", 2).then((data) => setData_2nd(data));
+        teacherRPC.fetch_ta_subject_list("بكلوريوس", 3).then((data) => setData_3rd(data));
+        teacherRPC.fetch_ta_subject_list("بكلوريوس", 4).then((data) => setData_4th(data));
         teacherRPC.fetch_ta_subject_list("ماجستير").then((data) => setData_master(data));
         teacherRPC.fetch_ta_subject_list("دكتوراه").then((data) => setData_phd(data));
     };

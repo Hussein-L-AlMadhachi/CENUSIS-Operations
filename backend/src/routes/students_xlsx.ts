@@ -7,7 +7,6 @@ import { translateHeaders } from "../helpers/headers_translate.js"
 
 
 // services
-import { newStudent, findStudentByName, updateStudent } from '../services/students.js';
 import { isValidAdminNoRPC, isValidSuperadminNoRPC, isValidTeacherNoRPC } from '../auth.js';
 import { normalize_arabic } from '../helpers/normalize_arabic.js';
 import { students, studying, subjects, grading_systems } from '../db.js';

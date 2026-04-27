@@ -1,4 +1,4 @@
-import { type JSX, useState, useEffect } from "react";
+import { type JSX, useState, useEffect, useCallback } from "react";
 import { ArrowRightFromLine, UserRoundPlus } from "lucide-react";
 
 // layouts
@@ -130,18 +130,18 @@ function MainContent(): JSX.Element {
 
     console.log(">>>", data);
 
-    const fetchData = () => {
+    const fetchData = useCallback(() => {
         if (subjectId) {
             teacherRPC.fetchEnrollmentsForSubject(subjectId).then((data) => {
                 setData(data);
                 console.log(">>>", data);
             });
         }
-    };
+    }, [subjectId]);
 
     useEffect(() => {
         fetchData();
-    }, [subjectId]);
+    }, [fetchData, subjectId]);
 
     return <>
         <Section>
@@ -153,7 +153,7 @@ function MainContent(): JSX.Element {
                     data={data || []}
                     headers={{
                         "student_name": "اسم الطالب",
-                        "hours_missed": "غيابات",
+                        "hours_missed": "عدد ساعات الغياب",
                         "studying_year": "سنة",
                         ":edit:": ""
                     }}

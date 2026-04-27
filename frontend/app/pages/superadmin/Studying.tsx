@@ -157,7 +157,7 @@ function MainContent(): JSX.Element {
                     data={data || []}
                     headers={{
                         "student_name": "اسم الطالب",
-                        "hours_missed": "غيابات",
+                        "hours_missed": "عدد ساعات الغياب",
                         "studying_year": "سنة",
                         ":edit:": ""
                     }}

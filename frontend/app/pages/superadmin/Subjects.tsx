@@ -55,7 +55,7 @@ const subjectFormTemplate: DynamicFormTemplate[] = [
     {
         title: "الدرجة العلمية", key: "degree",
         type: "select", options: [
-            { label: "بكالوريوس", value: "بكالوريوس" },
+            { label: "بكلوريوس", value: "بكلوريوس" },
             { label: "ماجستير", value: "ماجستير" },
             { label: "دكتوراه", value: "دكتوراه" }
         ]
@@ -66,13 +66,13 @@ const subjectFormTemplate: DynamicFormTemplate[] = [
             { label: "الثانية", value: 2 },
             { label: "الثالثة", value: 3 },
             { label: "الرابعة", value: 4 }
-        ], condition: { key: "degree", value: "بكالوريوس" }
+        ], condition: { key: "degree", value: "بكلوريوس" }
     },
     {
         title: "الكورس", key: "semester", type: "select", options: [
             { label: "الأول", value: 1 },
             { label: "الثاني", value: 2 },
-        ], condition: { key: "degree", value: "بكالوريوس" }
+        ], condition: { key: "degree", value: "بكلوريوس" }
     },
     { title: "عدد الساعات اسبوعياً", key: "hours_weekly", type: "number", min: 0 },
     { title: "التدريسي", key: "teacher_name", type: "autocomplete", fetchSuggestions: superAdminRPC.autocompleteTeacher },
@@ -86,7 +86,7 @@ function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubjectModalProps) {
                 "subject_name", "degree", "class", "total_hours", "hours_weekly",
                 "semester", "teacher_name", "grading_system_name"]
             );
-            if (data.degree !== "بكالوريوس") {
+            if (data.degree !== "بكلوريوس") {
                 data["class"] = 1;
             }
 
@@ -115,6 +115,7 @@ function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubjectModalProps) {
 }
 
 
+
 function MainContent(): JSX.Element {
 
     const [data_1st, setData_1st] = useState<SubjectData[]>([]);
@@ -127,10 +128,10 @@ function MainContent(): JSX.Element {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     const fetchData = () => {
-        superAdminRPC.filterSubjectsByClassDegree("بكالوريوس", 1).then((data) => setData_1st(data));
-        superAdminRPC.filterSubjectsByClassDegree("بكالوريوس", 2).then((data) => setData_2nd(data));
-        superAdminRPC.filterSubjectsByClassDegree("بكالوريوس", 3).then((data) => setData_3rd(data));
-        superAdminRPC.filterSubjectsByClassDegree("بكالوريوس", 4).then((data) => setData_4th(data));
+        superAdminRPC.filterSubjectsByClassDegree("بكلوريوس", 1).then((data) => setData_1st(data));
+        superAdminRPC.filterSubjectsByClassDegree("بكلوريوس", 2).then((data) => setData_2nd(data));
+        superAdminRPC.filterSubjectsByClassDegree("بكلوريوس", 3).then((data) => setData_3rd(data));
+        superAdminRPC.filterSubjectsByClassDegree("بكلوريوس", 4).then((data) => setData_4th(data));
 
         superAdminRPC.filterSubjectsByDegree("ماجستير").then((data) => setData_master(data));
 
@@ -170,7 +171,7 @@ function MainContent(): JSX.Element {
                         عرض سجل الغياب
                     </a>
                     <a href={`/superadmin/grades/${row.id}`} className="btn btn-xs w-32">
-                        عرض درجات السعي
+                        عرض و ادارة الدرجات
                     </a>
                 </div>
             )
