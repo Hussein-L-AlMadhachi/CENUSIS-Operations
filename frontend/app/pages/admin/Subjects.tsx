@@ -74,7 +74,7 @@ const subjectFormTemplate: DynamicFormTemplate[] = [
         title: "الكورس", key: "semester", type: "select", options: [
             { label: "الأول", value: 1 },
             { label: "الثاني", value: 2 },
-        ], condition: { key: "degree", value: "بكلوريوس" }
+        ]
     },
     { title: "عدد الساعات اسبوعياً", key: "hours_weekly", type: "number", min: 0 },
     { title: "التدريسي", key: "teacher_name", type: "autocomplete", fetchSuggestions: adminRPC.autocompleteTeacher },
@@ -166,7 +166,7 @@ function MainContent(): JSX.Element {
             return (
                 <div className="flex flex-col flex-nowrap gap-1">
                     <a href={`/admin/enrolled/${row.teacher}/${row.id}`} className="btn btn-xs  w-32">
-                        عرض الطلاب
+                        إدارة الطلاب
                     </a>
                 </div>
             )

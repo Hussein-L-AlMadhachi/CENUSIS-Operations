@@ -59,6 +59,8 @@ export interface EnrollmentData {
     studying_year?: number;
     hours_missed?: number;
     grade_fields?: GradeField[];
+    class?: number;
+    degree?: string;
 }
 
 export interface AttendanceRecordData {
@@ -180,6 +182,8 @@ interface AdminsRPC {
 
 interface TeachersRPC {
     load(): Promise<void>;
+
+    fetchSubjectsByLabTeacher(): Promise<SubjectData[]>;
 
     autocompleteStudentsBySubject(searched_name: string, subject_id: number): Promise<string[]>;
 

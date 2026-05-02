@@ -19,7 +19,7 @@ export async function newEnrollment(metadata: Metadata, data: any) {
     if (data["student_name"]) delete data["student_name"];
 
     validate_params(data, [
-        "teacher_id", "student_id", "subject_id", "exam_retakes", "semester_retakes", "studying_year",
+        "teacher_id", "student_id", "subject_id", "studying_year",
         "hours_missed"
     ]);
 

@@ -57,7 +57,7 @@ interface EnrollModalProps {
 }
 
 function EnrollModal({ isOpen, onClose, onSuccess, subjectId, teacherId }: EnrollModalProps) {
-    const handleAddEnrollment = async (data: any) => {
+    const handleAddEnrollment = async (data: Partial<EnrollmentData>) => {
         if (!data.student_name) {
             throw "يجب اختيار طالب";
         }
@@ -152,13 +152,14 @@ function MainContent(): JSX.Element {
                     headers={{
                         "student_name": "اسم الطالب",
                         "hours_missed": "عدد ساعات الغياب",
-                        "studying_year": "سنة",
+                        "class": "المرحلة",
+                        "degree":"الدرجة العلمية",
                         ":edit:": ""
                     }}
                     onDelete={(id: number) => {
                         adminRPC.deleteEnrollment(id).then(() => fetchData());
                     }}
-                    onSave={async (id: number, form_data: any) => {
+                    onSave={async (id: number, form_data: Partial<EnrollmentData>) => {
                         try {
                             const updates: Partial<EnrollmentData> = { ...form_data, subject_id:subjectId, teacher_id:teacherId };
 
@@ -182,9 +183,15 @@ function MainContent(): JSX.Element {
                             title: "اسم الطالب",
                             key: "student_name",
                             type: "autocomplete",
+                            disabled: true,
                             fetchSuggestions: (q) => adminRPC.autocompleteStudent(q)
                         },
-                        { title: "السنة الدراسية", key: "studying_year", type: "number" }
+                        { 
+                            title: "السنة الدراسية",
+                            key: "studying_year",
+                            type: "number",
+                            disabled: true,
+                        }
                     ]}
                 />
             </Subsection>

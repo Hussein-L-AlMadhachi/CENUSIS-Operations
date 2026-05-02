@@ -132,7 +132,7 @@ export function TeachersGradesPage(): JSX.Element {
     return <>
         <MainLayout
             main={MainContent}
-            title={"رفع درجات السعي"}
+            title={"درجات مادة"}
             sidebar={sidebar_pages}
         />
     </>

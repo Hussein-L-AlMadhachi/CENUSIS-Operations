@@ -99,7 +99,9 @@ export class Studying extends PG_Table {
         return await this.sql`
             SELECT 
                 STUDYING.*, 
-                STUDENT.student_name 
+                STUDENT.student_name,
+                STUDENT.degree,
+                STUDENT.class
             FROM studying AS STUDYING
             JOIN ${this.sql(students.table_name)} AS STUDENT
                 ON STUDYING.student=STUDENT.id

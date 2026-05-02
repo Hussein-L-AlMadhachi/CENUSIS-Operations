@@ -33,6 +33,7 @@ interface DynamicFormProps {
         value: any;
         onChange: (val: any) => void;
         field: DynamicFormTemplate;
+        disabled?: boolean;
     }>>;
 }
 
@@ -217,6 +218,7 @@ export function DynamicForm(props: DynamicFormProps) {
                                         className="w-full"
                                         ghost={false}
                                         expand={true}
+                                        disabled={field.disabled}
                                     />
                                 )}
                                 {field.type === "subform" && field.subformTemplate && (
@@ -310,6 +312,7 @@ export function DynamicForm(props: DynamicFormProps) {
                                         value={data[field.key || field.title]}
                                         onChange={(val: any) => handleChange(field.key || field.title, val)}
                                         field={field}
+                                        disabled={field.disabled}
                                     />
                                 )}
                             </div>

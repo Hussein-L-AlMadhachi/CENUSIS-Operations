@@ -264,3 +264,18 @@ export async function fetchSubjectsByTeacher(metadata: Metadata, degree: string,
     return result;
 }
 
+
+export async function fetchSubjectsByLabTeacher(metadata: Metadata): Promise<postgres.RowList<postgres.Row[]>> {
+
+    const lab_teacher = await teaching_staff.fetchByUserId(metadata.auth.user_id as number);
+    if (!lab_teacher) {
+        throw new Error("لم يتم العثور على التدريسي");
+    }
+
+    const result = await subjects.filterByLabTeacher(lab_teacher.id as number);
+    if (!result) {
+        throw new Error("لم يتم العثور على اي مادة");
+    }
+
+    return result;
+}

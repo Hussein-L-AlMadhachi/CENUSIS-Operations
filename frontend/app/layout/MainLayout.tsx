@@ -10,7 +10,6 @@ import { ThemeController } from "@/components/ThemeController";
 
 
 
-
 interface MainLayoutProps {
     main: React.FC;
     sidebar?: { label: string, link: string, icon: React.FC<{ size: number, strokeWidth: number }> }[];
@@ -51,7 +50,7 @@ export function MainLayout(props: MainLayoutProps): JSX.Element {
         <div className="drawer-content overflow-x-hidden max-w-full">
 
             {/* Navbar */}
-            <nav className="navbar w-[calc(100%-16px)] mr-4 bg-base-300 rounded-full rounded-l-none mt-2 justify-between items-center">
+            <nav className="navbar w-[calc(100%-16px)] mr-4 bg-[#3e4659] text-white rounded-full rounded-l-none mt-2 justify-between items-center">
                 <label htmlFor="my-drawer-4" aria-label="open sidebar" className="btn btn-circle btn-ghost sm:hidden">
                     {/* Sidebar toggle icon */}
                     <ArrowLeftFromLine size={20} strokeWidth={1.5} />
@@ -71,7 +70,7 @@ export function MainLayout(props: MainLayoutProps): JSX.Element {
 
         <div className="drawer-side is-drawer-close:overflow-visible">
             <label htmlFor="my-drawer-4" aria-label="close sidebar" className="drawer-overlay"></label>
-            <div className="flex min-h-[calc(100vh-8px)] flex-col sm:mt-2 items-start bg-base-200
+            <div className="flex min-h-[calc(100vh-8px)] flex-col sm:mt-2 items-start bg-[#1e2537] text-white
                 is-drawer-close:w-14 is-drawer-open:w-[200px] sm:rounded-full sm:rounded-b-none rounded-2xl md:rounded-b-none">
 
                 {/* Sidebar content */}

@@ -15,7 +15,6 @@ import { useValidRoute } from "@/hooks/useValidRoute";
 // Globals
 import { type SubjectData, teacherRPC } from "@/rpc";
 import { useValidParams as validateParams } from "@/hooks/useValidParams";
-import Tabs from "@/components/Tabs";
 import { sidebar_pages } from "./sidebar_pages";
 
 
@@ -27,7 +26,8 @@ interface AddSubjectModalProps {
 
 const subjectFormTemplate: DynamicFormTemplate[] = [
     { title: "اسم المادة", key: "subject_name", type: "text" },
-    { title: "نظام الدرجات", key: "grading_system_name", type: "autocomplete", fetchSuggestions: teacherRPC.autocompleteGradingSystem },
+    { title: "نظام الدرجات", key: "grading_system_name", 
+    type: "autocomplete", fetchSuggestions: teacherRPC.autocompleteGradingSystem },
     {
         title: "الدرجة العلمية", key: "degree",
         type: "select", options: [
@@ -93,24 +93,13 @@ function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubjectModalProps) {
 
 function MainContent(): JSX.Element {
 
-    const [data_1st, setData_1st] = useState<SubjectData[]>([]);
-    const [data_2nd, setData_2nd] = useState<SubjectData[]>([]);
-    const [data_3rd, setData_3rd] = useState<SubjectData[]>([]);
-    const [data_4th, setData_4th] = useState<SubjectData[]>([]);
-    const [data_master, setData_master] = useState<SubjectData[]>([]);
-    const [data_phd, setData_phd] = useState<SubjectData[]>([]);
+    const [data, setData] = useState<SubjectData[]>([]);
+
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     const fetchData = () => {
-        teacherRPC.fetchSubjectsByTeacher("بكلوريوس", 1).then((data) => setData_1st(data));
-        teacherRPC.fetchSubjectsByTeacher("بكلوريوس", 2).then((data) => setData_2nd(data));
-        teacherRPC.fetchSubjectsByTeacher("بكلوريوس", 3).then((data) => setData_3rd(data));
-        teacherRPC.fetchSubjectsByTeacher("بكلوريوس", 4).then((data) => setData_4th(data));
-
-        teacherRPC.fetchSubjectsByTeacher("ماجستير").then((data) => setData_master(data));
-
-        teacherRPC.fetchSubjectsByTeacher("دكتوراه").then((data) => setData_phd(data));
+        teacherRPC.fetchSubjectsByLabTeacher().then((data) => setData(data));
 
     };
 
@@ -156,70 +145,14 @@ function MainContent(): JSX.Element {
     return <>
         <Section>
             <Subsection>
-                <Tabs group="students" tabs={
-                    [
-                        {
-                            label: "المرحلة الأولى", content: <EditableTable
-                                data={data_1st || []}
-                                headers={table_headers}
-                                onDelete={handleDeleteSubject}
-                                onSave={handleUpdateSubject}
-                                formTemplate={subjectFormTemplate}
-                                customRenderers={customRenderers}
-                            />
-                        },
-                        {
-                            label: "المرحلة الثانية", content: <EditableTable
-                                data={data_2nd || []}
-                                headers={table_headers}
-                                onDelete={handleDeleteSubject}
-                                onSave={handleUpdateSubject}
-                                formTemplate={subjectFormTemplate}
-                                customRenderers={customRenderers}
-                            />
-                        },
-                        {
-                            label: "المرحلة الثالثة", content: <EditableTable
-                                data={data_3rd || []}
-                                headers={table_headers}
-                                onDelete={handleDeleteSubject}
-                                onSave={handleUpdateSubject}
-                                formTemplate={subjectFormTemplate}
-                                customRenderers={customRenderers}
-                            />
-                        },
-                        {
-                            label: "المرحلة الرابعة", content: <EditableTable
-                                data={data_4th || []}
-                                headers={table_headers}
-                                onDelete={handleDeleteSubject}
-                                onSave={handleUpdateSubject}
-                                formTemplate={subjectFormTemplate}
-                                customRenderers={customRenderers}
-                            />
-                        },
-                        {
-                            label: "الماجستير", content: <EditableTable
-                                data={data_master || []}
-                                headers={table_headers}
-                                onDelete={handleDeleteSubject}
-                                onSave={handleUpdateSubject}
-                                formTemplate={subjectFormTemplate}
-                                customRenderers={customRenderers}
-                            />
-                        },
-                        {
-                            label: "الدكتوراه", content: <EditableTable
-                                data={data_phd || []}
-                                headers={table_headers}
-                                onDelete={handleDeleteSubject}
-                                onSave={handleUpdateSubject}
-                                formTemplate={subjectFormTemplate}
-                                customRenderers={customRenderers}
-                            />
-                        }
-                    ]
-                } />
+                <EditableTable
+                    data={data || []}
+                    headers={table_headers}
+                    onDelete={handleDeleteSubject}
+                    onSave={handleUpdateSubject}
+                    formTemplate={subjectFormTemplate}
+                    customRenderers={customRenderers}
+                />
             </Subsection>
         </Section>
 
@@ -232,16 +165,13 @@ function MainContent(): JSX.Element {
 }
 
 
-///
-
-
-export function TeachersSubjectsPage(): JSX.Element {
+export function TeachersLabSubjectsPage(): JSX.Element {
     useValidRoute(["teacher"], "/login");
 
     return <>
         <MainLayout
             main={MainContent}
-            title={"المواد الدراسية"}
+            title={"المواد المختبرية"}
             sidebar={sidebar_pages}
         />
     </>

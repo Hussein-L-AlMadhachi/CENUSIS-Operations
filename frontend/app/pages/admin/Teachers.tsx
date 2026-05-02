@@ -27,7 +27,7 @@ interface OptionsProps {
 
 function Options({ onAddClick }: OptionsProps) {
     return <div id="options" className="menu lg:menu-horizontal menu-vertical w-full justify-between">
-        <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> إدارة الحسابات </div>
+        <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> إدارة حسابات الأساتذة </div>
         <ul className="menu bg-base-200 lg:menu-horizontal rounded-box gap-1 menu-vertical max-md:w-full">
 
             <li>

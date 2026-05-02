@@ -18,6 +18,7 @@ export class GradingSystems extends PG_Table {
                     name                VARCHAR(150) NOT NULL,
                     normalized_name     VARCHAR(150) UNIQUE NOT NULL,
                     fields              JSONB NOT NULL DEFAULT '[]'::jsonb
+                    deleted_at          TIMESTAMP DEFAULT NULL
                 )
             `;
 
@@ -33,20 +34,32 @@ export class GradingSystems extends PG_Table {
             SELECT name, word_similarity(${searched_name}, normalized_name) AS similarity
             FROM grading_systems
             WHERE word_similarity(${searched_name}, normalized_name) > 0.3 AND normalized_name % ${searched_name}
+            AND deleted_at IS NULL
             ORDER BY similarity DESC LIMIT 10;
         `;
     }
 
     public async findByName(normalized_name: string) {
         return (await this.sql`
-            SELECT ${this.sql(this.visibles)} FROM grading_systems WHERE normalized_name = ${normalized_name};
+            SELECT ${this.sql(this.visibles)} FROM grading_systems WHERE normalized_name = ${normalized_name} AND deleted_at IS NULL;
         `)[0];
     }
 
 
     public async listAll() {
         return await this.sql`
-            SELECT ${this.sql(this.visibles)} FROM grading_systems ORDER BY name ASC;
+            SELECT ${this.sql(this.visibles)} FROM grading_systems WHERE deleted_at IS NULL ORDER BY name ASC;
+        `;
+    }
+
+    public async fetch(id: number) {
+        return await this.sql`
+            SELECT ${this.sql(this.visibles)} FROM grading_systems WHERE id = ${id} AND deleted_at IS NULL;`;
+    }
+
+    public async delete(id: number) {
+        return await this.sql`
+            UPDATE grading_systems SET deleted_at = CURRENT_TIMESTAMP WHERE id = ${id};
         `;
     }
 }

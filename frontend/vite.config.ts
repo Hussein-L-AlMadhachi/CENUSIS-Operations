@@ -28,7 +28,8 @@ export default defineConfig({
                 changeOrigin: true,
                 secure: false,
             }
-        }
+        },
+        allowedHosts:["0e9c5b3ef2a8ba.lhr.life"]
     }
 
 })
