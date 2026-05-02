@@ -1,5 +1,5 @@
 import { type JSX, useState, useEffect } from "react";
-import { UserRoundPlus } from "lucide-react";
+import { UserRoundPlus, Download } from "lucide-react";
 
 // layouts
 import { MainLayout } from "@/layout/MainLayout";
@@ -14,7 +14,7 @@ import { Section, Subsection } from "@/components/Section";
 import { useValidRoute } from "@/hooks/useValidRoute";
 
 // Globals
-import { type SubjectData, superAdminRPC } from "@/rpc";
+import { type SubjectData, type GradingSystemData, superAdminRPC } from "@/rpc";
 import { useValidParams as validateParams } from "@/hooks/useValidParams";
 import Tabs from "@/components/Tabs";
 import { sidebar_pages } from "./sidebar_pages";
@@ -151,6 +151,26 @@ function MainContent(): JSX.Element {
         await superAdminRPC.deleteSubject(id).then(() => fetchData());
     };
 
+    const [gradingSystems, setGradingSystems] = useState<GradingSystemData[]>([]);
+    const [selectedGradingSystem, setSelectedGradingSystem] = useState<string>('');
+
+    useEffect(() => {
+        superAdminRPC.fetchGradingSystems().then((data) => {
+            setGradingSystems(data);
+            if (data.length > 0 && data[0].name) {
+                setSelectedGradingSystem(data[0].name);
+            }
+        });
+    }, []);
+
+    const handleExportGrades = (degree: string, classNumber: number) => {
+        if (!selectedGradingSystem) return;
+        window.open(
+            `/api/grades/export?degree=${encodeURIComponent(degree)}&class=${classNumber}&grading_system=${encodeURIComponent(selectedGradingSystem)}`,
+            '_blank'
+        );
+    };
+
     const table_headers = {
         "subject_name": "الاسم",
         "grading_system_name": "نظام الدرجات",
@@ -178,6 +198,30 @@ function MainContent(): JSX.Element {
         },
     }
 
+    const ExportBar = ({ degree, classNumber }: { degree: string; classNumber: number }) => (
+        <div className="flex justify-end items-center gap-2">
+            <select
+                className="select select-sm select-bordered"
+                value={selectedGradingSystem}
+                onChange={(e) => setSelectedGradingSystem(e.target.value)}
+            >
+                {gradingSystems.length === 0 && (
+                    <option value="">لا توجد أنظمة درجات</option>
+                )}
+                {gradingSystems.map((gs) => (
+                    <option key={gs.id} value={gs.name}>{gs.name}</option>
+                ))}
+            </select>
+            <button
+                className="btn btn-sm"
+                onClick={() => handleExportGrades(degree, classNumber)}
+                disabled={!selectedGradingSystem}
+            >
+                <Download size={16} /> تصدير الدرجات
+            </button>
+        </div>
+    );
+
     return <>
         <Section>
             <Subsection>
@@ -187,64 +231,82 @@ function MainContent(): JSX.Element {
                 <Tabs className="w-full" group="students" tabs={
                     [
                         {
-                            label: "المرحلة الأولى", content: <EditableTable
-                                data={data_1st || []}
-                                headers={table_headers}
-                                onDelete={handleDeleteSubject}
-                                onSave={handleUpdateSubject}
-                                formTemplate={subjectFormTemplate}
-                                customRenderers={customRenderers}
-                            />
+                            label: "المرحلة الأولى", content: <div className="flex flex-col gap-4">
+                                <ExportBar degree="بكلوريوس" classNumber={1} />
+                                <EditableTable
+                                    data={data_1st || []}
+                                    headers={table_headers}
+                                    onDelete={handleDeleteSubject}
+                                    onSave={handleUpdateSubject}
+                                    formTemplate={subjectFormTemplate}
+                                    customRenderers={customRenderers}
+                                />
+                            </div>
                         },
                         {
-                            label: "المرحلة الثانية", content: <EditableTable
-                                data={data_2nd || []}
-                                headers={table_headers}
-                                onDelete={handleDeleteSubject}
-                                onSave={handleUpdateSubject}
-                                formTemplate={subjectFormTemplate}
-                                customRenderers={customRenderers}
-                            />
+                            label: "المرحلة الثانية", content: <div className="flex flex-col gap-4">
+                                <ExportBar degree="بكلوريوس" classNumber={2} />
+                                <EditableTable
+                                    data={data_2nd || []}
+                                    headers={table_headers}
+                                    onDelete={handleDeleteSubject}
+                                    onSave={handleUpdateSubject}
+                                    formTemplate={subjectFormTemplate}
+                                    customRenderers={customRenderers}
+                                />
+                            </div>
                         },
                         {
-                            label: "المرحلة الثالثة", content: <EditableTable
-                                data={data_3rd || []}
-                                headers={table_headers}
-                                onDelete={handleDeleteSubject}
-                                onSave={handleUpdateSubject}
-                                formTemplate={subjectFormTemplate}
-                                customRenderers={customRenderers}
-                            />
+                            label: "المرحلة الثالثة", content: <div className="flex flex-col gap-4">
+                                <ExportBar degree="بكلوريوس" classNumber={3} />
+                                <EditableTable
+                                    data={data_3rd || []}
+                                    headers={table_headers}
+                                    onDelete={handleDeleteSubject}
+                                    onSave={handleUpdateSubject}
+                                    formTemplate={subjectFormTemplate}
+                                    customRenderers={customRenderers}
+                                />
+                            </div>
                         },
                         {
-                            label: "المرحلة الرابعة", content: <EditableTable
-                                data={data_4th || []}
-                                headers={table_headers}
-                                onDelete={handleDeleteSubject}
-                                onSave={handleUpdateSubject}
-                                formTemplate={subjectFormTemplate}
-                                customRenderers={customRenderers}
-                            />
+                            label: "المرحلة الرابعة", content: <div className="flex flex-col gap-4">
+                                <ExportBar degree="بكلوريوس" classNumber={4} />
+                                <EditableTable
+                                    data={data_4th || []}
+                                    headers={table_headers}
+                                    onDelete={handleDeleteSubject}
+                                    onSave={handleUpdateSubject}
+                                    formTemplate={subjectFormTemplate}
+                                    customRenderers={customRenderers}
+                                />
+                            </div>
                         },
                         {
-                            label: "الماجستير", content: <EditableTable
-                                data={data_master || []}
-                                headers={table_headers}
-                                onDelete={handleDeleteSubject}
-                                onSave={handleUpdateSubject}
-                                formTemplate={subjectFormTemplate}
-                                customRenderers={customRenderers}
-                            />
+                            label: "الماجستير", content: <div className="flex flex-col gap-4">
+                                <ExportBar degree="ماجستير" classNumber={1} />
+                                <EditableTable
+                                    data={data_master || []}
+                                    headers={table_headers}
+                                    onDelete={handleDeleteSubject}
+                                    onSave={handleUpdateSubject}
+                                    formTemplate={subjectFormTemplate}
+                                    customRenderers={customRenderers}
+                                />
+                            </div>
                         },
                         {
-                            label: "الدكتوراه", content: <EditableTable
-                                data={data_phd || []}
-                                headers={table_headers}
-                                onDelete={handleDeleteSubject}
-                                onSave={handleUpdateSubject}
-                                formTemplate={subjectFormTemplate}
-                                customRenderers={customRenderers}
-                            />
+                            label: "الدكتوراه", content: <div className="flex flex-col gap-4">
+                                <ExportBar degree="دكتوراه" classNumber={1} />
+                                <EditableTable
+                                    data={data_phd || []}
+                                    headers={table_headers}
+                                    onDelete={handleDeleteSubject}
+                                    onSave={handleUpdateSubject}
+                                    formTemplate={subjectFormTemplate}
+                                    customRenderers={customRenderers}
+                                />
+                            </div>
                         }
                     ]
                 } />

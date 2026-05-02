@@ -1,5 +1,5 @@
 import { type JSX, useState, useEffect } from "react";
-import { Search, UserRoundPlus } from "lucide-react";
+import { UserRoundPlus } from "lucide-react";
 
 // layouts
 import { MainLayout } from "@/layout/MainLayout";
@@ -9,7 +9,6 @@ import { EditableTable } from "@/components/EditableTable";
 import { Modal } from "@/components/Modal";
 import { DynamicForm } from "@/components/DynamicForm";
 import { Section, Subsection } from "@/components/Section";
-import { AutocompleteText } from "@/components/AutocompleteText";
 
 // Hooks
 import { useValidRoute } from "@/hooks/useValidRoute";
@@ -53,6 +52,12 @@ interface AddTeacherFormData {
     password?: string;
 }
 
+interface TeacherUpdateFormData {
+    id?: number;
+    teacher_name?: string;
+    password?: string;
+}
+
 function AddTeacherModal({ isOpen, onClose, onSuccess }: AddTeacherModalProps) {
     const handleAddTeacher = async (data: AddTeacherFormData) => {
         if (!data.teacher_name || !data.password) {
@@ -78,7 +83,7 @@ function AddTeacherModal({ isOpen, onClose, onSuccess }: AddTeacherModalProps) {
             <DynamicForm
                 key={isOpen ? "open" : "closed"}
                 template={[
-                    { title: "الاسم الكامل", key: "teacher_name", type: "text" },
+                    { title: "الاسم الكامل", key: "teacher_name", type: "text", disabled:true },
                     { title: "كلمة السر", key: "password", type: "text" }
                 ]}
                 onSubmit={handleAddTeacher}
@@ -118,11 +123,15 @@ function MainContent(): JSX.Element {
                     onDelete={(id: number) => {
                         superAdminRPC.deleteUser(id).then(() => fetchData());
                     }}
-                    onSave={(data: any) => {
-                        superAdminRPC.updateUser(data.id, data).then(() => fetchData());
+                    onSave={(id: number, rowData: TeacherUpdateFormData) => {
+                        superAdminRPC.updateUser(String(rowData.id ?? id), {
+                            id: rowData.id ?? id,
+                            name: rowData.teacher_name || "",
+                            password: rowData.password
+                        }).then(() => fetchData());
                     }}
                     formTemplate={[
-                        { title: "الاسم الكامل", key: "teacher_name", type: "text" },
+                        { title: "الاسم الكامل", key: "teacher_name", type: "text", disabled:true },
                         { title: "كلمة السر", key: "password", type: "text" }
                     ]}
                 />

@@ -31,11 +31,19 @@ interface OptionsProps {
 
 
 function Options({ onImportSuccess, studying_id }: OptionsProps) {
+    const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
+
+    const showErrorModal = (message: string) => {
+        setErrorMessage(message);
+        setIsErrorModalOpen(true);
+    };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || e.target.files.length === 0) return;
+        const input = e.currentTarget;
+        if (!input.files || input.files.length === 0) return;
 
-        const file = e.target.files[0];
+        const file = input.files[0];
         const formData = new FormData();
         formData.append("file", file);
 
@@ -49,29 +57,50 @@ function Options({ onImportSuccess, studying_id }: OptionsProps) {
                 onImportSuccess();
             } else {
                 const result = await response.json();
-                alert("خطأ في معالجة الملف: " + result.error);
+                console.log(result);
+                showErrorModal("خطأ في معالجة الملف: " + (result?.err || "حدث خطأ غير متوقع"));
             }
         } catch (error) {
             console.error("Upload error:", error);
-            alert("خطأ في رفع الملف");
+            showErrorModal("خطأ في رفع الملف");
+        } finally {
+            // Allow selecting the same file again so failures can retrigger the flow.
+            input.value = "";
         }
     };
 
-    return <div id="options" className="menu lg:menu-horizontal menu-vertical w-full justify-between">
-        <Link href="/teacher/subjects" className="btn btn-md btn-ghost btn-circle">
-            <ArrowRightFromLine />
-        </Link>
-        <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> رفع درجات الطلاب </div>
-        <ul className="menu bg-base-200 lg:menu-horizontal rounded-box gap-1 menu-vertical max-md:w-full">
+    return <>
+        <div id="options" className="menu lg:menu-horizontal menu-vertical w-full justify-between">
+            <Link href="/teacher/subjects" className="btn btn-md btn-ghost btn-circle">
+                <ArrowRightFromLine />
+            </Link>
+            <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> رفع درجات الطلاب </div>
+            <ul className="menu bg-base-200 lg:menu-horizontal rounded-box gap-1 menu-vertical max-md:w-full">
 
-            <li>
-                <label className="btn">
-                    <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
-                    <Upload size={18} /> رفع البيانات من برنامج أكسل
-                </label>
-            </li>
-        </ul>
-    </div>;
+                <li>
+                    <label className="btn">
+                        <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
+                        <Upload size={18} /> رفع البيانات من برنامج أكسل
+                    </label>
+                </li>
+            </ul>
+        </div>
+
+        <dialog className={`modal ${isErrorModalOpen ? "modal-open" : ""}`}>
+            <div className="modal-box">
+                <h3 className="text-lg font-bold">حدث خطأ</h3>
+                <p className="py-4">{errorMessage}</p>
+                <div className="modal-action">
+                    <button className="btn btn-error btn-outline" onClick={() => setIsErrorModalOpen(false)}>
+                        إغلاق
+                    </button>
+                </div>
+            </div>
+            <form method="dialog" className="modal-backdrop">
+                <button onClick={() => setIsErrorModalOpen(false)}>close</button>
+            </form>
+        </dialog>
+    </>;
 }
 
 

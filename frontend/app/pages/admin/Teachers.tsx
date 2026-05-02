@@ -47,14 +47,28 @@ interface AddTeacherModalProps {
     onSuccess: () => void;
 }
 
+interface AddTeacherFormData {
+    teacher_name?: string;
+    password?: string;
+}
+
+interface TeacherUpdateFormData {
+    id?: number;
+    teacher_name?: string;
+    password?: string;
+}
+
 function AddTeacherModal({ isOpen, onClose, onSuccess }: AddTeacherModalProps) {
-    const handleAddTeacher = async (data: any) => {
+    const handleAddTeacher = async (data: AddTeacherFormData) => {
         if (!data.teacher_name || !data.password) {
             throw "يجب ملئ جميع الحقول";
         }
 
         try {
-            await adminRPC.registerTeacher(data);
+            await adminRPC.registerTeacher({
+                name: data.teacher_name,
+                password: data.password
+            });
             onSuccess();
             onClose();
         } catch (error) {
@@ -109,11 +123,15 @@ function MainContent(): JSX.Element {
                     onDelete={(id: number) => {
                         adminRPC.deleteUser(id).then(() => fetchData());
                     }}
-                    onSave={(data: any) => {
-                        adminRPC.updateUser(data.id, data).then(() => fetchData());
+                    onSave={(id: number, rowData: TeacherUpdateFormData) => {
+                        adminRPC.updateUser(String(rowData.id ?? id), {
+                            id: rowData.id ?? id,
+                            name: rowData.teacher_name || "",
+                            password: rowData.password
+                        }).then(() => fetchData());
                     }}
                     formTemplate={[
-                        { title: "الاسم الكامل", key: "teacher_name", type: "text" },
+                        { title: "الاسم الكامل", key: "teacher_name", type: "text" ,disabled:true},
                         { title: "كلمة السر", key: "password", type: "text" }
                     ]}
                 />

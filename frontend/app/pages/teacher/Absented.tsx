@@ -65,18 +65,7 @@ function MainContent(): JSX.Element {
             hours_absent: row.hours_absent,
         });
 
-        setData((currentData) => currentData.map((currentRow) => {
-            const currentStudentId = currentRow.student_id ?? currentRow.id;
-
-            if (currentStudentId !== student_id) {
-                return currentRow;
-            }
-
-            return {
-                ...currentRow,
-                hours_absent: row.hours_absent,
-            };
-        }));
+        await fetchData();
     };
 
     return <>

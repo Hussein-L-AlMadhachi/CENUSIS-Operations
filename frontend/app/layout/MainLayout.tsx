@@ -4,7 +4,7 @@ import { ArrowLeftFromLine, LockKeyhole } from "lucide-react";
 import { Link } from "wouter"
 
 import UniLogo from "../../public/Assets/logo.jpg"
-import { publicRPC } from "@/rpc";
+import { adminRPC, publicRPC, superAdminRPC, teacherRPC } from "@/rpc";
 import { navigate } from "wouter/use-browser-location";
 import { ThemeController } from "@/components/ThemeController";
 
@@ -27,6 +27,7 @@ export function MainLayout(props: MainLayoutProps): JSX.Element {
     const [isDrawerOpen, setIsDrawerOpen] = useState(() =>
         typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches
     );
+    const [username, setUsername] = useState<string>("");
 
     useEffect(() => {
         const desktopQuery = window.matchMedia("(min-width: 1024px)");
@@ -36,6 +37,25 @@ export function MainLayout(props: MainLayoutProps): JSX.Element {
         desktopQuery.addEventListener("change", updateDrawerDefault);
 
         return () => desktopQuery.removeEventListener("change", updateDrawerDefault);
+    }, []);
+
+    useEffect(() => {
+        const pathname = window.location.pathname;
+        const rpcClient = pathname.startsWith("/admin")
+            ? adminRPC
+            : pathname.startsWith("/superadmin")
+                ? superAdminRPC
+                : pathname.startsWith("/teacher")
+                    ? teacherRPC
+                    : null;
+
+        if (!rpcClient) {
+            return;
+        }
+
+        rpcClient.getAccountInfo()
+            .then((accountInfo) => setUsername(accountInfo.username))
+            .catch(() => setUsername(""));
     }, []);
 
     return <div className="drawer sm:drawer-open w-full">
@@ -75,12 +95,29 @@ export function MainLayout(props: MainLayoutProps): JSX.Element {
 
                 {/* Sidebar content */}
                 <ul className="menu w-full grow text-base">
-                    <li className="is-drawer-open:mb-5 m-1 is-drawer-close:m-0">
+                    <li className="is-drawer-open:mb-2 m-1 is-drawer-close:m-0">
                         <label htmlFor="my-drawer-4" aria-label="افتح الشريط الجانبي" className="is-drawer-close:tooltip is-drawer-close:tooltip-left" data-tip="إفتح">
                             {/* Sidebar toggle icon */}
                             <img className="is-drawer-close:h-5 w-full my-2 rounded-full" src={UniLogo} alt="logo" />
                         </label>
                     </li>
+                    {username ? (
+                        <li className="h-8 px-3 mb-20 w-full is-drawer-close:px-0 is-drawer-close:flex is-drawer-close:justify-center">
+                            <span
+                                className="text-sm text-gray-300 mx-auto text-center opacity-85 truncate max-w-full is-drawer-close:tooltip is-drawer-close:tooltip-left"
+                                data-tip={username}
+                            >
+                                حساب {username}
+                            </span>
+                        </li>
+                    ) : <li className="h-8 px-3 mb-20 w-full is-drawer-close:px-0 is-drawer-close:flex is-drawer-close:justify-center">
+                    <span
+                        className="text-sm text-gray-300 mx-auto text-center opacity-85 truncate max-w-full is-drawer-close:tooltip is-drawer-close:tooltip-left"
+                        data-tip={username}
+                    >
+                        -
+                    </span>
+                </li>}
 
                     {props.sidebar?.map((item, index) => (
                         <li key={index}>

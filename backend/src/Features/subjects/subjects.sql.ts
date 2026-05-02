@@ -138,6 +138,16 @@ export class Subjects extends PG_Table {
             ORDER BY subject_name`;
     }
 
+    async filterByClassDegreeGradingSystem(degree: string, class_id: number, grading_system_name: string) {
+        return await this.sql`
+            SELECT ${this.sql(columns2select)}, grading_systems.name AS grading_system_name 
+            FROM subjects 
+            JOIN teaching_staff ON subjects.teacher = teaching_staff.id 
+            JOIN grading_systems ON subjects.grading_system_id = grading_systems.id 
+            WHERE degree=${degree} AND class=${class_id} AND grading_systems.name=${grading_system_name} AND subjects.deleted_at IS NULL
+            ORDER BY subject_name`;
+    }
+
     async filterByDegree(degree: string) {
         return await this.sql`
             SELECT ${this.sql(columns2select)}, grading_systems.name AS grading_system_name 

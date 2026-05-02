@@ -1,5 +1,5 @@
 import { type JSX, useState, useEffect } from "react";
-import { Search, UserRoundPlus, Upload } from "lucide-react";
+import { UserRoundPlus, Upload } from "lucide-react";
 
 // layouts
 import { MainLayout } from "@/layout/MainLayout";
@@ -9,7 +9,6 @@ import { EditableTable } from "@/components/EditableTable";
 import { Modal } from "@/components/Modal";
 import { DynamicForm, type DynamicFormTemplate } from "@/components/DynamicForm";
 import { Section, Subsection } from "@/components/Section";
-import { AutocompleteText } from "@/components/AutocompleteText";
 
 // Hooks
 import { useValidRoute } from "@/hooks/useValidRoute";

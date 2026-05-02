@@ -18,8 +18,8 @@ export class Absented extends PG_Table {
                 student             INTEGER NOT NULL,
                 hours_absent        INTEGER NOT NULL,
 
-                FOREIGN KEY (attendance_record) REFERENCES ${this.sql(attendance_record.table_name)}(id) ON DELETE CASCADE,
-                FOREIGN KEY (student) REFERENCES ${this.sql(students.table_name)}(id) ON DELETE CASCADE
+                FOREIGN KEY (attendance_record) REFERENCES attendance_record(id) ON DELETE CASCADE,
+                FOREIGN KEY (student) REFERENCES students(id) ON DELETE CASCADE
             );
         `;
     }
@@ -43,15 +43,25 @@ export class Absented extends PG_Table {
     async markAbsent(student_id: number, attendance_record_id: number, hours_absent: number) {
         await this.sql.begin(async sql => {
             await sql`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE`;
-
+            
             const [existingAbsence] = await sql`
-                SELECT hours_absent
-                FROM absented
-                WHERE student = ${student_id}
-                AND attendance_record = ${attendance_record_id}
+            SELECT hours_absent
+            FROM absented
+            WHERE student = ${student_id}
+            AND attendance_record = ${attendance_record_id}
             `;
-
+            
             if (existingAbsence) {
+                const record = await sql`select * from attendance_record ar join subjects s on ar.subject = s.id where ar.id = ${attendance_record_id};`;
+                const hoursWeekly = Number(record[0]!.hours_weekly);
+                console.log(hoursWeekly, ".",hours_absent)
+                if (hoursWeekly < hours_absent) {
+                    hours_absent = hoursWeekly;
+                }
+
+                const oldHoursAbsent = Number(existingAbsence.hours_absent);
+                const delta = hours_absent - oldHoursAbsent;
+
                 await sql`
                     UPDATE absented
                     SET hours_absent = ${hours_absent}
@@ -59,15 +69,14 @@ export class Absented extends PG_Table {
                     AND attendance_record = ${attendance_record_id}
                 `;
 
-                const delta = hours_absent - existingAbsence.hours_absent;
                 if (delta !== 0) {
                     await sql`
-                        UPDATE ${this.sql(studying.table_name)}
+                        UPDATE studying
                         SET hours_missed = hours_missed + ${delta}
                         WHERE student = ${student_id}
                         AND subject = (
                             SELECT subject
-                            FROM ${this.sql(attendance_record.table_name)}
+                            FROM attendance_record
                             WHERE id = ${attendance_record_id}
                         )
                     `;
@@ -81,12 +90,12 @@ export class Absented extends PG_Table {
             `;
 
             await sql`
-                UPDATE ${this.sql(studying.table_name)} 
+                UPDATE studying
                 SET hours_missed = hours_missed + ${hours_absent}
                 WHERE student = ${student_id}
                 AND subject = (
                     SELECT subject
-                    FROM ${this.sql(attendance_record.table_name)}
+                    FROM attendance_record
                     WHERE id = ${attendance_record_id}
                 )
             `;
@@ -120,12 +129,12 @@ export class Absented extends PG_Table {
 
             // Subtract the absent hours from studying.hours_missed
             await sql`
-                UPDATE ${this.sql(studying.table_name)} 
+                UPDATE studying
                 SET hours_missed = hours_missed - ${result.hours_absent}
                 WHERE student = ${result.student}
                 AND subject = (
                     SELECT subject
-                    FROM ${this.sql(attendance_record.table_name)}
+                    FROM attendance_record
                     WHERE id = ${result.attendance_record}
                 );
             `;

@@ -39,6 +39,8 @@ export async function newSubject(metadata: Metadata, data: any) {
         "subject_name", "degree", "class", "hours_weekly", "teacher_name", "semester", "grading_system_name"
     ]);
 
+    
+
     console.log(data)
 
     if (typeof data["teacher_name"] !== "string") {

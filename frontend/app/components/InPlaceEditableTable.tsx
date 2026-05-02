@@ -32,6 +32,7 @@ export function InPlaceEditableTable<T extends { id?: string | number }>(props: 
     const [draftValue, setDraftValue] = React.useState("");
     const [savingCellKey, setSavingCellKey] = React.useState<string | null>(null);
     const savingCellKeyRef = React.useRef<string | null>(null);
+    const draftValueRef = React.useRef("");
 
     const getColumnFieldType = (column: string): ColumnFieldType => {
         return props.columnFieldTypes?.[column] ?? "text";
@@ -90,11 +91,14 @@ export function InPlaceEditableTable<T extends { id?: string | number }>(props: 
             columnKey,
             row,
         });
-        setDraftValue(getCellValue(row, columnKey));
+        const cellValue = getCellValue(row, columnKey);
+        draftValueRef.current = cellValue;
+        setDraftValue(cellValue);
     };
 
     const cancelEditing = () => {
         setEditingCell(null);
+        draftValueRef.current = "";
         setDraftValue("");
     };
 
@@ -119,7 +123,7 @@ export function InPlaceEditableTable<T extends { id?: string | number }>(props: 
             return;
         }
 
-        const valueToSave = valueOverride ?? draftValue;
+        const valueToSave = valueOverride ?? draftValueRef.current;
         const nextRow = {
             ...editingCell.row,
             [editingCell.columnKey]: getTypedCellValue(editingCell.columnKey, valueToSave),
@@ -249,7 +253,10 @@ export function InPlaceEditableTable<T extends { id?: string | number }>(props: 
                                                     value={draftValue}
                                                     disabled={isSavingThisCell}
                                                     onClick={(e) => e.stopPropagation()}
-                                                    onChange={(e) => setDraftValue(e.target.value)}
+                                                    onChange={(e) => {
+                                                        draftValueRef.current = e.target.value;
+                                                        setDraftValue(e.target.value);
+                                                    }}
                                                     onBlur={() => { void saveCell(); }}
                                                     onKeyDown={(e) => {
                                                         if (e.key === "Enter") {
@@ -275,20 +282,66 @@ export function InPlaceEditableTable<T extends { id?: string | number }>(props: 
                                                         date={parseDraftDate(draftValue)}
                                                         setDate={(date) => {
                                                             const value = date ? formatDateForValue(date) : "";
+                                                            draftValueRef.current = value;
                                                             setDraftValue(value);
                                                             void saveCell(value);
                                                         }}
                                                     />
                                                 </div>
+                                            ) : columnType === "number" ? (
+                                                <div
+                                                    tabIndex={0}
+                                                    className="flex items-center w-[100px] outline-none"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    onBlur={(e) => {
+                                                        if (!e.currentTarget.contains(e.relatedTarget)) {
+                                                            void saveCell();
+                                                        }
+                                                    }}
+                                                    ref={(el) => el?.focus()}
+                                                >
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-sm btn-square h-[25px] min-h-[25px] w-[25px]"
+                                                        disabled={isSavingThisCell}
+                                                        onClick={() => {
+                                                            const current = Number(draftValueRef.current) || 0;
+                                                            const newValue = String(current + 1);
+                                                            draftValueRef.current = newValue;
+                                                            setDraftValue(newValue);
+                                                        }}
+                                                    >
+                                                        +
+                                                    </button>
+                                                    <div className="h-[25px] w-[50px] flex items-center justify-center">
+                                                        {draftValue}
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-sm btn-square h-[25px] min-h-[25px] w-[25px]"
+                                                        disabled={isSavingThisCell}
+                                                        onClick={() => {
+                                                            const current = Number(draftValueRef.current) || 0;
+                                                            const newValue = String(Math.max(0, current - 1));
+                                                            draftValueRef.current = newValue;
+                                                            setDraftValue(newValue);
+                                                        }}
+                                                    >
+                                                        -
+                                                    </button>
+                                                </div>
                                             ) : (
                                                 <input
-                                                    type={columnType === "number" ? "number" : "text"}
+                                                    type="text"
                                                     autoFocus
                                                     className="input input-outline input-sm h-[25px] w-full min-w-24"
                                                     value={draftValue}
                                                     disabled={isSavingThisCell}
                                                     onClick={(e) => e.stopPropagation()}
-                                                    onChange={(e) => setDraftValue(e.target.value)}
+                                                    onChange={(e) => {
+                                                        draftValueRef.current = e.target.value;
+                                                        setDraftValue(e.target.value);
+                                                    }}
                                                     onBlur={() => { void saveCell(); }}
                                                     onKeyDown={(e) => {
                                                         if (e.key === "Enter") {
@@ -315,3 +368,4 @@ export function InPlaceEditableTable<T extends { id?: string | number }>(props: 
         </div>
     );
 }
+

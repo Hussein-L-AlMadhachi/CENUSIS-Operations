@@ -73,13 +73,11 @@ export async function registerAdmin(metadata: Metadata, name: string, password: 
 
 
 export async function updateUser(metadata: Metadata, teacher_id: number, data: any) {
-    if (typeof teacher_id !== "number") {
-        throw new Error("Unexpected error: user_id cannot be anythin but a number");
-    }
+    loose_validate_params(data, ["name", "password"]);
 
-    loose_validate_params(data, ["teacher_name", "password"]);
+    console.log(data)
 
-    data["teacher_normalized_name"] = normalize_arabic(data["teacher_name"]);
+    const teacher_normalized_name = normalize_arabic(data["name"]);
 
     let teacher = await teaching_staff.fetch( teacher_id )
 
@@ -89,18 +87,18 @@ export async function updateUser(metadata: Metadata, teacher_id: number, data: a
 
     let uid = teacher[0]!.login_credentials
 
-    if (data["password"]) {
-        await changeTeacherPassword(metadata, uid, data["password"]);
+    if (data.password) {
+        await changeTeacherPassword(metadata, uid, data.password);
     }
 
-    await teaching_staff.update(uid, { teacher_name: data.teacher_name, teacher_normalized_name: data.teacher_normalized_name });
+    await teaching_staff.update(uid, { teacher_name: data.name, teacher_normalized_name: teacher_normalized_name });
     return uid;
 }
 
 
 
 export async function updateSelf(metadata: Metadata, data: any) {
-    loose_validate_params(data, ["teacher_name"]);
+    loose_validate_params(data, ["name"]);
 
     const uid = metadata.auth.user_id;
     if (typeof uid !== "number") {
@@ -144,10 +142,9 @@ export async function changeSelfPassword(metadata: Metadata, new_password: strin
 export async function changeTeacherPassword(
     metadata: Metadata, id: number, new_password: string
 ) {
-    if (!metadata.auth.id || typeof metadata.auth.id !== "number") {
-        throw new Error("You need to be loggedin to change your password")
-    }
 
+    console.log("new pass:", new_password)
+    console.log("tuid:", id)
     const uid = loggedin_users.updatePassword(id, new_password);
 
     if (!uid) {

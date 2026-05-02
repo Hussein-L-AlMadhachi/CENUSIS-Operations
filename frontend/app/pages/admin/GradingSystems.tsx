@@ -115,8 +115,8 @@ function MainContent(): JSX.Element {
                                     <thead>
                                         <tr>
                                             <th>الحقل</th>
-                                            <th>من</th>
-                                            <th>إلى</th>
+                                            <th>درجة النجاح</th>
+                                            <th>الدرجة الكاملة</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -155,8 +155,8 @@ function MainContent(): JSX.Element {
                             addLabel: "إضافة حقل",
                             subformTemplate: [
                                 { title: "اسم الحقل", key: "field_name", type: "text" },
-                                { title: "الحد الأدنى", key: "min_grade", type: "number", min: 0 },
-                                { title: "الحد الأعلى", key: "max_grade", type: "number", min: 0 }
+                                { title: "درجة النجاح", key: "min_grade", type: "number", min: 0 },
+                                { title: "الدرجة الكاملة", key: "max_grade", type: "number", min: 0 }
                             ]
                         }
                     ]}

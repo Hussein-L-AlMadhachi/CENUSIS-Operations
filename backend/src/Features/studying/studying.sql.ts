@@ -133,6 +133,34 @@ export class Studying extends PG_Table {
         `;
     }
 
+    public async getGradesByClassDegree(degree: string, class_number: number, grading_system: string) {
+        return await this.sql`
+            SELECT
+                STUDENT.id AS student_id,
+                STUDENT.student_name,
+                SUBJECT.id AS subject_id,
+                SUBJECT.subject_name,
+                STUDYING.grade_fields
+            FROM studying AS STUDYING
+            JOIN students AS STUDENT ON STUDYING.student = STUDENT.id
+            JOIN subjects AS SUBJECT ON STUDYING.subject = SUBJECT.id
+            JOIN grading_systems AS gs ON SUBJECT.grading_system_id = gs.id
+            WHERE STUDENT.degree = ${degree}
+              AND STUDENT.class = ${class_number}
+              AND SUBJECT.degree = ${degree}
+              AND SUBJECT.class = ${class_number}
+              AND SUBJECT.deleted_at IS NULL
+              AND gs.name = ${grading_system}
+            ORDER BY STUDENT.student_name, SUBJECT.subject_name
+        `;
+    }
+
+    public async HardReset(){
+        return await this.sql`
+            delete from studying;
+        `
+    }
+
 }
 
 

@@ -1,4 +1,4 @@
-import { type JSX, useState, useEffect } from "react";
+import { type JSX, useState, useEffect, useCallback } from "react";
 import { ArrowRightFromLine, UserRoundPlus } from "lucide-react";
 
 // layouts
@@ -119,6 +119,7 @@ function EnrollModal({ isOpen, onClose, onSuccess, subjectId, teacherId }: Enrol
 }
 
 
+
 function MainContent(): JSX.Element {
     const params = useParams();
     const subjectId = parseInt(params.id || "0", 10);
@@ -129,17 +130,17 @@ function MainContent(): JSX.Element {
 
     console.log(">>>", data);
 
-    const fetchData = () => {
+    const fetchData = useCallback(() => {
         if (subjectId) {
             adminRPC.fetchEnrollmentsForSubject(subjectId).then((data) => {
                 setData(data);
             });
         }
-    };
+    }, [subjectId]);
 
     useEffect(() => {
         fetchData();
-    }, [subjectId]);
+    }, [fetchData, subjectId]);
 
     return <>
         <Section>

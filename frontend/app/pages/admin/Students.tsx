@@ -1,4 +1,4 @@
-import { type JSX, useState, useEffect } from "react";
+import { type JSX, useState, useEffect, useRef } from "react";
 import { UserRoundPlus, Upload } from "lucide-react";
 
 // layouts
@@ -14,7 +14,7 @@ import { Section, Subsection } from "@/components/Section";
 import { useValidRoute } from "@/hooks/useValidRoute";
 
 // Globals
-import { type studentData, adminRPC } from "@/rpc";
+import { type studentData, type StudentUpdateData, adminRPC } from "@/rpc";
 import { useValidParams as validateParams } from "@/hooks/useValidParams";
 import Tabs from "@/components/Tabs";
 import { sidebar_pages } from "./sidebar_pages";
@@ -29,6 +29,8 @@ interface OptionsProps {
 
 
 function Options({ onAddClick, onImportSuccess }: OptionsProps) {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isStartYearModalOpen, setIsStartYearModalOpen] = useState(false);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
@@ -55,25 +57,59 @@ function Options({ onAddClick, onImportSuccess }: OptionsProps) {
         }
     };
 
+    const handleStartYearClick = () => {
+        setIsStartYearModalOpen(true);
+    };
 
-    return <div id="options" className="menu lg:menu-horizontal menu-vertical w-full justify-between">
-        <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> إدارة الطلاب </div>
-        <ul className="menu bg-base-200 lg:menu-horizontal rounded-box gap-1 menu-vertical max-md:w-full">
+    const handleConfirmStartYear = () => {
+        setIsStartYearModalOpen(false);
+        fileInputRef.current?.click();
+    };
 
-            <li>
-                <button className="btn btn-lg" onClick={onAddClick}>
-                    <UserRoundPlus size={18} /> إضافة طالب
+
+    return <>
+        <div id="options" className="menu lg:menu-horizontal menu-vertical w-full justify-between">
+            <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> إدارة الطلاب </div>
+            <ul className="menu bg-base-200 lg:menu-horizontal rounded-box gap-1 menu-vertical max-md:w-full">
+
+                <li>
+                    <button className="btn btn-lg" onClick={onAddClick}>
+                        <UserRoundPlus size={18} /> إضافة طالب
+                    </button>
+                </li>
+
+                <li>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        className="hidden"
+                        accept=".xlsx, .xls"
+                        onChange={handleFileUpload}
+                    />
+                    <button className="btn btn-lg" onClick={handleStartYearClick}>
+                        <Upload size={18} /> ابدأ سنة دراسية جديدة
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <Modal isOpen={isStartYearModalOpen} className="w-full flex flex-col justify-center max-w-lg">
+            <h3 className="font-bold text-lg mb-4 text-center">تحذير</h3>
+            <p className="text-center mb-6 leading-7">
+                هذا الإجراء سيبدأ سنة دراسية جديدة وقد يؤدي إلى فقدان بيانات الطلاب الحالية.
+                <br />
+                هل أنت متأكد أنك تريد المتابعة؟
+            </p>
+            <div className="flex justify-center gap-3">
+                <button className="btn btn-ghost" onClick={() => setIsStartYearModalOpen(false)}>
+                    إلغاء
                 </button>
-            </li>
-
-            <li>
-                <label className="btn btn-lg">
-                    <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
-                    <Upload size={18} /> إدخال البيانات من برنامج أكسل
-                </label>
-            </li>
-        </ul>
-    </div>;
+                <button className="btn btn-warning" onClick={handleConfirmStartYear}>
+                    نعم، متابعة
+                </button>
+            </div>
+        </Modal>
+    </>;
 }
 
 
@@ -106,7 +142,8 @@ const studentFormTemplate: DynamicFormTemplate[] = [
 ];
 
 function AddStudentModal({ isOpen, onClose, onSuccess }: AddStudentModalProps) {
-    const handleAddTeacher = async (data: any) => {
+    type AddStudentFormData = Pick<StudentUpdateData, "student_name" | "joined_year" | "degree" | "class">;
+    const handleAddTeacher = async (data: AddStudentFormData) => {
 
         try {
             validateParams(data, ["student_name", "joined_year", "degree"])
@@ -114,7 +151,7 @@ function AddStudentModal({ isOpen, onClose, onSuccess }: AddStudentModalProps) {
                 data["class"] = 1;
             }
 
-            await adminRPC.newStudent(data);
+            await adminRPC.newStudent(data as unknown as studentData);
             onSuccess();
             onClose();
         } catch (error) {
@@ -166,7 +203,7 @@ function MainContent(): JSX.Element {
         fetchData();
     }, []);
 
-    const handleUpdateStudent = async (id: number, data: any) => {
+    const handleUpdateStudent = async (id: number, data: StudentUpdateData) => {
         await adminRPC.updateStudent(id, data);
         fetchData();
     };

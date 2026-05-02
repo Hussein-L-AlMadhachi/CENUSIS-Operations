@@ -80,6 +80,31 @@ export async function logout(metadata: Metadata) {
     metadata.res!.cookie("auth-role", "");
 }
 
+interface AccountInfo {
+    id: number;
+    username: string;
+    role: string;
+}
+
+export async function getAccountInfo(metadata: Metadata): Promise<AccountInfo> {
+    const uid = metadata.auth.user_id;
+
+    if (typeof uid !== "number") {
+        throw new Error("Unexpected error: user_id cannot be anythin but a number");
+    }
+
+    const [user] = await loggedin_users.fetch(uid);
+    if (!user) {
+        throw new Error("no user found");
+    }
+
+    return {
+        id: user.id,
+        username: user.username,
+        role: user.role
+    };
+}
+
 
 export async function login(
     metadata: Metadata, username: string | undefined, password: string | undefined

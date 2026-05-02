@@ -1,5 +1,5 @@
 import { type JSX, useEffect, useState } from "react";
-import { Search, UserRoundPlus } from "lucide-react";
+import { UserRoundPlus } from "lucide-react";
 
 import { MainLayout } from "@/layout/MainLayout";
 
@@ -7,7 +7,6 @@ import { EditableTable } from "@/components/EditableTable";
 import { Modal } from "@/components/Modal";
 import { DynamicForm } from "@/components/DynamicForm";
 import { Section, Subsection } from "@/components/Section";
-import { AutocompleteText } from "@/components/AutocompleteText";
 
 import { useValidRoute } from "@/hooks/useValidRoute";
 
@@ -72,8 +71,8 @@ function AddGradingSystemModal({ isOpen, onClose, onSuccess }: AddGradingSystemM
                         addLabel: "إضافة حقل",
                         subformTemplate: [
                             { title: "اسم الحقل", key: "field_name", type: "text" },
-                            { title: "الحد الأدنى", key: "min_grade", type: "number", min: 0 },
-                            { title: "الحد الأعلى", key: "max_grade", type: "number", min: 0 }
+                            { title: "درجة النجاح", key: "min_grade", type: "number", min: 0 },
+                            { title: "الدرجة الكاملة", key: "max_grade", type: "number", min: 0 }
                         ]
                     }
                 ]}

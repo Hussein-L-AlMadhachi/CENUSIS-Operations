@@ -7,6 +7,12 @@ interface Loggedin {
     role: string;
 }
 
+export interface AccountInfo {
+    id: number;
+    username: string;
+    role: string;
+}
+
 interface PublicRPC {
     load(): Promise<void>;
     login(username: string, password: string): Promise<Loggedin>;
@@ -27,6 +33,14 @@ export interface studentData {
     class: number;
     years_retaken: number;
     years_failed: number;
+}
+
+export interface StudentUpdateData {
+    student_name?: string;
+    joined_year?: number;
+    degree?: string;
+    class?: number;
+    sex?: "ذكر" | "انثى";
 }
 
 export interface SubjectData {
@@ -69,6 +83,14 @@ export interface AttendanceRecordData {
     created_at: string;
 }
 
+
+export interface LabAttendanceRecordData {
+    id: number;
+    date: string;
+    lab_attendance: boolean;
+    created_at: string;
+}
+
 export interface AbsentedData {
     id?: number;
     hours_absent?: number;
@@ -106,6 +128,7 @@ export interface SubjectAccessControlData {
 
 interface AdminsRPC {
     load(): Promise<void>;
+    getAccountInfo(): Promise<AccountInfo>;
 
     autocompleteStudentsBySubject(searched_name: string, subject_id: number): Promise<string[]>;
 
@@ -122,7 +145,7 @@ interface AdminsRPC {
 
     // students registration management
     fetchStudents(): Promise<studentData[]>;
-    updateStudent(uid: number, data: any): Promise<{ id: number }>;
+    updateStudent(uid: number, data: StudentUpdateData): Promise<{ id: number }>;
     newStudent(data: studentData): Promise<{ id: number }>;
     deleteStudent(student_id: number): Promise<void>;
     fetchStudentInfo(id: number): Promise<studentData>;
@@ -158,30 +181,19 @@ interface AdminsRPC {
     fetchSingleEnrollment(id: number): Promise<EnrollmentData>;
     fetchEnrollmentsForSubject(subject_id: number): Promise<EnrollmentData[]>;
 
-    // attendance management per record
-    markStudentAbsent(data: { attendance_record_id: number, hours_absent: number }): Promise<void>;
-    deleteAttendanceRecordForTheDay(attendance_record_id: number): Promise<void>;
-
     // attendance records management
-    createDailyAttendanceRecord(subject_id: number, date: string): Promise<number>;
     fetchDailyAttendanceRecordsForTheSubject(subject_id: number): Promise<AttendanceRecordData[]>;
 
     // attendance management per student
-    markStudentAbsent(data: { attendance_record_id: number, student_name: string, hours_absent: number }): Promise<void>;
     fetchAbsentStudents(attendance_record_id: number): Promise<AbsentedData[]>;
-    removeAbsence(absented_id: number): Promise<void>;
 
     // grading
     fetchStudentGradeFieldsPerStudying(studying_id: number): Promise<GradesDate[]>;
-
-    // TA access control
-    fetchSubjectAccessControl(subject_id: number): Promise<SubjectAccessControlData[]>;
-    grantAccess(subject_name: string, user_name: string): Promise<void>;
-    revokeAccess(subject_id: number, user_id: number): Promise<void>;
 }
 
 interface TeachersRPC {
     load(): Promise<void>;
+    getAccountInfo(): Promise<AccountInfo>;
 
     fetchSubjectsByLabTeacher(): Promise<SubjectData[]>;
 
@@ -201,7 +213,7 @@ interface TeachersRPC {
 
     // students registration management
     fetchStudents(): Promise<studentData[]>;
-    updateStudent(uid: number, data: any): Promise<{ id: number }>;
+    updateStudent(uid: number, data: StudentUpdateData): Promise<{ id: number }>;
     newStudent(data: studentData): Promise<{ id: number }>;
     deleteStudent(student_id: number): Promise<void>;
     fetchStudentInfo(id: number): Promise<studentData>;
@@ -244,8 +256,9 @@ interface TeachersRPC {
     deleteAttendanceRecordForTheDay(attendance_record_id: number): Promise<void>;
 
     // attendance records management
-    createDailyAttendanceRecord(subject_id: number, date: string): Promise<number>;
+    createDailyAttendanceRecord(subject_id: number, date: string, lab_attendance?:boolean): Promise<number>;
     fetchDailyAttendanceRecordsForTheSubject(subject_id: number): Promise<AttendanceRecordData[]>;
+    fetchDailyLabAttendanceRecordsForTheSubject(subject_id: number): Promise<LabAttendanceRecordData[]>;
 
     // attendance management per student
     fetchAbsentStudents(attendance_record_id: number): Promise<AbsentedData[]>;
@@ -261,6 +274,7 @@ interface TeachersRPC {
 
 interface SuperAdminRPC {
     load(): Promise<void>;
+    getAccountInfo(): Promise<AccountInfo>;
 
     autocompleteStudentsBySubject(searched_name: string, subject_id: number): Promise<string[]>;
 
@@ -277,7 +291,7 @@ interface SuperAdminRPC {
 
     // students registration management
     fetchStudents(): Promise<studentData[]>;
-    updateStudent(uid: number, data: any): Promise<{ id: number }>;
+    updateStudent(uid: number, data: StudentUpdateData): Promise<{ id: number }>;
     newStudent(data: studentData): Promise<{ id: number }>;
     deleteStudent(student_id: number): Promise<void>;
     fetchStudentInfo(id: number): Promise<studentData>;
@@ -354,19 +368,27 @@ export const superAdminRPC = new RPC('/api/superadmin') as unknown as SuperAdmin
 export const teacherRPC = new RPC('/api/teacher') as unknown as TeachersRPC;
 
 type GradeFieldsFetcher = (studying_id: number) => Promise<GradesDate[]>;
+type GradeFieldsFallbackClient = {
+    fetchStudentGradeFieldsPerStudying?: GradeFieldsFetcher;
+};
+type AccountInfoFetcher = () => Promise<AccountInfo>;
+type AccountInfoFallbackClient = {
+    getAccountInfo?: AccountInfoFetcher;
+    getProfile?: () => Promise<{ username?: string; teacher_name?: string; role?: string; id?: number }>;
+};
 
 function isAuthError(error: unknown): boolean {
     const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
     return message.includes("unauthorized") || message.includes("forbidden") || message.includes("401") || message.includes("403");
 }
 
-function attachGradeFieldsFetcherFallback(client: any) {
+function attachGradeFieldsFetcherFallback(client: GradeFieldsFallbackClient) {
     if (typeof client.fetchStudentGradeFieldsPerStudying === "function") {
         return;
     }
 
     client.fetchStudentGradeFieldsPerStudying = async (studying_id: number): Promise<GradesDate[]> => {
-        const candidates: any[] = [adminRPC, teacherRPC, superAdminRPC];
+        const candidates: GradeFieldsFallbackClient[] = [adminRPC, teacherRPC, superAdminRPC];
         let lastAuthError: unknown = null;
 
         for (const candidate of candidates) {
@@ -394,6 +416,25 @@ function attachGradeFieldsFetcherFallback(client: any) {
     };
 }
 
+function attachAccountInfoFallback(client: AccountInfoFallbackClient) {
+    if (typeof client.getAccountInfo === "function") {
+        return;
+    }
+
+    client.getAccountInfo = async (): Promise<AccountInfo> => {
+        if (typeof client.getProfile === "function") {
+            const profile = await client.getProfile();
+            return {
+                id: typeof profile.id === "number" ? profile.id : 0,
+                username: profile.username ?? profile.teacher_name ?? "",
+                role: profile.role ?? ""
+            };
+        }
+
+        throw new Error("getAccountInfo is not available on loaded RPC endpoints");
+    };
+}
+
 export async function initializeRPC() {
   await publicRPC.load();
   await adminRPC.load();
@@ -403,6 +444,10 @@ export async function initializeRPC() {
     attachGradeFieldsFetcherFallback(adminRPC);
     attachGradeFieldsFetcherFallback(teacherRPC);
     attachGradeFieldsFetcherFallback(superAdminRPC);
+
+    attachAccountInfoFallback(adminRPC);
+    attachAccountInfoFallback(teacherRPC);
+    attachAccountInfoFallback(superAdminRPC);
 }
 
 await initializeRPC()

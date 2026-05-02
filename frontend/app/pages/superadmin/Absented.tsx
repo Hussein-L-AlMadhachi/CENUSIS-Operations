@@ -1,4 +1,4 @@
-import { type JSX, useState, useEffect } from "react";
+import { type JSX, useState, useEffect, useCallback } from "react";
 import { ArrowRightFromLine, UserRoundPlus } from "lucide-react";
 
 // layouts
@@ -17,7 +17,6 @@ import { useValidRoute } from "@/hooks/useValidRoute";
 import { type AbsentedData, superAdminRPC } from "@/rpc";
 import { Link, useParams } from "wouter";
 import { sidebar_pages } from "./sidebar_pages";
-import { navigate } from "wouter/use-browser-location";
 
 
 
@@ -116,30 +115,13 @@ function MainContent(): JSX.Element {
     const [data, setData] = useState<AbsentedData[]>([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-    const fetchData = () => {
+    const fetchData = useCallback(() => {
         superAdminRPC.fetchAbsentStudents(attendance_record_id).then((data) => setData(data));
-    };
+    }, [attendance_record_id]);
 
     useEffect(() => {
         fetchData();
-    }, []);
-
-    const customRenderers: Record<string, (row: AbsentedData) => JSX.Element> = {
-
-        "@delete": (row: AbsentedData) => {
-            if (row.id === undefined) {
-                return <div>WTF</div>
-            }
-
-            return (
-                <div className="flex flex-col flex-nowrap">
-                    <button onClick={() => superAdminRPC.removeAbsence(row.id!).then(() => navigate("/superadmin/subjects/"))} className="btn btn-xs">
-                        حذف
-                    </button>
-                </div>
-            )
-        },
-    }
+    }, [fetchData]);
 
     return <>
         <Section>
@@ -150,8 +132,7 @@ function MainContent(): JSX.Element {
 
                 <EditableTable
                     data={data || []}
-                    headers={{ "student_name": "الاسم", "hours_absent": "عدد ساعات الغياب", "@delete": "" }}
-                    customRenderers={customRenderers}
+                    headers={{ "student_name": "الاسم", "hours_absent": "عدد ساعات الغياب" }}
                 />
 
             </Subsection>
@@ -166,10 +147,6 @@ function MainContent(): JSX.Element {
     </>;
 
 }
-
-
-
-
 
 
 

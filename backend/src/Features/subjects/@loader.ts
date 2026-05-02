@@ -10,6 +10,7 @@ import {
     findSubjectByName,
     newSubject,
     updateSubject,
+    fetchSubjectsByLabTeacher,
 } from "./subjects.service.js";
 
 export function subjectsLoader(rpc: RPC) {
@@ -23,4 +24,5 @@ export function subjectsLoader(rpc: RPC) {
     rpc.add(autocompleteSubject);
     rpc.add(findSubjectByName);
     rpc.add(fetchSubjectsByTeacher);
+    rpc.add(fetchSubjectsByLabTeacher)
 }
