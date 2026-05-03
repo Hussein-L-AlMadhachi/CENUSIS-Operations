@@ -91,6 +91,13 @@ export interface LabAttendanceRecordData {
     created_at: string;
 }
 
+export interface AttendanceRecordWithSubject {
+    id: number;
+    date: string;
+    lab_attendance: boolean;
+    subject_name: string;
+}
+
 export interface AbsentedData {
     id?: number;
     hours_absent?: number;
@@ -259,11 +266,13 @@ interface TeachersRPC {
     createDailyAttendanceRecord(subject_id: number, date: string, lab_attendance?:boolean): Promise<number>;
     fetchDailyAttendanceRecordsForTheSubject(subject_id: number): Promise<AttendanceRecordData[]>;
     fetchDailyLabAttendanceRecordsForTheSubject(subject_id: number): Promise<LabAttendanceRecordData[]>;
+    fetchAttendanceRecordWithSubject(attendance_record_id: number): Promise<AttendanceRecordWithSubject>;
 
     // attendance management per student
     fetchAbsentStudents(attendance_record_id: number): Promise<AbsentedData[]>;
     removeAbsence(absented_id: number): Promise<void>;
     markStudentAbsent(data: { attendance_record_id: number, student_id: number, hours_absent: number }): Promise<void>;
+    markStudentAbsentBulk(data: { attendance_record_id: number, student_ids: number[], hours_absent: number }): Promise<void>;
 
     // grading
     fetchStudentGradeFieldsPerStudying(studying_id: number): Promise<GradesDate[]>;
@@ -334,6 +343,7 @@ interface SuperAdminRPC {
     // attendance records management
     createDailyAttendanceRecord(subject_id: number, date: string): Promise<number>;
     fetchDailyAttendanceRecordsForTheSubject(subject_id: number): Promise<AttendanceRecordData[]>;
+    fetchAttendanceRecordWithSubject(attendance_record_id: number): Promise<AttendanceRecordWithSubject>;
 
     // attendance management per student
     markStudentAbsent(data: { attendance_record_id: number, student_name: string, hours_absent: number }): Promise<void>;

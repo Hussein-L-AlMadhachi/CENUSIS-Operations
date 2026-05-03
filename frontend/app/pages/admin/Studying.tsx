@@ -14,7 +14,10 @@ import { Section, Subsection } from "@/components/Section";
 import { useValidRoute } from "@/hooks/useValidRoute";
 
 // Globals
-import { type EnrollmentData, adminRPC, type studentData } from "@/rpc";
+import { type EnrollmentData, adminRPC, type studentData, type SubjectData } from "@/rpc";
+
+/** API may include subject_name alongside SubjectData.name */
+type SubjectForDisplay = SubjectData & { subject_name?: string };
 import { Link, useParams } from "wouter";
 import { sidebar_pages } from "./sidebar_pages";
 
@@ -25,16 +28,17 @@ import { sidebar_pages } from "./sidebar_pages";
 
 interface OptionsProps {
     onAddClick: () => void;
+    subjectName: string;
 }
 
 
 
-function Options({ onAddClick }: OptionsProps) {
+function Options({ onAddClick, subjectName }: OptionsProps) {
     return <div id="options" className="menu lg:menu-horizontal menu-vertical w-full justify-between">
         <Link href="/admin/subjects" className="btn btn-md btn-ghost btn-circle">
             <ArrowRightFromLine />
         </Link>
-        <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> الطلبة المسجلين </div>
+        <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> {subjectName ? `طلاب مادة ${subjectName}` : "الطلبة المسجلين"} </div>
         <ul className="menu bg-base-200 lg:menu-horizontal rounded-box gap-1 menu-vertical max-md:w-full">
 
             <li>
@@ -126,6 +130,7 @@ function MainContent(): JSX.Element {
     const teacherId = parseInt(params.teacher || "0", 10);
 
     const [data, setData] = useState<EnrollmentData[]>([]);
+    const [subjectName, setSubjectName] = useState<string>("");
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     console.log(">>>", data);
@@ -134,6 +139,10 @@ function MainContent(): JSX.Element {
         if (subjectId) {
             adminRPC.fetchEnrollmentsForSubject(subjectId).then((data) => {
                 setData(data);
+            });
+            adminRPC.fetchSingleSubject(subjectId).then((subject) => {
+                const s: SubjectForDisplay = subject;
+                setSubjectName(s.subject_name ?? s.name);
             });
         }
     }, [subjectId]);
@@ -145,7 +154,7 @@ function MainContent(): JSX.Element {
     return <>
         <Section>
             <Subsection>
-                <Options onAddClick={() => setIsAddModalOpen(true)} />
+                <Options onAddClick={() => setIsAddModalOpen(true)} subjectName={subjectName} />
             </Subsection>
             <Subsection>
                 <EditableTable

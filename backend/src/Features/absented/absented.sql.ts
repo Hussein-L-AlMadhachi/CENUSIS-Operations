@@ -54,7 +54,6 @@ export class Absented extends PG_Table {
             if (existingAbsence) {
                 const record = await sql`select * from attendance_record ar join subjects s on ar.subject = s.id where ar.id = ${attendance_record_id};`;
                 const hoursWeekly = Number(record[0]!.hours_weekly);
-                console.log(hoursWeekly, ".",hours_absent)
                 if (hoursWeekly < hours_absent) {
                     hours_absent = hoursWeekly;
                 }
@@ -99,6 +98,66 @@ export class Absented extends PG_Table {
                     WHERE id = ${attendance_record_id}
                 )
             `;
+        });
+    }
+
+    async markAbsentBulk(student_ids: number[], attendance_record_id: number, hours_absent: number) {
+        await this.sql.begin(async sql => {
+            await sql`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE`;
+
+            const record = await sql`select * from attendance_record ar join subjects s on ar.subject = s.id where ar.id = ${attendance_record_id};`;
+            const hoursWeekly = Number(record[0]!.hours_weekly);
+            const cappedHoursAbsent = Math.min(hours_absent, hoursWeekly);
+
+            for (const student_id of student_ids) {
+                const [existingAbsence] = await sql`
+                    SELECT hours_absent
+                    FROM absented
+                    WHERE student = ${student_id}
+                    AND attendance_record = ${attendance_record_id}
+                `;
+
+                if (existingAbsence) {
+                    const oldHoursAbsent = Number(existingAbsence.hours_absent);
+                    const delta = cappedHoursAbsent - oldHoursAbsent;
+
+                    await sql`
+                        UPDATE absented
+                        SET hours_absent = ${cappedHoursAbsent}
+                        WHERE student = ${student_id}
+                        AND attendance_record = ${attendance_record_id}
+                    `;
+
+                    if (delta !== 0) {
+                        await sql`
+                            UPDATE studying
+                            SET hours_missed = hours_missed + ${delta}
+                            WHERE student = ${student_id}
+                            AND subject = (
+                                SELECT subject
+                                FROM attendance_record
+                                WHERE id = ${attendance_record_id}
+                            )
+                        `;
+                    }
+                } else {
+                    await sql`
+                        INSERT INTO absented (student, attendance_record, hours_absent)
+                        VALUES (${student_id}, ${attendance_record_id}, ${cappedHoursAbsent})
+                    `;
+
+                    await sql`
+                        UPDATE studying
+                        SET hours_missed = hours_missed + ${cappedHoursAbsent}
+                        WHERE student = ${student_id}
+                        AND subject = (
+                            SELECT subject
+                            FROM attendance_record
+                            WHERE id = ${attendance_record_id}
+                        )
+                    `;
+                }
+            }
         });
     }
 

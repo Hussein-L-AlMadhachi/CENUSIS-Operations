@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Plus, Minus } from "lucide-react";
 import { DatePicker } from "./DatePciker";
 
 type CellRenderer<T> = (row: T) => React.JSX.Element;
@@ -306,12 +307,12 @@ export function InPlaceEditableTable<T extends { id?: string | number }>(props: 
                                                         disabled={isSavingThisCell}
                                                         onClick={() => {
                                                             const current = Number(draftValueRef.current) || 0;
-                                                            const newValue = String(current + 1);
+                                                            const newValue = String(Math.max(0, current - 1));
                                                             draftValueRef.current = newValue;
                                                             setDraftValue(newValue);
                                                         }}
                                                     >
-                                                        +
+                                                        <Minus size={14} />
                                                     </button>
                                                     <div className="h-[25px] w-[50px] flex items-center justify-center">
                                                         {draftValue}
@@ -322,12 +323,12 @@ export function InPlaceEditableTable<T extends { id?: string | number }>(props: 
                                                         disabled={isSavingThisCell}
                                                         onClick={() => {
                                                             const current = Number(draftValueRef.current) || 0;
-                                                            const newValue = String(Math.max(0, current - 1));
+                                                            const newValue = String(current + 1);
                                                             draftValueRef.current = newValue;
                                                             setDraftValue(newValue);
                                                         }}
                                                     >
-                                                        -
+                                                        <Plus size={14} />
                                                     </button>
                                                 </div>
                                             ) : (

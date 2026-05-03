@@ -1,5 +1,5 @@
 import { type JSX, useState, useEffect } from "react";
-import { UserRoundPlus, Upload } from "lucide-react";
+import { UserRoundPlus } from "lucide-react";
 
 // layouts
 import { MainLayout } from "@/layout/MainLayout";
@@ -14,10 +14,10 @@ import { Section, Subsection } from "@/components/Section";
 import { useValidRoute } from "@/hooks/useValidRoute";
 
 // Globals
-import { type studentData, superAdminRPC } from "@/rpc";
-import { useValidParams } from "@/hooks/useValidParams";
-import Tabs from "@/components/Tabs";
+import { type studentData, type StudentUpdateData, superAdminRPC } from "@/rpc";
+import { useValidParams as validateParams } from "@/hooks/useValidParams";
 import { sidebar_pages } from "./sidebar_pages";
+import Tabs from "@/components/Tabs";
 
 
 
@@ -28,32 +28,7 @@ interface OptionsProps {
 
 
 
-function Options({ onAddClick, onImportSuccess }: OptionsProps) {
-
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || e.target.files.length === 0) return;
-
-        const file = e.target.files[0];
-        const formData = new FormData();
-        formData.append("file", file);
-
-        try {
-            const response = await fetch("/api/students/import", {
-                method: "POST",
-                body: formData,
-            });
-
-            if (response.ok) {
-                onImportSuccess();
-            } else {
-                const result = await response.json();
-                alert("خطأ في استيراد الملف: " + result.error);
-            }
-        } catch (error) {
-            console.error("Upload error:", error);
-            alert("خطأ في استيراد الملف");
-        }
-    };
+function Options({ onAddClick }: OptionsProps) {
 
 
     return <div id="options" className="menu lg:menu-horizontal menu-vertical w-full justify-between">
@@ -64,13 +39,6 @@ function Options({ onAddClick, onImportSuccess }: OptionsProps) {
                 <button className="btn btn-lg" onClick={onAddClick}>
                     <UserRoundPlus size={18} /> إضافة طالب
                 </button>
-            </li>
-
-            <li>
-                <label className="btn btn-lg">
-                    <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
-                    <Upload size={18} /> إدخال البيانات من برنامج أكسل
-                </label>
             </li>
         </ul>
     </div>;
@@ -103,23 +71,23 @@ const studentFormTemplate: DynamicFormTemplate[] = [
             { label: "الرابعة", value: 4 }
         ], condition: { key: "degree", value: "بكلوريوس" }, defaultValue: 1
     },
-    {
-        title: "الجنس", key: "sex", type: "select", options: [
-            { label: "ذكر", value: "ذكر" }, { label: "أنثى", value: "انثى" }
-        ]
-    }
+    
 ];
 
 function AddStudentModal({ isOpen, onClose, onSuccess }: AddStudentModalProps) {
-    const handleAddTeacher = async (data: any) => {
+    type AddStudentFormData = Pick<
+        StudentUpdateData,
+        "student_name" | "joined_year" | "degree" | "class"
+    >;
+    const handleAddTeacher = async (data: AddStudentFormData) => {
 
         try {
-            useValidParams(data, ["student_name", "joined_year", "degree", "sex"])
+            validateParams(data, ["student_name", "joined_year", "degree"]);
             if (data.degree !== "بكلوريوس") {
                 data["class"] = 1;
             }
 
-            await superAdminRPC.newStudent(data);
+            await superAdminRPC.newStudent(data as unknown as studentData);
             onSuccess();
             onClose();
         } catch (error) {
@@ -171,7 +139,7 @@ function MainContent(): JSX.Element {
         fetchData();
     }, []);
 
-    const handleUpdateStudent = async (id: number, data: any) => {
+    const handleUpdateStudent = async (id: number, data: StudentUpdateData) => {
         await superAdminRPC.updateStudent(id, data);
         fetchData();
     };

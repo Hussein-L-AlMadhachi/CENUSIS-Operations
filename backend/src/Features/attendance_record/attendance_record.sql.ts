@@ -38,4 +38,14 @@ export class AttendanceRecord extends PG_Table {
         return await this.sql`delete from attendance_record where id=${attendance_record_id}`;
     }
 
+    async fetchWithSubject(attendance_record_id: number) {
+        const [result] = await this.sql`
+            SELECT ar.id, ar.date, ar.lab_attendance, s.subject_name
+            FROM attendance_record ar
+            JOIN subjects s ON ar.subject = s.id
+            WHERE ar.id = ${attendance_record_id}
+        `;
+        return result;
+    }
+
 }

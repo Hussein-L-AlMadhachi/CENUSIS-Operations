@@ -26,16 +26,22 @@ import { sidebar_pages } from "./sidebar_pages";
 
 interface OptionsProps {
     onAddClick: () => void;
+    subjectName: string;
+    recordDate: string;
 }
 
 
 
-function Options({ onAddClick }: OptionsProps) {
+function Options({ onAddClick, subjectName, recordDate }: OptionsProps) {
+    const title = subjectName && recordDate
+        ? `غيابات طلاب مادة ${subjectName} لتاريخ ${recordDate}`
+        : "إدارة الغيابات";
+
     return <div id="options" className="menu lg:menu-horizontal menu-vertical w-full justify-between">
         <Link href={`/superadmin/subjects`} className="btn btn-md btn-ghost btn-circle">
             <ArrowRightFromLine />
         </Link>
-        <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> إدارة الغيابات </div>
+        <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> {title} </div>
         <ul className="menu bg-base-200 lg:menu-horizontal rounded-box gap-1 menu-vertical max-md:w-full">
 
             <li>
@@ -113,20 +119,34 @@ function MainContent(): JSX.Element {
     const attendance_record_id = parseInt(params.attendance_record);
 
     const [data, setData] = useState<AbsentedData[]>([]);
+    const [subjectName, setSubjectName] = useState<string>("");
+    const [recordDate, setRecordDate] = useState<string>("");
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     const fetchData = useCallback(() => {
         superAdminRPC.fetchAbsentStudents(attendance_record_id).then((data) => setData(data));
     }, [attendance_record_id]);
 
+    const fetchRecordInfo = useCallback(() => {
+        superAdminRPC.fetchAttendanceRecordWithSubject(attendance_record_id)
+            .then((record) => {
+                setSubjectName(record.subject_name);
+                setRecordDate(record.date);
+            })
+            .catch((err) => {
+                console.error("Failed to fetch record info:", err);
+            });
+    }, [attendance_record_id]);
+
     useEffect(() => {
         fetchData();
-    }, [fetchData]);
+        fetchRecordInfo();
+    }, [fetchData, fetchRecordInfo]);
 
     return <>
         <Section>
             <Subsection>
-                <Options onAddClick={() => setIsAddModalOpen(true)} />
+                <Options onAddClick={() => setIsAddModalOpen(true)} subjectName={subjectName} recordDate={recordDate} />
             </Subsection>
             <Subsection>
 

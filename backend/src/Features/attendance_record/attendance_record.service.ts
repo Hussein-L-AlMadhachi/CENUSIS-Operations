@@ -52,3 +52,15 @@ export async function fetchDailyLabAttendanceRecordsForTheSubject(metadata: Meta
     return result;
 }
 
+export async function fetchAttendanceRecordWithSubject(metadata: Metadata, attendance_record_id: number) {
+    if (typeof attendance_record_id !== "number") {
+        throw new Error("attendance_record_id must be a number");
+    }
+
+    const result = await attendance_record.fetchWithSubject(attendance_record_id);
+    if (!result) {
+        throw new Error("Attendance record not found");
+    }
+    return result;
+}
+
