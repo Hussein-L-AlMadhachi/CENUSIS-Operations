@@ -9,7 +9,7 @@ export class Studying extends PG_Table {
         super(app, "studying", [
             "id", "teacher", "student", "subject", "exam_retakes",
             "semester_retakes", "studying_year", "hours_missed",
-            "grade_fields", "is_attending_required", "is_submitted"
+            "grade_fields", "is_attending_required", "is_submitted", "alert_level"
         ]);
     }
 
@@ -47,7 +47,8 @@ export class Studying extends PG_Table {
                 ADD COLUMN IF NOT EXISTS exam_retakes INTEGER DEFAULT 0,
                 ADD COLUMN IF NOT EXISTS semester_retakes INTEGER DEFAULT 0,
                 ADD COLUMN IF NOT EXISTS is_attending_required BOOLEAN DEFAULT TRUE,
-                ADD COLUMN IF NOT EXISTS grade_fields JSONB NOT NULL DEFAULT '[]'::jsonb
+                ADD COLUMN IF NOT EXISTS grade_fields JSONB NOT NULL DEFAULT '[]'::jsonb,
+                ADD COLUMN IF NOT EXISTS alert_level VARCHAR(150) DEFAULT NULL
             `;
 
             await sql`
@@ -151,6 +152,223 @@ export class Studying extends PG_Table {
               AND SUBJECT.class = ${class_number}
               AND SUBJECT.deleted_at IS NULL
               AND gs.name = ${grading_system}
+            ORDER BY STUDENT.student_name, SUBJECT.subject_name
+        `;
+    }
+
+    public async fetchAbsenceAlertCandidates() {
+        return await this.sql`
+            SELECT
+                STUDYING.id AS studying_id,
+                STUDYING.hours_missed,
+                STUDYING.alert_level,
+                STUDENT.student_name,
+                SUBJECT.subject_name,
+                SUBJECT.total_hours,
+                SUBJECT.grading_system_id,
+                GS.name AS grading_system_name
+            FROM studying AS STUDYING
+            JOIN students AS STUDENT
+                ON STUDYING.student = STUDENT.id
+            JOIN subjects AS SUBJECT
+                ON STUDYING.subject = SUBJECT.id
+            JOIN grading_systems AS GS
+                ON SUBJECT.grading_system_id = GS.id
+            WHERE SUBJECT.deleted_at IS NULL
+        `;
+    }
+
+    public async setAlertLevel(studying_id: number, alert_level: string | null) {
+        return await this.sql`
+            UPDATE studying
+            SET alert_level = ${alert_level}
+            WHERE id = ${studying_id}
+        `;
+    }
+
+    public async fetchAbsenceAlerts(degree?: string, class_number?: number, grading_system_name?: string) {
+        const hasDegree = typeof degree === "string" && degree.trim() !== "";
+        const hasClass = typeof class_number === "number";
+        const hasGradingSystem = typeof grading_system_name === "string" && grading_system_name.trim() !== "";
+
+        if (hasDegree && hasClass && hasGradingSystem) {
+            return await this.sql`
+                SELECT
+                    STUDYING.id AS studying_id,
+                    STUDENT.student_name,
+                    SUBJECT.subject_name,
+                    STUDYING.hours_missed,
+                    SUBJECT.total_hours,
+                    CASE
+                        WHEN SUBJECT.total_hours > 0
+                            THEN (STUDYING.hours_missed::NUMERIC / SUBJECT.total_hours::NUMERIC) * 100
+                        ELSE 0
+                    END AS absence_ratio_percent,
+                    STUDYING.alert_level,
+                    GS.name AS grading_system_name
+                FROM studying AS STUDYING
+                JOIN students AS STUDENT
+                    ON STUDYING.student = STUDENT.id
+                JOIN subjects AS SUBJECT
+                    ON STUDYING.subject = SUBJECT.id
+                JOIN grading_systems AS GS
+                    ON SUBJECT.grading_system_id = GS.id
+                WHERE STUDYING.alert_level IS NOT NULL
+                  AND SUBJECT.deleted_at IS NULL
+                  AND STUDENT.degree = ${degree!.trim()}
+                  AND STUDENT.class = ${class_number}
+                  AND SUBJECT.degree = ${degree!.trim()}
+                  AND SUBJECT.class = ${class_number}
+                  AND GS.name = ${grading_system_name!.trim()}
+                ORDER BY STUDENT.student_name, SUBJECT.subject_name
+            `;
+        }
+
+        if (hasDegree && hasGradingSystem) {
+            return await this.sql`
+                SELECT
+                    STUDYING.id AS studying_id,
+                    STUDENT.student_name,
+                    SUBJECT.subject_name,
+                    STUDYING.hours_missed,
+                    SUBJECT.total_hours,
+                    CASE
+                        WHEN SUBJECT.total_hours > 0
+                            THEN (STUDYING.hours_missed::NUMERIC / SUBJECT.total_hours::NUMERIC) * 100
+                        ELSE 0
+                    END AS absence_ratio_percent,
+                    STUDYING.alert_level,
+                    GS.name AS grading_system_name
+                FROM studying AS STUDYING
+                JOIN students AS STUDENT
+                    ON STUDYING.student = STUDENT.id
+                JOIN subjects AS SUBJECT
+                    ON STUDYING.subject = SUBJECT.id
+                JOIN grading_systems AS GS
+                    ON SUBJECT.grading_system_id = GS.id
+                WHERE STUDYING.alert_level IS NOT NULL
+                  AND SUBJECT.deleted_at IS NULL
+                  AND STUDENT.degree = ${degree!.trim()}
+                  AND SUBJECT.degree = ${degree!.trim()}
+                  AND GS.name = ${grading_system_name!.trim()}
+                ORDER BY STUDENT.student_name, SUBJECT.subject_name
+            `;
+        }
+
+        if (hasDegree && hasClass) {
+            return await this.sql`
+                SELECT
+                    STUDYING.id AS studying_id,
+                    STUDENT.student_name,
+                    SUBJECT.subject_name,
+                    STUDYING.hours_missed,
+                    SUBJECT.total_hours,
+                    CASE
+                        WHEN SUBJECT.total_hours > 0
+                            THEN (STUDYING.hours_missed::NUMERIC / SUBJECT.total_hours::NUMERIC) * 100
+                        ELSE 0
+                    END AS absence_ratio_percent,
+                    STUDYING.alert_level,
+                    GS.name AS grading_system_name
+                FROM studying AS STUDYING
+                JOIN students AS STUDENT
+                    ON STUDYING.student = STUDENT.id
+                JOIN subjects AS SUBJECT
+                    ON STUDYING.subject = SUBJECT.id
+                JOIN grading_systems AS GS
+                    ON SUBJECT.grading_system_id = GS.id
+                WHERE STUDYING.alert_level IS NOT NULL
+                  AND SUBJECT.deleted_at IS NULL
+                  AND STUDENT.degree = ${degree!.trim()}
+                  AND STUDENT.class = ${class_number}
+                  AND SUBJECT.degree = ${degree!.trim()}
+                  AND SUBJECT.class = ${class_number}
+                ORDER BY STUDENT.student_name, SUBJECT.subject_name
+            `;
+        }
+
+        if (hasDegree) {
+            return await this.sql`
+                SELECT
+                    STUDYING.id AS studying_id,
+                    STUDENT.student_name,
+                    SUBJECT.subject_name,
+                    STUDYING.hours_missed,
+                    SUBJECT.total_hours,
+                    CASE
+                        WHEN SUBJECT.total_hours > 0
+                            THEN (STUDYING.hours_missed::NUMERIC / SUBJECT.total_hours::NUMERIC) * 100
+                        ELSE 0
+                    END AS absence_ratio_percent,
+                    STUDYING.alert_level,
+                    GS.name AS grading_system_name
+                FROM studying AS STUDYING
+                JOIN students AS STUDENT
+                    ON STUDYING.student = STUDENT.id
+                JOIN subjects AS SUBJECT
+                    ON STUDYING.subject = SUBJECT.id
+                JOIN grading_systems AS GS
+                    ON SUBJECT.grading_system_id = GS.id
+                WHERE STUDYING.alert_level IS NOT NULL
+                  AND SUBJECT.deleted_at IS NULL
+                  AND STUDENT.degree = ${degree!.trim()}
+                  AND SUBJECT.degree = ${degree!.trim()}
+                ORDER BY STUDENT.student_name, SUBJECT.subject_name
+            `;
+        }
+
+        if (hasGradingSystem) {
+            return await this.sql`
+                SELECT
+                    STUDYING.id AS studying_id,
+                    STUDENT.student_name,
+                    SUBJECT.subject_name,
+                    STUDYING.hours_missed,
+                    SUBJECT.total_hours,
+                    CASE
+                        WHEN SUBJECT.total_hours > 0
+                            THEN (STUDYING.hours_missed::NUMERIC / SUBJECT.total_hours::NUMERIC) * 100
+                        ELSE 0
+                    END AS absence_ratio_percent,
+                    STUDYING.alert_level,
+                    GS.name AS grading_system_name
+                FROM studying AS STUDYING
+                JOIN students AS STUDENT
+                    ON STUDYING.student = STUDENT.id
+                JOIN subjects AS SUBJECT
+                    ON STUDYING.subject = SUBJECT.id
+                JOIN grading_systems AS GS
+                    ON SUBJECT.grading_system_id = GS.id
+                WHERE STUDYING.alert_level IS NOT NULL
+                  AND SUBJECT.deleted_at IS NULL
+                  AND GS.name = ${grading_system_name!.trim()}
+                ORDER BY STUDENT.student_name, SUBJECT.subject_name
+            `;
+        }
+
+        return await this.sql`
+            SELECT
+                STUDYING.id AS studying_id,
+                STUDENT.student_name,
+                SUBJECT.subject_name,
+                STUDYING.hours_missed,
+                SUBJECT.total_hours,
+                CASE
+                    WHEN SUBJECT.total_hours > 0
+                        THEN (STUDYING.hours_missed::NUMERIC / SUBJECT.total_hours::NUMERIC) * 100
+                    ELSE 0
+                END AS absence_ratio_percent,
+                STUDYING.alert_level,
+                GS.name AS grading_system_name
+            FROM studying AS STUDYING
+            JOIN students AS STUDENT
+                ON STUDYING.student = STUDENT.id
+            JOIN subjects AS SUBJECT
+                ON STUDYING.subject = SUBJECT.id
+            JOIN grading_systems AS GS
+                ON SUBJECT.grading_system_id = GS.id
+            WHERE STUDYING.alert_level IS NOT NULL
+              AND SUBJECT.deleted_at IS NULL
             ORDER BY STUDENT.student_name, SUBJECT.subject_name
         `;
     }

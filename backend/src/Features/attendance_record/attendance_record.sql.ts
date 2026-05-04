@@ -7,7 +7,7 @@ export class AttendanceRecord extends PG_Table {
 
     constructor(app: PG_App) {
         super(app, "attendance_record", [
-            "id", "subject", "date", "created_at"]);
+            "id", "subject", "date", "created_at","lab_attendance"]);
     }
 
     async create() {

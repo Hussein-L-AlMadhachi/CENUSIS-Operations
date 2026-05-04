@@ -14,7 +14,7 @@ import { Section, Subsection } from "@/components/Section";
 import { useValidRoute } from "@/hooks/useValidRoute";
 
 // Globals
-import { type SubjectAccessControlData, adminRPC } from "@/rpc";
+import { type SubjectAccessControlData, type teacherData, adminRPC } from "@/rpc";
 import { sidebar_pages } from "./sidebar_pages";
 import { Link, useParams } from "wouter";
 
@@ -58,8 +58,22 @@ interface AddPermissionEntryModalProps {
     onSuccess: () => void;
 }
 
+interface PermissionEntryFormData {
+    teacher_name?: string;
+    subject_name?: string;
+}
+
+const getTeacherDisplayName = (teacher: teacherData & { teacher_name?: string; username?: string }): string =>
+    teacher.teacher_name ?? teacher.name ?? teacher.username ?? "";
+
 function AddPermissionEntryModal({ isOpen, onClose, onSuccess }: AddPermissionEntryModalProps) {
-    const handleAddPermissionEntry = async (data: any) => {
+    const [teachers, setTeachers] = useState<teacherData[]>([]);
+
+    useEffect(() => {
+        adminRPC.fetchTeachers().then((data) => setTeachers(data));
+    }, []);
+
+    const handleAddPermissionEntry = async (data: PermissionEntryFormData) => {
         console.log(data)
         if (!data.teacher_name || !data.subject_name) {
             throw "يجب ملئ جميع الحقول";
@@ -84,8 +98,11 @@ function AddPermissionEntryModal({ isOpen, onClose, onSuccess }: AddPermissionEn
                     {
                         title: "اسم الحساب",
                         key: "teacher_name",
-                        type: "autocomplete",
-                        fetchSuggestions: (q) => adminRPC.autocompleteTeacher(q)
+                        type: "select",
+                        options: teachers
+                            .map((teacher) => getTeacherDisplayName(teacher))
+                            .filter((name) => name.length > 0)
+                            .map((name) => ({ label: name, value: name }))
                     },
                     {
                         title: "اسم المادة",

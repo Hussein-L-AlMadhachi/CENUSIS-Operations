@@ -1,5 +1,5 @@
 import { type JSX, useState, useEffect } from "react";
-import { UserRoundPlus, Search } from "lucide-react";
+import { UserRoundPlus } from "lucide-react";
 
 // layouts
 import { MainLayout } from "@/layout/MainLayout";
@@ -9,13 +9,12 @@ import { EditableTable } from "@/components/EditableTable";
 import { Modal } from "@/components/Modal";
 import { DynamicForm, type DynamicFormTemplate } from "@/components/DynamicForm";
 import { Section, Subsection } from "@/components/Section";
-import { AutocompleteText } from "@/components/AutocompleteText";
 
 // Hooks
 import { useValidRoute } from "@/hooks/useValidRoute";
 
 // Globals
-import { type SubjectData, teacherRPC } from "@/rpc";
+import { type SubjectData, type teacherData, teacherRPC } from "@/rpc";
 import { useValidParams } from "@/hooks/useValidParams";
 import Tabs from "@/components/Tabs";
 import { sidebar_pages } from "./sidebar_pages";
@@ -48,9 +47,13 @@ interface AddSubjectModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    subjectFormTemplate: DynamicFormTemplate[];
 }
 
-const subjectFormTemplate: DynamicFormTemplate[] = [
+const getTeacherDisplayName = (teacher: teacherData & { teacher_name?: string; username?: string }): string =>
+    teacher.teacher_name ?? teacher.name ?? teacher.username ?? "";
+
+const buildSubjectFormTemplate = (teachers: teacherData[]): DynamicFormTemplate[] => [
     { title: "اسم المادة", key: "subject_name", type: "text" },
     {
         title: "الدرجة العلمية", key: "degree",
@@ -76,10 +79,18 @@ const subjectFormTemplate: DynamicFormTemplate[] = [
     },
     { title: "عدد ساعات في الكورس", key: "total_hours", type: "number", min: 0 },
     { title: "عدد الساعات اسبوعياً", key: "hours_weekly", type: "number", min: 0 },
-    { title: "التدريسي", key: "teacher_name", type: "autocomplete", fetchSuggestions: teacherRPC.autocompleteTeacher },
+    {
+        title: "التدريسي",
+        key: "teacher_name",
+        type: "select",
+        options: teachers
+            .map((teacher) => getTeacherDisplayName(teacher))
+            .filter((name) => name.length > 0)
+            .map((name) => ({ label: name, value: name }))
+    },
 ];
 
-function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubjectModalProps) {
+function AddSubjectModal({ isOpen, onClose, onSuccess, subjectFormTemplate }: AddSubjectModalProps) {
     const handleAddSubject = async (data: any) => {
 
         try {
@@ -125,6 +136,7 @@ function MainContent(): JSX.Element {
     const [data_4th, setData_4th] = useState<SubjectData[]>([]);
     const [data_master, setData_master] = useState<SubjectData[]>([]);
     const [data_phd, setData_phd] = useState<SubjectData[]>([]);
+    const [teachers, setTeachers] = useState<teacherData[]>([]);
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -139,7 +151,10 @@ function MainContent(): JSX.Element {
 
     useEffect(() => {
         fetchData();
+        teacherRPC.fetchTeachers().then((data) => setTeachers(data));
     }, []);
+
+    const subjectFormTemplate = buildSubjectFormTemplate(teachers);
 
     const handleUpdateSubject = async (id: number, data: any) => {
         await teacherRPC.updateSubject(id, data).then(() => fetchData());
@@ -249,6 +264,7 @@ function MainContent(): JSX.Element {
             isOpen={isAddModalOpen}
             onClose={() => setIsAddModalOpen(false)}
             onSuccess={fetchData}
+            subjectFormTemplate={subjectFormTemplate}
         />
     </>;
 }

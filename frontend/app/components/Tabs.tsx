@@ -12,7 +12,7 @@ interface TabsProps {
     className?: string;
 }
 
-const Tabs: React.FC<TabsProps> = ({ tabs, group = "34", className }) => {
+const Tabs: React.FC<TabsProps> = ({ tabs, group = "34", defaultCheckedIndex = 0, className }) => {
     return (
         <div className={`tabs tabs-border ${className || ""}`}>
             {tabs.map((tab, index) => (
@@ -22,6 +22,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, group = "34", className }) => {
                         name={group}
                         className="tab"
                         aria-label={tab.label}
+                        defaultChecked={index === defaultCheckedIndex}
                         readOnly
                     />
                     <div className="tab-content border-base-300 bg-base-100 p-10">

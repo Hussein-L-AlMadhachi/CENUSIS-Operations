@@ -17,7 +17,7 @@ export class GradingSystems extends PG_Table {
                     id                  SERIAL PRIMARY KEY,
                     name                VARCHAR(150) NOT NULL,
                     normalized_name     VARCHAR(150) UNIQUE NOT NULL,
-                    fields              JSONB NOT NULL DEFAULT '[]'::jsonb
+                    fields              JSONB NOT NULL DEFAULT '[]'::jsonb,
                     deleted_at          TIMESTAMP DEFAULT NULL
                 )
             `;

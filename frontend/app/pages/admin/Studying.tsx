@@ -164,45 +164,22 @@ function MainContent(): JSX.Element {
                         "hours_missed": "عدد ساعات الغياب",
                         "class": "المرحلة",
                         "degree":"الدرجة العلمية",
-                        ":edit:": ""
+                        "@delete": ""
                     }}
-                    onDelete={(id: number) => {
-                        adminRPC.deleteEnrollment(id).then(() => fetchData());
+                    customRenderers={{
+                        "@delete": (row) => (
+                            <button
+                                className="btn btn-error btn-xs text-white"
+                                onClick={() => {
+                                    if (row.id) {
+                                        adminRPC.deleteEnrollment(row.id).then(() => fetchData());
+                                    }
+                                }}
+                            >
+                                حذف
+                            </button>
+                        )
                     }}
-                    onSave={async (id: number, form_data: Partial<EnrollmentData>) => {
-                        try {
-                            const updates: Partial<EnrollmentData> = { ...form_data, subject_id:subjectId, teacher_id:teacherId };
-
-                            // If name changed, we need to find the new ID
-                            if (form_data.student_name) {
-                                const student = await adminRPC.findStudentByName(form_data.student_name);
-                                if (student && student.id) {
-                                    updates.student_id = student.id;
-                                    updates.student_name = student.name;
-                                }
-                            }
-                            await adminRPC.updateEnrollment(id, updates);
-                            fetchData();
-                        } catch (e) {
-                            console.error("Update failed", e);
-                            alert("حدث خطأ أثناء التعديل");
-                        }
-                    }}
-                    formTemplate={[
-                        {
-                            title: "اسم الطالب",
-                            key: "student_name",
-                            type: "autocomplete",
-                            disabled: true,
-                            fetchSuggestions: (q) => adminRPC.autocompleteStudent(q)
-                        },
-                        { 
-                            title: "السنة الدراسية",
-                            key: "studying_year",
-                            type: "number",
-                            disabled: true,
-                        }
-                    ]}
                 />
             </Subsection>
         </Section>

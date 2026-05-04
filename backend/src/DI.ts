@@ -10,6 +10,7 @@ import { studyingLoader } from "./Features/studying/@loader.js";
 import { gradingLoader } from "./Features/grading/@loader.js";
 import { attendanceRecordLoader } from "./Features/attendance_record/@loader.js";
 import { absentedLoader } from "./Features/absented/@loader.js";
+import { absenceAlertThresholdsLoader } from "./Features/absence_alert_thresholds/@loader.js";
 
 export function registerAdminCoreHandlers(rpc: RPC) {
     teachingStaffLoader(rpc);
@@ -23,4 +24,8 @@ export function registerAdminCoreHandlers(rpc: RPC) {
 export function registerTeacherAttendanceHandlers(rpc: RPC) {
     attendanceRecordLoader(rpc);
     absentedLoader(rpc);
+}
+
+export function registerAbsenceAlertHandlers(rpc: RPC) {
+    absenceAlertThresholdsLoader(rpc);
 }

@@ -1,309 +1,338 @@
-import { type JSX, useState, useEffect, useRef } from "react";
-import { UserRoundPlus, Plus } from "lucide-react";
+import { type JSX, useCallback, useEffect, useMemo, useState } from "react";
+import { BellPlus } from "lucide-react";
 
-// layouts
 import { MainLayout } from "@/layout/MainLayout";
-
-// Components
 import { EditableTable } from "@/components/EditableTable";
 import { Modal } from "@/components/Modal";
 import { DynamicForm, type DynamicFormTemplate } from "@/components/DynamicForm";
 import { Section, Subsection } from "@/components/Section";
-
-// Hooks
 import { useValidRoute } from "@/hooks/useValidRoute";
-
-// Globals
-import { type studentData, type StudentUpdateData, adminRPC } from "@/rpc";
-import { useValidParams as validateParams } from "@/hooks/useValidParams";
+import {
+    adminRPC,
+    type AbsenceAlertRowData,
+    type AbsenceAlertThresholdData,
+    type GradingSystemData
+} from "@/rpc";
 import Tabs from "@/components/Tabs";
 import { sidebar_pages } from "./sidebar_pages";
 
-
-
 interface OptionsProps {
     onAddClick: () => void;
-    onImportSuccess: () => void;
+    onRefresh: () => void;
+    isRefreshing: boolean;
+    gradingSystems: string[];
+    selectedGradingSystem: string;
+    onGradingSystemChange: (gradingSystem: string) => void;
 }
 
-
-
-function Options({ onAddClick, onImportSuccess }: OptionsProps) {
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [isStartYearModalOpen, setIsStartYearModalOpen] = useState(false);
-
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || e.target.files.length === 0) return;
-
-        const file = e.target.files[0];
-        const formData = new FormData();
-        formData.append("file", file);
-
-        try {
-            const response = await fetch("/api/students/import", {
-                method: "POST",
-                body: formData,
-            });
-
-            if (response.ok) {
-                onImportSuccess();
-            } else {
-                const result = await response.json();
-                alert("خطأ في استيراد الملف: " + result.error);
-            }
-        } catch (error) {
-            console.error("Upload error:", error);
-            alert("خطأ في استيراد الملف");
-        }
-    };
-
-    const handleStartYearClick = () => {
-        setIsStartYearModalOpen(true);
-    };
-
-    const handleConfirmStartYear = () => {
-        setIsStartYearModalOpen(false);
-        fileInputRef.current?.click();
-    };
-
-
-    return <>
-        <div id="options" className="menu lg:menu-horizontal menu-vertical w-full justify-between">
-            <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> إدارة الطلاب </div>
-            <ul className="menu bg-base-200 lg:menu-horizontal rounded-box gap-1 menu-vertical max-md:w-full">
-
-                <li>
-                    <button className="btn btn-lg" onClick={onAddClick}>
-                        <UserRoundPlus size={18} /> إضافة طالب
-                    </button>
-                </li>
-
-                <li>
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        className="hidden"
-                        accept=".xlsx, .xls"
-                        onChange={handleFileUpload}
-                    />
-                    <button className="btn btn-lg" onClick={handleStartYearClick}>
-                        <Plus size={18} /> ابدأ سنة دراسية جديدة
-                    </button>
-                </li>
-            </ul>
-        </div>
-
-        <Modal isOpen={isStartYearModalOpen} className="w-full flex flex-col justify-center max-w-lg">
-            <h3 className="font-bold text-lg mb-4 text-center">تحذير</h3>
-            <p className="text-center mb-6 leading-7">
-                هذا الإجراء سيبدأ سنة دراسية جديدة وقد يؤدي إلى فقدان بيانات الطلاب الحالية.
-                <br />
-                هل أنت متأكد أنك تريد المتابعة؟
-            </p>
-            <div className="flex justify-center gap-3">
-                <button className="btn btn-ghost" onClick={() => setIsStartYearModalOpen(false)}>
-                    إلغاء
+function Options({
+    onAddClick,
+    gradingSystems,
+    selectedGradingSystem,
+    onGradingSystemChange
+}: OptionsProps) {
+    return <div id="options" className="menu lg:menu-horizontal menu-vertical w-full justify-between">
+        <div className="text-4xl text-center max-sm:py-10 max-md:w-full"> تنبيهات الغياب </div>
+        <ul className="menu bg-base-200 lg:menu-horizontal rounded-box gap-1 menu-vertical max-md:w-full">
+            <li>
+                <button className="btn btn-lg" onClick={onAddClick}>
+                    <BellPlus size={18} /> إضافة تنبيه
                 </button>
-                <button className="btn btn-warning" onClick={handleConfirmStartYear}>
-                    نعم، متابعة
-                </button>
-            </div>
-        </Modal>
-    </>;
+            </li>
+            <li>
+                <select
+                    className="select select-bordered select-lg"
+                    value={selectedGradingSystem}
+                    onChange={(event) => onGradingSystemChange(event.target.value)}
+                    disabled={gradingSystems.length === 0}
+                >
+                    <option value="" disabled>
+                        اختر نظام الدرجات
+                    </option>
+                    {gradingSystems.map((gradingSystemName) => (
+                        <option key={gradingSystemName} value={gradingSystemName}>
+                            {gradingSystemName}
+                        </option>
+                    ))}
+                </select>
+            </li>
+        </ul>
+    </div>;
 }
 
-
-
-interface AddStudentModalProps {
+interface AddThresholdModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    selectedGradingSystem: string;
 }
 
-const studentFormTemplate: DynamicFormTemplate[] = [
-    { title: "الاسم الكامل", key: "student_name", type: "text" },
-    { title: "السنة التسجيل", key: "joined_year", type: "number" },
-    {
-        title: "الدرجة العلمية", key: "degree",
-        type: "select", options: [
-            { label: "بكلوريوس", value: "بكلوريوس" },
-            { label: "ماجستير", value: "ماجستير" },
-            { label: "دكتوراه", value: "دكتوراه" }
-        ], defaultValue: "بكلوريوس"
-    },
-    {
-        title: "المرحلة", key: "class", type: "select", options: [
-            { label: "الأولى", value: 1 },
-            { label: "الثانية", value: 2 },
-            { label: "الثالثة", value: 3 },
-            { label: "الرابعة", value: 4 }
-        ], condition: { key: "degree", value: "بكلوريوس" }, defaultValue: 1
-    }
+const thresholdFormTemplate: DynamicFormTemplate[] = [
+    { title: "اسم التنبيه", key: "alert_name", type: "text" },
+    { title: "نسبة الغياب (%)", key: "threshold_percent", type: "number", min: 0, max: 100 }
 ];
 
-function AddStudentModal({ isOpen, onClose, onSuccess }: AddStudentModalProps) {
-    type AddStudentFormData = Pick<StudentUpdateData, "student_name" | "joined_year" | "degree" | "class">;
-    const handleAddTeacher = async (data: AddStudentFormData) => {
+function AddThresholdModal({ isOpen, onClose, onSuccess, selectedGradingSystem }: AddThresholdModalProps) {
+    const handleSubmit = async (data: AbsenceAlertThresholdData) => {
+        const alertName = data.alert_name?.trim();
+        const thresholdPercent = Number(data.threshold_percent);
 
-        try {
-            validateParams(data, ["student_name", "joined_year", "degree"])
-            if (data.degree !== "بكلوريوس") {
-                data["class"] = 1;
-            }
-
-            await adminRPC.newStudent(data as unknown as studentData);
-            onSuccess();
-            onClose();
-        } catch (error) {
-            throw `حدث خطأ أثناء إضافة الحساب: ${error}`;
+        if (!selectedGradingSystem || !alertName || Number.isNaN(thresholdPercent)) {
+            throw "يجب ملء جميع الحقول";
         }
+
+        await adminRPC.newAbsenceAlertThreshold({
+            grading_system_name: selectedGradingSystem,
+            alert_name: alertName,
+            threshold_percent: thresholdPercent
+        });
+
+        onSuccess();
+        onClose();
     };
 
-    return (
-        <Modal isOpen={isOpen} className="w-full flex flex-col justify-center max-w-lg">
-            <h3 className="font-bold text-lg mb-4 text-center">إضافة طالب جديد</h3>
-
-            <DynamicForm
-                key={isOpen ? "open" : "closed"}
-                template={studentFormTemplate}
-                onSubmit={handleAddTeacher}
-                submitLabel="حفظ"
-            />
-
-            <button className="btn btn-ghost w-2xs mt-4" onClick={onClose}>إلغاء</button>
-        </Modal>
-    );
+    return <Modal isOpen={isOpen} className="w-full flex flex-col justify-center max-w-lg">
+        <h3 className="font-bold text-lg mb-4 text-center">إضافة تنبيه غياب</h3>
+        <DynamicForm
+            key={isOpen ? "open" : "closed"}
+            template={thresholdFormTemplate}
+            onSubmit={handleSubmit}
+            submitLabel="حفظ"
+        />
+        <button className="btn btn-ghost w-2xs mt-4" onClick={onClose}>إلغاء</button>
+    </Modal>;
 }
 
-
 function MainContent(): JSX.Element {
-
-    const [data_1st, setData_1st] = useState<studentData[]>([]);
-    const [data_2nd, setData_2nd] = useState<studentData[]>([]);
-    const [data_3rd, setData_3rd] = useState<studentData[]>([]);
-    const [data_4th, setData_4th] = useState<studentData[]>([]);
-    const [data_master, setData_master] = useState<studentData[]>([]);
-    const [data_phd, setData_phd] = useState<studentData[]>([]);
-
+    const [thresholds, setThresholds] = useState<AbsenceAlertThresholdData[]>([]);
+    const [alerts1st, setAlerts1st] = useState<AbsenceAlertRowData[]>([]);
+    const [alerts2nd, setAlerts2nd] = useState<AbsenceAlertRowData[]>([]);
+    const [alerts3rd, setAlerts3rd] = useState<AbsenceAlertRowData[]>([]);
+    const [alerts4th, setAlerts4th] = useState<AbsenceAlertRowData[]>([]);
+    const [alertsMaster, setAlertsMaster] = useState<AbsenceAlertRowData[]>([]);
+    const [alertsPhd, setAlertsPhd] = useState<AbsenceAlertRowData[]>([]);
+    const [gradingSystems, setGradingSystems] = useState<GradingSystemData[]>([]);
+    const [selectedGradingSystem, setSelectedGradingSystem] = useState("");
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-    const fetchData = () => {
-        adminRPC.filterStudentsByClassDegree("بكلوريوس", 1).then((data) => setData_1st(data));
-        adminRPC.filterStudentsByClassDegree("بكلوريوس", 2).then((data) => setData_2nd(data));
-        adminRPC.filterStudentsByClassDegree("بكلوريوس", 3).then((data) => setData_3rd(data));
-        adminRPC.filterStudentsByClassDegree("بكلوريوس", 4).then((data) => setData_4th(data));
+    const dedupeAlerts = useCallback((rows: AbsenceAlertRowData[]) => {
+        const byStudentSubject = new Map<string, AbsenceAlertRowData>();
 
-        adminRPC.filterStudentsByDegree("ماجستير").then((data) => setData_master(data));
+        for (const row of rows) {
+            const studentName = row.student_name ?? "";
+            const subjectName = row.subject_name ?? "";
+            const key = `${studentName}::${subjectName}`;
 
-        adminRPC.filterStudentsByDegree("دكتوراه").then((data) => setData_phd(data));
+            if (!byStudentSubject.has(key)) {
+                byStudentSubject.set(key, row);
+                continue;
+            }
 
-    };
+            const existing = byStudentSubject.get(key)!;
+            const existingRatio = Number(existing.absence_ratio_percent ?? 0);
+            const nextRatio = Number(row.absence_ratio_percent ?? 0);
 
-    useEffect(() => {
-        fetchData();
+            if (nextRatio > existingRatio) {
+                byStudentSubject.set(key, row);
+            }
+        }
+
+        return Array.from(byStudentSubject.values()).map((row) => ({
+            ...row,
+            id: row.studying_id
+        }));
     }, []);
 
-    const handleUpdateStudent = async (id: number, data: StudentUpdateData) => {
-        await adminRPC.updateStudent(id, data);
-        fetchData();
-    };
+    const refreshAlerts = useCallback(async () => {
+        if (!selectedGradingSystem) {
+            return;
+        }
 
-    const handleDeleteStudent = async (id: number) => {
-        await adminRPC.deleteStudent(id);
-        fetchData();
-    };
+        setIsRefreshing(true);
+        try {
+            await adminRPC.recomputeAbsenceAlerts();
+            const [
+                thresholdRows,
+                firstClassRows,
+                secondClassRows,
+                thirdClassRows,
+                fourthClassRows,
+                masterRows,
+                phdRows
+            ] = await Promise.all([
+                adminRPC.fetchAbsenceAlertThresholds({ grading_system_name: selectedGradingSystem }),
+                adminRPC.fetchAbsenceAlerts({ degree: "بكلوريوس", class: 1, grading_system_name: selectedGradingSystem }),
+                adminRPC.fetchAbsenceAlerts({ degree: "بكلوريوس", class: 2, grading_system_name: selectedGradingSystem }),
+                adminRPC.fetchAbsenceAlerts({ degree: "بكلوريوس", class: 3, grading_system_name: selectedGradingSystem }),
+                adminRPC.fetchAbsenceAlerts({ degree: "بكلوريوس", class: 4, grading_system_name: selectedGradingSystem }),
+                adminRPC.fetchAbsenceAlerts({ degree: "ماجستير", grading_system_name: selectedGradingSystem }),
+                adminRPC.fetchAbsenceAlerts({ degree: "دكتوراه", grading_system_name: selectedGradingSystem })
+            ]);
 
-    const headers = {
-        "student_name": "الاسم", "joined_year": "السنة التسجيل",
-        "degree": "الدرجة العلمية", "class": "المرحلة", ":edit:": ""
-    };
+            setThresholds(thresholdRows);
+            setAlerts1st(dedupeAlerts(firstClassRows));
+            setAlerts2nd(dedupeAlerts(secondClassRows));
+            setAlerts3rd(dedupeAlerts(thirdClassRows));
+            setAlerts4th(dedupeAlerts(fourthClassRows));
+            setAlertsMaster(dedupeAlerts(masterRows));
+            setAlertsPhd(dedupeAlerts(phdRows));
+        } finally {
+            setIsRefreshing(false);
+        }
+    }, [dedupeAlerts, selectedGradingSystem]);
+
+    useEffect(() => {
+        adminRPC.fetchGradingSystems().then((systems) => {
+            setGradingSystems(systems);
+            if (systems.length > 0) {
+                setSelectedGradingSystem((current) => current || systems[0].name);
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        if (!selectedGradingSystem) {
+            return;
+        }
+
+        refreshAlerts();
+    }, [refreshAlerts, selectedGradingSystem]);
+
+    const gradingSystemOptions = useMemo(
+        () => gradingSystems.map((system) => system.name),
+        [gradingSystems]
+    );
+
+    const activeAlertsHeaders = useMemo(() => ({
+        "student_name": "الطالب",
+        "subject_name": "المادة",
+        "hours_missed": "عدد ساعات الغياب",
+        "total_hours": "عدد الساعات الكلية",
+        "@ratio": "نسبة الغياب",
+        "alert_level": "مستوى التنبيه"
+    }), []);
+
+    const activeAlertsRenderers = useMemo(() => ({
+        "@ratio": (row: AbsenceAlertRowData) => {
+            const ratio = Number(row.absence_ratio_percent ?? 0);
+            return <span>{ratio.toFixed(2)}%</span>;
+        }
+    }), []);
 
     return <>
         <Section>
             <Subsection>
-                <Options onAddClick={() => setIsAddModalOpen(true)} onImportSuccess={fetchData} />
+                <Options
+                    onAddClick={() => setIsAddModalOpen(true)}
+                    onRefresh={refreshAlerts}
+                    isRefreshing={isRefreshing}
+                    gradingSystems={gradingSystemOptions}
+                    selectedGradingSystem={selectedGradingSystem}
+                    onGradingSystemChange={setSelectedGradingSystem}
+                />
             </Subsection>
+
             <Subsection>
-                <Tabs group="students" tabs={
-                    [
+                <h3 className="text-2xl mb-4">إعدادات التنبيهات</h3>
+                <EditableTable
+                    data={thresholds}
+                    headers={{
+                        "alert_name": "اسم التنبيه",
+                        "threshold_percent": "نسبة الغياب (%)",
+                        ":edit:": ""
+                    }}
+                    onSave={async (id, row) => {
+                        await adminRPC.updateAbsenceAlertThreshold(id, {
+                            grading_system_name: selectedGradingSystem,
+                            alert_name: row.alert_name?.trim(),
+                            threshold_percent: Number(row.threshold_percent)
+                        });
+                        await refreshAlerts();
+                    }}
+                    onDelete={async (id) => {
+                        await adminRPC.deleteAbsenceAlertThreshold(id);
+                        await refreshAlerts();
+                    }}
+                    formTemplate={thresholdFormTemplate}
+                />
+            </Subsection>
+
+            <Subsection>
+                <h3 className="text-2xl my-4 mt-8">قائمة التنبيهات الفعالة</h3>
+                <Tabs
+                    group="absence_alerts_by_degree"
+                    tabs={[
                         {
-                            label: "المرحلة الأولى", 
+                            label: "المرحلة الأولى",
                             content: <EditableTable
-                                data={data_1st || []}
-                                headers={headers}
-                                onDelete={handleDeleteStudent}
-                                onSave={handleUpdateStudent}
-                                formTemplate={studentFormTemplate}
+                                data={alerts1st}
+                                headers={activeAlertsHeaders}
+                                customRenderers={activeAlertsRenderers}
                             />
                         },
                         {
-                            label: "المرحلة الثانية", content: <EditableTable
-                                data={data_2nd || []}
-                                headers={headers}
-                                onDelete={handleDeleteStudent}
-                                onSave={handleUpdateStudent}
-                                formTemplate={studentFormTemplate}
+                            label: "المرحلة الثانية",
+                            content: <EditableTable
+                                data={alerts2nd}
+                                headers={activeAlertsHeaders}
+                                customRenderers={activeAlertsRenderers}
                             />
                         },
                         {
-                            label: "المرحلة الثالثة", content: <EditableTable
-                                data={data_3rd || []}
-                                headers={headers}
-                                onDelete={handleDeleteStudent}
-                                onSave={handleUpdateStudent}
-                                formTemplate={studentFormTemplate}
+                            label: "المرحلة الثالثة",
+                            content: <EditableTable
+                                data={alerts3rd}
+                                headers={activeAlertsHeaders}
+                                customRenderers={activeAlertsRenderers}
                             />
                         },
                         {
-                            label: "المرحلة الرابعة", content: <EditableTable
-                                data={data_4th || []}
-                                headers={headers}
-                                onDelete={handleDeleteStudent}
-                                onSave={handleUpdateStudent}
-                                formTemplate={studentFormTemplate}
+                            label: "المرحلة الرابعة",
+                            content: <EditableTable
+                                data={alerts4th}
+                                headers={activeAlertsHeaders}
+                                customRenderers={activeAlertsRenderers}
                             />
                         },
                         {
-                            label: "الماجستير", content: <EditableTable
-                                data={data_master || []}
-                                headers={headers}
-                                onDelete={handleDeleteStudent}
-                                onSave={handleUpdateStudent}
-                                formTemplate={studentFormTemplate}
+                            label: "الماجستير",
+                            content: <EditableTable
+                                data={alertsMaster}
+                                headers={activeAlertsHeaders}
+                                customRenderers={activeAlertsRenderers}
                             />
                         },
                         {
-                            label: "الدكتوراه", content: <EditableTable
-                                data={data_phd || []}
-                                headers={headers}
-                                onDelete={handleDeleteStudent}
-                                onSave={handleUpdateStudent}
-                                formTemplate={studentFormTemplate}
+                            label: "الدكتوراه",
+                            content: <EditableTable
+                                data={alertsPhd}
+                                headers={activeAlertsHeaders}
+                                customRenderers={activeAlertsRenderers}
                             />
                         }
-                    ]
-                } />
+                    ]}
+                />
             </Subsection>
         </Section>
 
-        <AddStudentModal
+        <AddThresholdModal
             isOpen={isAddModalOpen}
             onClose={() => setIsAddModalOpen(false)}
-            onSuccess={fetchData}
+            onSuccess={refreshAlerts}
+            selectedGradingSystem={selectedGradingSystem}
         />
     </>;
 }
 
-
-//
-export function StudentsPage(): JSX.Element {
+export function AbsenceAlertsPage(): JSX.Element {
     useValidRoute(["admin"], "/login");
 
     return <>
         <MainLayout
             main={MainContent}
-            title={"معلومات الطلاب"}
+            title={"تنبيهات الغياب"}
             sidebar={sidebar_pages}
         />
-    </>
+    </>;
 }

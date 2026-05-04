@@ -133,6 +133,32 @@ export interface SubjectAccessControlData {
     user_name?: string;
 }
 
+export interface AbsenceAlertThresholdData {
+    id?: number;
+    grading_system_id?: number;
+    grading_system_name?: string;
+    alert_name?: string;
+    threshold_percent?: number;
+}
+
+export interface AbsenceAlertRowData {
+    id?: number;
+    studying_id?: number;
+    student_name?: string;
+    subject_name?: string;
+    hours_missed?: number;
+    total_hours?: number;
+    absence_ratio_percent?: number;
+    alert_level?: string;
+    grading_system_name?: string;
+}
+
+export interface AbsenceAlertsFilterData {
+    degree?: string;
+    class?: number;
+    grading_system_name?: string;
+}
+
 interface AdminsRPC {
     load(): Promise<void>;
     getAccountInfo(): Promise<AccountInfo>;
@@ -187,6 +213,14 @@ interface AdminsRPC {
     deleteEnrollment(id: number): Promise<void>;
     fetchSingleEnrollment(id: number): Promise<EnrollmentData>;
     fetchEnrollmentsForSubject(subject_id: number): Promise<EnrollmentData[]>;
+
+    // absence alerts
+    newAbsenceAlertThreshold(data: AbsenceAlertThresholdData): Promise<number>;
+    updateAbsenceAlertThreshold(id: number, data: Partial<AbsenceAlertThresholdData>): Promise<number>;
+    deleteAbsenceAlertThreshold(id: number): Promise<void>;
+    fetchAbsenceAlertThresholds(filters?: AbsenceAlertsFilterData): Promise<AbsenceAlertThresholdData[]>;
+    recomputeAbsenceAlerts(): Promise<{ updated: number }>;
+    fetchAbsenceAlerts(filters?: AbsenceAlertsFilterData): Promise<AbsenceAlertRowData[]>;
 
     // attendance records management
     fetchDailyAttendanceRecordsForTheSubject(subject_id: number): Promise<AttendanceRecordData[]>;

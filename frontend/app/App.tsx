@@ -12,6 +12,7 @@ import { StudyingPage } from "@/pages/admin/Studying";
 
 import { PermissionsPage } from "@/pages/admin/Permissions";
 import { GradingSystemsPage } from "@/pages/admin/GradingSystems";
+import { AbsenceAlertsPage } from "@/pages/admin/AbsenceAlerts";
 import { TeachersSubjectsPage } from "./pages/teacher/Subjects";
 import { TeachersAttendancePage } from "./pages/teacher/Attendance";
 import { TeachersAbsentedPage } from "./pages/teacher/Absented";
@@ -46,6 +47,7 @@ export default function App(): JSX.Element {
             <Route path="/admin/students" component={StudentsPage} />
             <Route path="/admin/subjects" component={SubjectsPage} />
             <Route path="/admin/grading-systems" component={GradingSystemsPage} />
+            <Route path="/admin/absence-alerts" component={AbsenceAlertsPage} />
             <Route path="/admin/enrolled/:teacher/:id" component={StudyingPage} />
             <Route path="/admin/permissions/:subject_id" component={PermissionsPage} />
 

@@ -14,7 +14,7 @@ import { Section, Subsection } from "@/components/Section";
 import { useValidRoute } from "@/hooks/useValidRoute";
 
 // Globals
-import { type SubjectData, type GradingSystemData, superAdminRPC } from "@/rpc";
+import { type SubjectData, type GradingSystemData, type teacherData, superAdminRPC } from "@/rpc";
 import { useValidParams as validateParams } from "@/hooks/useValidParams";
 import Tabs from "@/components/Tabs";
 import { sidebar_pages } from "./sidebar_pages";
@@ -47,11 +47,20 @@ interface AddSubjectModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    subjectFormTemplate: DynamicFormTemplate[];
 }
 
-const subjectFormTemplate: DynamicFormTemplate[] = [
+const getTeacherDisplayName = (teacher: teacherData & { teacher_name?: string; username?: string }): string =>
+    teacher.teacher_name ?? teacher.name ?? teacher.username ?? "";
+
+const buildSubjectFormTemplate = (teachers: teacherData[], gradingSystems: GradingSystemData[]): DynamicFormTemplate[] => [
     { title: "اسم المادة", key: "subject_name", type: "text" },
-    { title: "نظام الدرجات", key: "grading_system_name", type: "autocomplete", fetchSuggestions: superAdminRPC.autocompleteGradingSystem },
+    {
+        title: "نظام الدرجات",
+        key: "grading_system_name",
+        type: "select",
+        options: gradingSystems.map((system) => ({ label: system.name, value: system.name }))
+    },
     {
         title: "الدرجة العلمية", key: "degree",
         type: "select", options: [
@@ -75,10 +84,18 @@ const subjectFormTemplate: DynamicFormTemplate[] = [
         ], condition: { key: "degree", value: "بكلوريوس" }
     },
     { title: "عدد الساعات اسبوعياً", key: "hours_weekly", type: "number", min: 0 },
-    { title: "التدريسي", key: "teacher_name", type: "autocomplete", fetchSuggestions: superAdminRPC.autocompleteTeacher },
+    {
+        title: "التدريسي",
+        key: "teacher_name",
+        type: "select",
+        options: teachers
+            .map((teacher) => getTeacherDisplayName(teacher))
+            .filter((name) => name.length > 0)
+            .map((name) => ({ label: name, value: name }))
+    },
 ];
 
-function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubjectModalProps) {
+function AddSubjectModal({ isOpen, onClose, onSuccess, subjectFormTemplate }: AddSubjectModalProps) {
     const handleAddSubject = async (data: SubjectData) => {
 
         try {
@@ -124,6 +141,7 @@ function MainContent(): JSX.Element {
     const [data_4th, setData_4th] = useState<SubjectData[]>([]);
     const [data_master, setData_master] = useState<SubjectData[]>([]);
     const [data_phd, setData_phd] = useState<SubjectData[]>([]);
+    const [teachers, setTeachers] = useState<teacherData[]>([]);
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -155,6 +173,7 @@ function MainContent(): JSX.Element {
     const [selectedGradingSystem, setSelectedGradingSystem] = useState<string>('');
 
     useEffect(() => {
+        superAdminRPC.fetchTeachers().then((data) => setTeachers(data));
         superAdminRPC.fetchGradingSystems().then((data) => {
             setGradingSystems(data);
             if (data.length > 0 && data[0].name) {
@@ -162,6 +181,8 @@ function MainContent(): JSX.Element {
             }
         });
     }, []);
+
+    const subjectFormTemplate = buildSubjectFormTemplate(teachers, gradingSystems);
 
     const handleExportGrades = (degree: string, classNumber: number) => {
         if (!selectedGradingSystem) return;
@@ -317,6 +338,7 @@ function MainContent(): JSX.Element {
             isOpen={isAddModalOpen}
             onClose={() => setIsAddModalOpen(false)}
             onSuccess={fetchData}
+            subjectFormTemplate={subjectFormTemplate}
         />
     </>;
 }

@@ -30,7 +30,7 @@ export class StudentsTable extends PG_Table {
                     joined_year                 INTEGER NOT NULL,
 
                     degree                      VARCHAR(20) NOT NULL,
-                    class                       INTEGER NOT NULL,
+                    class                       INTEGER NOT NULL
                 )
             `;
             await sql`
