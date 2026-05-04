@@ -1,5 +1,5 @@
 import { type JSX, useCallback, useEffect, useMemo, useState } from "react";
-import { BellPlus } from "lucide-react";
+import { BellPlus, Download } from "lucide-react";
 
 import { MainLayout } from "@/layout/MainLayout";
 import { EditableTable } from "@/components/EditableTable";
@@ -220,6 +220,35 @@ function MainContent(): JSX.Element {
         }
     }), []);
 
+    const handleExportAbsenceAlerts = useCallback((degree: string, classNumber?: number) => {
+        if (!selectedGradingSystem) {
+            return;
+        }
+
+        const query = new URLSearchParams({
+            degree,
+            grading_system: selectedGradingSystem
+        });
+
+        if (typeof classNumber === "number") {
+            query.set("class", String(classNumber));
+        }
+
+        window.open(`/api/absence-alerts/export?${query.toString()}`, "_blank");
+    }, [selectedGradingSystem]);
+
+    const ExportBar = ({ degree, classNumber }: { degree: string; classNumber?: number }) => (
+        <div className="flex justify-end items-center">
+            <button
+                className="btn btn-sm"
+                onClick={() => handleExportAbsenceAlerts(degree, classNumber)}
+                disabled={!selectedGradingSystem}
+            >
+                <Download size={16} /> تصدير التنبيهات
+            </button>
+        </div>
+    );
+
     return <>
         <Section>
             <Subsection>
@@ -265,51 +294,69 @@ function MainContent(): JSX.Element {
                     tabs={[
                         {
                             label: "المرحلة الأولى",
-                            content: <EditableTable
-                                data={alerts1st}
-                                headers={activeAlertsHeaders}
-                                customRenderers={activeAlertsRenderers}
-                            />
+                            content: <div className="flex flex-col gap-4">
+                                <ExportBar degree="بكلوريوس" classNumber={1} />
+                                <EditableTable
+                                    data={alerts1st}
+                                    headers={activeAlertsHeaders}
+                                    customRenderers={activeAlertsRenderers}
+                                />
+                            </div>
                         },
                         {
                             label: "المرحلة الثانية",
-                            content: <EditableTable
-                                data={alerts2nd}
-                                headers={activeAlertsHeaders}
-                                customRenderers={activeAlertsRenderers}
-                            />
+                            content: <div className="flex flex-col gap-4">
+                                <ExportBar degree="بكلوريوس" classNumber={2} />
+                                <EditableTable
+                                    data={alerts2nd}
+                                    headers={activeAlertsHeaders}
+                                    customRenderers={activeAlertsRenderers}
+                                />
+                            </div>
                         },
                         {
                             label: "المرحلة الثالثة",
-                            content: <EditableTable
-                                data={alerts3rd}
-                                headers={activeAlertsHeaders}
-                                customRenderers={activeAlertsRenderers}
-                            />
+                            content: <div className="flex flex-col gap-4">
+                                <ExportBar degree="بكلوريوس" classNumber={3} />
+                                <EditableTable
+                                    data={alerts3rd}
+                                    headers={activeAlertsHeaders}
+                                    customRenderers={activeAlertsRenderers}
+                                />
+                            </div>
                         },
                         {
                             label: "المرحلة الرابعة",
-                            content: <EditableTable
-                                data={alerts4th}
-                                headers={activeAlertsHeaders}
-                                customRenderers={activeAlertsRenderers}
-                            />
+                            content: <div className="flex flex-col gap-4">
+                                <ExportBar degree="بكلوريوس" classNumber={4} />
+                                <EditableTable
+                                    data={alerts4th}
+                                    headers={activeAlertsHeaders}
+                                    customRenderers={activeAlertsRenderers}
+                                />
+                            </div>
                         },
                         {
                             label: "الماجستير",
-                            content: <EditableTable
-                                data={alertsMaster}
-                                headers={activeAlertsHeaders}
-                                customRenderers={activeAlertsRenderers}
-                            />
+                            content: <div className="flex flex-col gap-4">
+                                <ExportBar degree="ماجستير" />
+                                <EditableTable
+                                    data={alertsMaster}
+                                    headers={activeAlertsHeaders}
+                                    customRenderers={activeAlertsRenderers}
+                                />
+                            </div>
                         },
                         {
                             label: "الدكتوراه",
-                            content: <EditableTable
-                                data={alertsPhd}
-                                headers={activeAlertsHeaders}
-                                customRenderers={activeAlertsRenderers}
-                            />
+                            content: <div className="flex flex-col gap-4">
+                                <ExportBar degree="دكتوراه" />
+                                <EditableTable
+                                    data={alertsPhd}
+                                    headers={activeAlertsHeaders}
+                                    customRenderers={activeAlertsRenderers}
+                                />
+                            </div>
                         }
                     ]}
                 />

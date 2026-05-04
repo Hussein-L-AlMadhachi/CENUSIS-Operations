@@ -484,3 +484,119 @@ studentsXlsxRouter.get('/api/grades/export', async (req, res) => {
     }
 });
 
+studentsXlsxRouter.get('/api/absence-alerts/export', async (req, res) => {
+    try {
+        const admin_auth = isValidAdminNoRPC(req, res);
+        const superadmin_auth = isValidSuperadminNoRPC(req, res);
+
+        if (!admin_auth && !superadmin_auth) {
+            res.status(401).json({
+                success: false,
+                error: "unauthorized"
+            });
+            return;
+        }
+
+        const degree = req.query.degree as string;
+        const classRaw = req.query.class as string | undefined;
+        const gradingSystem = req.query.grading_system as string;
+
+        if (!degree || !gradingSystem) {
+            res.status(400).json({
+                success: false,
+                error: "Missing required degree or grading_system parameter"
+            });
+            return;
+        }
+
+        const classNumber = classRaw ? Number(classRaw) : undefined;
+        if (classRaw !== undefined && Number.isNaN(classNumber)) {
+            res.status(400).json({
+                success: false,
+                error: "Invalid class parameter"
+            });
+            return;
+        }
+
+        const alerts = await studying.fetchAbsenceAlerts(degree, classNumber, gradingSystem);
+
+        const byStudentSubject = new Map<string, {
+            student_name: string;
+            subject_name: string;
+            hours_missed: number;
+            total_hours: number;
+            absence_ratio_percent: number;
+            alert_level: string;
+        }>();
+
+        for (const row of alerts) {
+            const studentName = String(row.student_name ?? "");
+            const subjectName = String(row.subject_name ?? "");
+            const key = `${studentName}::${subjectName}`;
+            const nextRatio = Number(row.absence_ratio_percent ?? 0);
+            const existing = byStudentSubject.get(key);
+
+            if (!existing || nextRatio > existing.absence_ratio_percent) {
+                byStudentSubject.set(key, {
+                    student_name: studentName,
+                    subject_name: subjectName,
+                    hours_missed: Number(row.hours_missed ?? 0),
+                    total_hours: Number(row.total_hours ?? 0),
+                    absence_ratio_percent: nextRatio,
+                    alert_level: String(row.alert_level ?? "")
+                });
+            }
+        }
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Absence Alerts');
+
+        worksheet.columns = [
+            { header: "الطالب", key: "student_name", width: 30 },
+            { header: "المادة", key: "subject_name", width: 30 },
+            { header: "عدد ساعات الغياب", key: "hours_missed", width: 20 },
+            { header: "عدد الساعات الكلية", key: "total_hours", width: 20 },
+            { header: "نسبة الغياب", key: "absence_ratio_percent", width: 18 },
+            { header: "مستوى التنبيه", key: "alert_level", width: 20 }
+        ];
+
+        for (const row of byStudentSubject.values()) {
+            worksheet.addRow({
+                ...row,
+                absence_ratio_percent: `${row.absence_ratio_percent.toFixed(2)}%`
+            });
+        }
+
+        const headerRow = worksheet.getRow(1);
+        headerRow.font = { bold: true };
+        headerRow.alignment = { horizontal: "center", vertical: "middle" };
+
+        const thinBorder: Partial<ExcelJS.Borders> = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+        };
+
+        worksheet.eachRow((row, rowNumber) => {
+            row.eachCell((cell) => {
+                cell.border = thinBorder;
+                if (rowNumber > 1) {
+                    cell.alignment = { horizontal: "center", vertical: "middle" };
+                }
+            });
+        });
+
+        const classLabel = classNumber !== undefined ? `_class${classNumber}` : "";
+        const filename = `absence_alerts${classLabel}_${Date.now()}.xlsx`;
+        const buffer = await workbook.xlsx.writeBuffer();
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(buffer);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, error: 'Error generating absence alerts Excel file' });
+    }
+});
+
