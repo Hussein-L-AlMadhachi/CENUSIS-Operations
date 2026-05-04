@@ -10,7 +10,7 @@ import { translateHeaders } from "../helpers/headers_translate.js"
 // services
 import { isValidAdminNoRPC, isValidSuperadminNoRPC, isValidTeacherNoRPC } from '../auth.js';
 import { normalize_arabic } from '../helpers/normalize_arabic.js';
-import { students, studying, subjects, grading_systems } from '../db.js';
+import { students, studying, subjects, grading_systems, app } from '../db.js';
 
 
 
@@ -55,26 +55,58 @@ studentsXlsxRouter.post('/api/students/import', upload.single('file'), async (re
             "المرحلة": "class",
         })
 
-        for (const student of loaded_students_record) {
-            try {
+        await app.sql.begin(async (sql) => {
+            // Clear existing data before importing
+            await sql`DELETE FROM absented;`;
+            await sql`DELETE FROM attendance_record;`;
+            await sql`DELETE FROM studying;`;
+            await sql`DELETE FROM students;`;
+
+            for (const student of loaded_students_record) {
                 if (!student?.student_name) {
                     continue;
                 }
 
-                await students.InsertOrUpdate(
-                    String(student.student_name),
-                    String(student.joined_year ?? new Date().getFullYear()),
-                    String(student.degree ?? ''),
-                    Number(student.class ?? 1)
-                );
-            } catch (e) {
-                console.error(`Error processing student ${student.student_name}:`, e);
-                res.status(500).json({ success: false, error: e!.toString() });
-                return
-            }
-        }
+                const name = String(student.student_name);
+                const joined_year = String(student.joined_year ?? new Date().getFullYear());
+                const degree = String(student.degree ?? '');
+                const class_number = Number(student.class ?? 1);
 
-        // Send the buffer
+                await sql`
+                    INSERT INTO students (student_name, student_normalized_name, joined_year, degree, class)
+                    VALUES (${name}, ${normalize_arabic(name)}, ${joined_year}, ${degree}, ${class_number})
+                    ON CONFLICT (student_normalized_name) 
+                    DO UPDATE SET
+                        student_name = EXCLUDED.student_name,
+                        joined_year = EXCLUDED.joined_year,
+                        degree = EXCLUDED.degree,
+                        class = EXCLUDED.class;
+                `;
+            }
+
+            // Establish studying relationships between students and subjects
+            await sql`
+                INSERT INTO studying (teacher, student, subject, studying_year, hours_missed, grade_fields, is_submitted)
+                SELECT 
+                    sub.teacher, 
+                    stu.id AS student, 
+                    sub.id AS subject, 
+                    EXTRACT(YEAR FROM CURRENT_DATE) AS studying_year, 
+                    0 AS hours_missed, 
+                    '[]'::jsonb AS grade_fields, 
+                    false AS is_submitted
+                FROM subjects sub
+                JOIN students stu ON sub.class = stu.class AND sub.degree = stu.degree
+                AND NOT EXISTS (
+                    SELECT 1 
+                    FROM studying existing 
+                    WHERE existing.student = stu.id 
+                    AND existing.subject = sub.id
+                    AND existing.studying_year = EXTRACT(YEAR FROM CURRENT_DATE)
+                );
+            `;
+        });
+
         res.json({ success: true });
 
     } catch (error) {
