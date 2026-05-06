@@ -40,7 +40,7 @@ export class Absented extends PG_Table {
         `;
     }
 
-    async markAbsent(student_id: number, attendance_record_id: number, hours_absent: number) {
+    async markAbsent(student_id: number, attendance_record_id: number, hours_absent: number, lab_attendance:boolean) {
         await this.sql.begin(async sql => {
             await sql`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE`;
             
@@ -54,8 +54,13 @@ export class Absented extends PG_Table {
             if (existingAbsence) {
                 const record = await sql`select * from attendance_record ar join subjects s on ar.subject = s.id where ar.id = ${attendance_record_id};`;
                 const hoursWeekly = Number(record[0]!.hours_weekly);
-                if (hoursWeekly < hours_absent) {
-                    hours_absent = hoursWeekly;
+                const labHoursWeekly = Number(record[0]!.lab_weekly_hours);
+
+                let cappedHoursAbsent;
+                if (lab_attendance) {
+                    hours_absent = Math.min(hours_absent, labHoursWeekly);
+                } else {
+                    hours_absent = Math.min(hours_absent, hoursWeekly);
                 }
 
                 const oldHoursAbsent = Number(existingAbsence.hours_absent);
@@ -101,13 +106,20 @@ export class Absented extends PG_Table {
         });
     }
 
-    async markAbsentBulk(student_ids: number[], attendance_record_id: number, hours_absent: number) {
+    async markAbsentBulk(student_ids: number[], attendance_record_id: number, hours_absent: number, lab_attendance:boolean) {
         await this.sql.begin(async sql => {
             await sql`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE`;
 
             const record = await sql`select * from attendance_record ar join subjects s on ar.subject = s.id where ar.id = ${attendance_record_id};`;
             const hoursWeekly = Number(record[0]!.hours_weekly);
-            const cappedHoursAbsent = Math.min(hours_absent, hoursWeekly);
+            const labHoursWeekly = Number(record[0]!.lab_weekly_hours);
+
+            let cappedHoursAbsent;
+            if (lab_attendance) {
+                cappedHoursAbsent = Math.min(hours_absent, labHoursWeekly);
+            } else {
+                cappedHoursAbsent = Math.min(hours_absent, hoursWeekly);
+            }
 
             for (const student_id of student_ids) {
                 const [existingAbsence] = await sql`

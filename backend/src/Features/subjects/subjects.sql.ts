@@ -7,7 +7,8 @@ const columns2select = [
     "subjects.id", "subjects.subject_name", "subjects.subject_normalized_name", "subjects.teacher",
     "subjects.degree", "subjects.class", "subjects.total_hours", "subjects.hours_weekly",
     "subjects.is_attending_required", "subjects.semester", "subjects.grading_system_id",
-    "teaching_staff.teacher_name"
+    "subjects.lab_teacher", "subjects.max_lab_grade", "subjects.lab_grade_field", "subjects.lab_weekly_hours",
+    "main_teacher.teacher_name"
 ];
 
 
@@ -19,7 +20,7 @@ export class Subjects extends PG_Table {
             "id", "subject_name", "subject_normalized_name", "teacher",
             "degree", "class", "total_hours", "hours_weekly",
             "is_attending_required", "semester", "grading_system_id",
-            "deleted_at", "lab_teacher", "max_lab_grade", "lab_grade_field"
+            "deleted_at", "lab_teacher", "max_lab_grade", "lab_grade_field", "lab_weekly_hours", "number_of_units"
         ]);
     }
 
@@ -50,13 +51,16 @@ export class Subjects extends PG_Table {
                     lab_teacher                 INTEGER DEFAULT NULL,
                     max_lab_grade               integer,
                     lab_grade_field             text,
-
+                    lab_weekly_hours            INTEGER DEFAULT 0,
+                    number_of_units             integer not null default 0,
+ 
                     FOREIGN KEY (lab_teacher) REFERENCES teaching_staff(id),
 
                     CHECK (semester BETWEEN 1 AND 2),
                     CHECK (class BETWEEN 1 AND 4),
                     CHECK (total_hours > 0),
                     CHECK (hours_weekly > 0 AND hours_weekly <= total_hours),
+                    CHECK (lab_weekly_hours >= 0),
 
                     FOREIGN KEY (teacher) REFERENCES teaching_staff(id) ON DELETE CASCADE,
                     FOREIGN KEY (grading_system_id) REFERENCES grading_systems(id) ON DELETE RESTRICT
@@ -76,6 +80,30 @@ export class Subjects extends PG_Table {
             await sql`
                 CREATE INDEX IF NOT EXISTS ${sql(`idx_${this.table_name}_grading_system_id`)}
                     ON ${sql(this.table_name)} (grading_system_id);
+            `;
+
+            await sql`
+                ALTER TABLE ${sql(this.table_name)}
+                ADD COLUMN IF NOT EXISTS lab_teacher INTEGER DEFAULT NULL,
+                ADD COLUMN IF NOT EXISTS max_lab_grade INTEGER,
+                ADD COLUMN IF NOT EXISTS lab_grade_field TEXT,
+                ADD COLUMN IF NOT EXISTS lab_weekly_hours INTEGER DEFAULT 0;
+            `;
+
+            await sql`
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_name = ${this.table_name}
+                        AND column_name = 'lab_hours_weekly'
+                    ) THEN
+                        UPDATE ${sql(this.table_name)}
+                        SET lab_weekly_hours = COALESCE(lab_weekly_hours, lab_hours_weekly, 0)
+                        WHERE lab_weekly_hours IS NULL OR lab_weekly_hours = 0;
+                    END IF;
+                END $$;
             `;
         });
     }
@@ -111,9 +139,10 @@ export class Subjects extends PG_Table {
 
     async filterByYear(year: number) {
         return await this.sql`
-            select ${this.sql(columns2select)}, grading_systems.name AS grading_system_name 
+            select ${this.sql(columns2select)}, lab_teacher.teacher_name AS lab_teacher_name, CASE WHEN subjects.lab_teacher IS NULL THEN FALSE ELSE TRUE END AS has_lab, grading_systems.name AS grading_system_name 
             FROM subjects 
-            JOIN teaching_staff ON subjects.teacher = teaching_staff.id 
+            JOIN teaching_staff AS main_teacher ON subjects.teacher = main_teacher.id
+            LEFT JOIN teaching_staff AS lab_teacher ON subjects.lab_teacher = lab_teacher.id
             LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id 
             WHERE year=${year} AND deleted_at IS NULL
             ORDER BY subject_name`;
@@ -121,9 +150,10 @@ export class Subjects extends PG_Table {
 
     async listAll() {
         return await this.sql`
-            select ${this.sql(columns2select)}, grading_systems.name AS grading_system_name 
+            select ${this.sql(columns2select)}, lab_teacher.teacher_name AS lab_teacher_name, CASE WHEN subjects.lab_teacher IS NULL THEN FALSE ELSE TRUE END AS has_lab, grading_systems.name AS grading_system_name 
             FROM subjects 
-            JOIN teaching_staff ON subjects.teacher = teaching_staff.id 
+            JOIN teaching_staff AS main_teacher ON subjects.teacher = main_teacher.id
+            LEFT JOIN teaching_staff AS lab_teacher ON subjects.lab_teacher = lab_teacher.id
             LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id 
             WHERE subjects.deleted_at IS NULL
             ORDER BY subject_name`;
@@ -132,9 +162,10 @@ export class Subjects extends PG_Table {
 
     async filterByClassDegree(degree: string, class_id: number) {
         return await this.sql`
-            SELECT ${this.sql(columns2select)}, grading_systems.name AS grading_system_name 
+            SELECT ${this.sql(columns2select)}, lab_teacher.teacher_name AS lab_teacher_name, CASE WHEN subjects.lab_teacher IS NULL THEN FALSE ELSE TRUE END AS has_lab, grading_systems.name AS grading_system_name 
             FROM subjects 
-            JOIN teaching_staff ON subjects.teacher = teaching_staff.id 
+            JOIN teaching_staff AS main_teacher ON subjects.teacher = main_teacher.id
+            LEFT JOIN teaching_staff AS lab_teacher ON subjects.lab_teacher = lab_teacher.id
             LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id 
             WHERE degree=${degree} AND class=${class_id} AND subjects.deleted_at IS NULL
             ORDER BY subject_name`;
@@ -142,9 +173,10 @@ export class Subjects extends PG_Table {
 
     async filterByClassDegreeGradingSystem(degree: string, class_id: number, grading_system_name: string) {
         return await this.sql`
-            SELECT ${this.sql(columns2select)}, grading_systems.name AS grading_system_name 
+            SELECT ${this.sql(columns2select)}, lab_teacher.teacher_name AS lab_teacher_name, CASE WHEN subjects.lab_teacher IS NULL THEN FALSE ELSE TRUE END AS has_lab, grading_systems.name AS grading_system_name 
             FROM subjects 
-            JOIN teaching_staff ON subjects.teacher = teaching_staff.id 
+            JOIN teaching_staff AS main_teacher ON subjects.teacher = main_teacher.id
+            LEFT JOIN teaching_staff AS lab_teacher ON subjects.lab_teacher = lab_teacher.id
             JOIN grading_systems ON subjects.grading_system_id = grading_systems.id 
             WHERE degree=${degree} AND class=${class_id} AND grading_systems.name=${grading_system_name} AND subjects.deleted_at IS NULL
             ORDER BY subject_name`;
@@ -152,9 +184,10 @@ export class Subjects extends PG_Table {
 
     async filterByDegree(degree: string) {
         return await this.sql`
-            SELECT ${this.sql(columns2select)}, grading_systems.name AS grading_system_name 
+            SELECT ${this.sql(columns2select)}, lab_teacher.teacher_name AS lab_teacher_name, CASE WHEN subjects.lab_teacher IS NULL THEN FALSE ELSE TRUE END AS has_lab, grading_systems.name AS grading_system_name 
             FROM subjects
-            JOIN teaching_staff ON subjects.teacher = teaching_staff.id 
+            JOIN teaching_staff AS main_teacher ON subjects.teacher = main_teacher.id
+            LEFT JOIN teaching_staff AS lab_teacher ON subjects.lab_teacher = lab_teacher.id
             LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id 
             WHERE degree=${degree} AND subjects.deleted_at IS NULL 
             ORDER BY subject_name`;
@@ -163,17 +196,19 @@ export class Subjects extends PG_Table {
     async findByName(name: string) {
         return (
             await this.sql`
-            SELECT ${this.sql(columns2select)}, grading_systems.name AS grading_system_name
+            SELECT ${this.sql(columns2select)}, lab_teacher.teacher_name AS lab_teacher_name, CASE WHEN subjects.lab_teacher IS NULL THEN FALSE ELSE TRUE END AS has_lab, grading_systems.name AS grading_system_name
             FROM subjects
-            JOIN teaching_staff ON subjects.teacher = teaching_staff.id
+            JOIN teaching_staff AS main_teacher ON subjects.teacher = main_teacher.id
+            LEFT JOIN teaching_staff AS lab_teacher ON subjects.lab_teacher = lab_teacher.id
             LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id
             WHERE subject_normalized_name=${name} AND subjects.deleted_at IS NULL`)[0];
     }
 
     async filterByTeacherClassDegree(teacher_id: number, degree: string, class_id: number) {
         return await this.sql`
-            SELECT ${this.sql(columns2select)}, grading_systems.name AS grading_system_name FROM subjects
-            JOIN teaching_staff ON subjects.teacher = teaching_staff.id
+            SELECT ${this.sql(columns2select)}, lab_teacher.teacher_name AS lab_teacher_name, CASE WHEN subjects.lab_teacher IS NULL THEN FALSE ELSE TRUE END AS has_lab, grading_systems.name AS grading_system_name FROM subjects
+            JOIN teaching_staff AS main_teacher ON subjects.teacher = main_teacher.id
+            LEFT JOIN teaching_staff AS lab_teacher ON subjects.lab_teacher = lab_teacher.id
             LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id
             WHERE teacher=${teacher_id} AND degree=${degree} AND class=${class_id} AND subjects.deleted_at IS NULL
             ORDER BY subject_name`;
@@ -182,8 +217,9 @@ export class Subjects extends PG_Table {
 
     async filterByTeacherDegree(teacher_id: number, degree: string) {
         return await this.sql`
-            SELECT ${this.sql(columns2select)}, grading_systems.name AS grading_system_name FROM subjects
-            JOIN teaching_staff ON subjects.teacher = teaching_staff.id
+            SELECT ${this.sql(columns2select)}, lab_teacher.teacher_name AS lab_teacher_name, CASE WHEN subjects.lab_teacher IS NULL THEN FALSE ELSE TRUE END AS has_lab, grading_systems.name AS grading_system_name FROM subjects
+            JOIN teaching_staff AS main_teacher ON subjects.teacher = main_teacher.id
+            LEFT JOIN teaching_staff AS lab_teacher ON subjects.lab_teacher = lab_teacher.id
             LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id
             WHERE teacher=${teacher_id} AND degree=${degree} AND subjects.deleted_at IS NULL
             ORDER BY subject_name`;
@@ -191,10 +227,11 @@ export class Subjects extends PG_Table {
 
     async filterByLabTeacher(lab_teacher_id: number) {
         return await this.sql`
-            SELECT ${this.sql(columns2select)}, grading_systems.name AS grading_system_name FROM subjects
-            JOIN teaching_staff ON subjects.lab_teacher = teaching_staff.id
+            SELECT ${this.sql(columns2select)}, lab_teacher.teacher_name AS lab_teacher_name, CASE WHEN subjects.lab_teacher IS NULL THEN FALSE ELSE TRUE END AS has_lab, grading_systems.name AS grading_system_name FROM subjects
+            JOIN teaching_staff AS main_teacher ON subjects.teacher = main_teacher.id
+            LEFT JOIN teaching_staff AS lab_teacher ON subjects.lab_teacher = lab_teacher.id
             LEFT JOIN grading_systems ON subjects.grading_system_id = grading_systems.id
-            WHERE lab_teacher=${lab_teacher_id} AND subjects.deleted_at IS NULL
+            WHERE subjects.lab_teacher=${lab_teacher_id} AND subjects.deleted_at IS NULL
             ORDER BY subject_name`;
     }
 }

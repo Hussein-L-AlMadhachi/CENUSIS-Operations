@@ -3,12 +3,14 @@ import { AutocompleteText } from "./AutocompleteText";
 
 
 
+type SelectOption = { label: string; value: any };
+
 export interface DynamicFormTemplate {
     title: string;
     key?: string;
     type: "text" | "number" | "checkbox" | "select" | "autocomplete" | (string & {});
     fieldsCheckbox?: string[];
-    options?: { label: string; value: any }[];
+    options?: SelectOption[] | ((formData: Record<string, any>) => SelectOption[]);
     fetchSuggestions?: (query: string) => Promise<string[]> | string[];
     condition?: {
         key: string;
@@ -136,6 +138,9 @@ export function DynamicForm(props: DynamicFormProps) {
                         return null;
                     }
                     const CustomComponent = props.customComponents?.[field.type];
+                    const selectOptions: SelectOption[] | undefined = field.type === "select"
+                        ? (typeof field.options === "function" ? field.options(data as Record<string, any>) : (field.options ?? []))
+                        : undefined;
 
                     return (
                         <fieldset className="fieldset p-1" key={i}>
@@ -160,40 +165,54 @@ export function DynamicForm(props: DynamicFormProps) {
                                         onChange={(e) => handleChange(field.key || field.title, Number(e.target.value))}
                                         disabled={field.disabled} />
                                 )}
-                                {field.type === "checkbox" && field.fieldsCheckbox && (
-                                    <div className="flex gap-4">
-                                        {field.fieldsCheckbox.map((option, j) => (
-                                            <div key={j} className="flex items-center gap-2">
+                                {field.type === "checkbox" && (
+                                    <>
+                                        {field.fieldsCheckbox ? (
+                                            <div className="flex gap-4">
+                                                {field.fieldsCheckbox.map((option, j) => (
+                                                    <div key={j} className="flex items-center gap-2">
+                                                        <input
+                                                            type="checkbox"
+                                                            className="checkbox"
+                                                            checked={((data[field.key || field.title] as string[]) || []).includes(option)}
+                                                            onChange={(e) => {
+                                                                const key = field.key || field.title;
+                                                                const currentValues = (data[key] as string[]) || [];
+                                                                if (e.target.checked) {
+                                                                    handleChange(key, [...currentValues, option]);
+                                                                } else {
+                                                                    handleChange(
+                                                                        key,
+                                                                        currentValues.filter((v) => v !== option)
+                                                                    );
+                                                                }
+                                                            }}
+                                                            disabled={field.disabled}
+                                                        />
+                                                        <span>{option}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-2">
                                                 <input
                                                     type="checkbox"
                                                     className="checkbox"
-                                                    checked={((data[field.key || field.title] as string[]) || []).includes(option)}
-                                                    onChange={(e) => {
-                                                        const key = field.key || field.title;
-                                                        const currentValues = (data[key] as string[]) || [];
-                                                        if (e.target.checked) {
-                                                            handleChange(key, [...currentValues, option]);
-                                                        } else {
-                                                            handleChange(
-                                                                key,
-                                                                currentValues.filter((v) => v !== option)
-                                                            );
-                                                        }
-                                                    }}
+                                                    checked={Boolean(data[field.key || field.title])}
+                                                    onChange={(e) => handleChange(field.key || field.title, e.target.checked)}
                                                     disabled={field.disabled}
                                                 />
-                                                <span>{option}</span>
                                             </div>
-                                        ))}
-                                    </div>
+                                        )}
+                                    </>
                                 )}
-                                {field.type === "select" && field.options && (
+                                {field.type === "select" && selectOptions && (
                                     <select
                                         className="select select-bordered w-full"
                                         value={data[field.key || field.title] ?? ""}
                                         onChange={(e) => {
                                             const val = e.target.value;
-                                            const originalOption = field.options?.find((opt) => String(opt.value) === val);
+                                            const originalOption = selectOptions.find((opt) => String(opt.value) === val);
                                             handleChange(field.key || field.title, originalOption ? originalOption.value : val);
                                         }}
                                         disabled={field.disabled}
@@ -201,7 +220,7 @@ export function DynamicForm(props: DynamicFormProps) {
                                         <option disabled value="">
                                             اختر {field.title}
                                         </option>
-                                        {field.options.map((opt, k) => (
+                                        {selectOptions.map((opt, k) => (
                                             <option key={k} value={opt.value}>
                                                 {opt.label}
                                             </option>
@@ -255,17 +274,20 @@ export function DynamicForm(props: DynamicFormProps) {
                                                                 }
 
                                                                 if (subfield.type === "select" && subfield.options) {
+                                                                    const subfieldOptions = typeof subfield.options === "function"
+                                                                        ? subfield.options(data as Record<string, any>)
+                                                                        : subfield.options;
                                                                     return <td key={`${field.key || field.title}-cell-${rowIndex}-${subfieldIndex}`}>
                                                                         <select
                                                                             className="select select-bordered select-xs w-28"
                                                                             value={value}
                                                                             onChange={(e) => {
-                                                                                const selected = subfield.options?.find((opt) => String(opt.value) === e.target.value);
+                                                                                const selected = subfieldOptions.find((opt) => String(opt.value) === e.target.value);
                                                                                 updateSubformRow(field.key || field.title, rowIndex, subKey, selected ? selected.value : e.target.value);
                                                                             }}
                                                                             disabled={field.disabled || subfield.disabled}
                                                                         >
-                                                                            {subfield.options.map((opt, k) => (
+                                                                            {subfieldOptions.map((opt, k) => (
                                                                                 <option key={k} value={opt.value}>{opt.label}</option>
                                                                             ))}
                                                                         </select>

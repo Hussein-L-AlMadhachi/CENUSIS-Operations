@@ -14,7 +14,7 @@ import { Section, Subsection } from "@/components/Section";
 import { useValidRoute } from "@/hooks/useValidRoute";
 
 // Globals
-import { type AttendanceRecordData, teacherRPC } from "@/rpc";
+import { type LabAttendanceRecordData, teacherRPC } from "@/rpc";
 import { DatePicker } from "@/components/DatePciker";
 import { sidebar_pages } from "./sidebar_pages";
 
@@ -112,7 +112,7 @@ function MainContent(): JSX.Element {
 
     const subject_id = parseInt(params.subject_id);
 
-    const [data, setData] = useState<AttendanceRecordData[]>([]);
+    const [data, setData] = useState<LabAttendanceRecordData[]>([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     const fetchData = useCallback(() => {
@@ -123,12 +123,12 @@ function MainContent(): JSX.Element {
         fetchData();
     }, [fetchData]);
 
-    const customRenderers: Record<string, (row: AttendanceRecordData) => JSX.Element> = {
-        "@view_absentees": (row: AttendanceRecordData) => {
+    const customRenderers: Record<string, (row: LabAttendanceRecordData) => JSX.Element> = {
+        "@view_absentees": (row: LabAttendanceRecordData) => {
 
             return (
                 <div className="flex flex-col flex-nowrap">
-                    <Link href={`/teacher/absented/${row.id}`} className="btn btn-xs">
+                    <Link href={`/teacher/lab/absented/${row.id}`} className="btn btn-xs">
                         الطلاب الغائبون
                     </Link>
                 </div>

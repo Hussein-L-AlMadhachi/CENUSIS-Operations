@@ -18,8 +18,8 @@ import { TeachersAttendancePage } from "./pages/teacher/Attendance";
 import { TeachersAbsentedPage } from "./pages/teacher/Absented";
 import { TeachersGradesPage } from "./pages/teacher/Grades";
 import { TeacherStudyingPage } from "./pages/teacher/Studying";
-import { TA_SubjectsPage } from "./pages/teacher/TA_Subjects";
-
+import { TeachersLabAttendancePage } from "./pages/teacher/LabAttendance"
+import { TeachersLabAbsentedPage } from "./pages/teacher/LabAttended";
 
 
 import { SuperTeachersPage }  from "@/pages/superadmin/Teachers" ;
@@ -52,13 +52,15 @@ export default function App(): JSX.Element {
             <Route path="/admin/permissions/:subject_id" component={PermissionsPage} />
 
             <Route path="/teacher/subjects" component={TeachersSubjectsPage} />
-            <Route path="/teacher/ta_subjects" component={TA_SubjectsPage} />
             <Route path="/teacher/attendance/:subject_id" component={TeachersAttendancePage} />
             <Route path="/teacher/absented/:attendance_record" component={TeachersAbsentedPage} />
             <Route path="/teacher/grades/:studying_id" component={TeachersGradesPage} />
             <Route path="/teacher/enrolled/:teacher/:id" component={TeacherStudyingPage} />
             <Route path="/teacher/subjects/:subject_id" component={TeacherStudyingPage} />
-            <Route path="/teacher/lab_subjects" component={TeachersLabSubjectsPage} />
+
+            <Route path="/teacher/lab/attendance/:subject_id" component={TeachersLabAttendancePage} />
+            <Route path="teacher/lab/absented/:attendance_record" component={TeachersLabAbsentedPage} />
+            <Route path="/teacher/lab/subjects" component={TeachersLabSubjectsPage} />
 
             <Route path="/superadmin/teachers" component={SuperTeachersPage} />
             <Route path="/superadmin/students" component={SuperStudentsPage} />

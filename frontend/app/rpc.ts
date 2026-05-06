@@ -46,6 +46,7 @@ export interface StudentUpdateData {
 export interface SubjectData {
     id?: number;
     name: string;
+    subject_name?: string;
     degree: string;
     class: number;
     total_hours: number;
@@ -55,6 +56,12 @@ export interface SubjectData {
     teacher?: string;
     grading_system_id?: number;
     grading_system_name?: string;
+    has_lab?: boolean;
+    lab_teacher?: number | null;
+    lab_teacher_name?: string | null;
+    max_lab_grade?: number | null;
+    lab_grade_field?: string | null;
+    lab_weekly_hours?: number | null;
 }
 
 export interface GradeField {
@@ -305,8 +312,8 @@ interface TeachersRPC {
     // attendance management per student
     fetchAbsentStudents(attendance_record_id: number): Promise<AbsentedData[]>;
     removeAbsence(absented_id: number): Promise<void>;
-    markStudentAbsent(data: { attendance_record_id: number, student_id: number, hours_absent: number }): Promise<void>;
-    markStudentAbsentBulk(data: { attendance_record_id: number, student_ids: number[], hours_absent: number }): Promise<void>;
+    markStudentAbsent(data: { attendance_record_id: number, student_id: number, hours_absent: number }, lab_attendance:boolean): Promise<void>;
+    markStudentAbsentBulk(data: { attendance_record_id: number, student_ids: number[], hours_absent: number }, lab_attendance:boolean): Promise<void>;
 
     // grading
     fetchStudentGradeFieldsPerStudying(studying_id: number): Promise<GradesDate[]>;

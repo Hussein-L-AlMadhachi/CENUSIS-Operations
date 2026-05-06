@@ -4,7 +4,7 @@ import { validate_params } from "../../helpers/validate_params.js";
 
 
 
-export async function markStudentAbsent(metadata: Metadata, data: any) {
+export async function markStudentAbsent(metadata: Metadata, data: any, lab_attendance:boolean) {
     validate_params(data, ["attendance_record_id", "student_id", "hours_absent"]);
 
     const { attendance_record_id, student_id, hours_absent } = data;
@@ -29,7 +29,7 @@ export async function markStudentAbsent(metadata: Metadata, data: any) {
         throw new Error("Student not found");
     }
 
-    await absented.markAbsent(student_id, attendance_record_id, hours_absent);
+    await absented.markAbsent(student_id, attendance_record_id, hours_absent, lab_attendance);
 
 }
 
@@ -71,7 +71,7 @@ export async function updateAbsence(metadata: Metadata, data: any) {
     await absented.updateAbsence(absented_id, hours_absent);
 }
 
-export async function markStudentAbsentBulk(metadata: Metadata, data: any) {
+export async function markStudentAbsentBulk(metadata: Metadata, data: any, lab_attendance:boolean) {
     validate_params(data, ["attendance_record_id", "student_ids", "hours_absent"]);
 
     const { attendance_record_id, student_ids, hours_absent } = data;
@@ -100,7 +100,7 @@ export async function markStudentAbsentBulk(metadata: Metadata, data: any) {
         }
     }
 
-    await absented.markAbsentBulk(student_ids, attendance_record_id, hours_absent);
+    await absented.markAbsentBulk(student_ids, attendance_record_id, hours_absent, lab_attendance);
 }
 
  

@@ -27,7 +27,11 @@ export class AttendanceRecord extends PG_Table {
     }
 
     async findBySubject(subject_id: number) {
-        return await this.sql`select ${this.sql(this.visibles)} from attendance_record where subject=${subject_id};`;
+        return await this.sql`
+            select ${this.sql(this.visibles)}
+            from attendance_record
+            where subject=${subject_id} and lab_attendance = FALSE;
+        `;
     }
 
     async findByLabSubject(subject_id: number) {

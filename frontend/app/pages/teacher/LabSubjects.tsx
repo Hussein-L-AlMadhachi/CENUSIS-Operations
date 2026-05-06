@@ -49,14 +49,11 @@ function MainContent(): JSX.Element {
 
             return (
                 <div className="flex flex-col flex-nowrap gap-1">
-                    <a href={`/teacher/enrolled/${row.teacher}/${row.id}`} className="btn btn-xs  w-32">
-                        عرض الطلاب
-                    </a>
-                    <a href={`/teacher/attendance/${row.id}`} className="btn btn-xs w-32">
-                        عرض سجل الغياب
+                    <a href={`/teacher/lab/attendance/${row.id}`} className="btn btn-xs w-32">
+                        الغياب
                     </a>
                     <a href={`/teacher/grades/${row.id}`} className="btn btn-xs w-32">
-                        عرض درجات السعي
+                        الدرجات
                     </a>
                 </div>
             )

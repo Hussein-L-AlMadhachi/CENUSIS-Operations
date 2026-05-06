@@ -55,47 +55,91 @@ interface AddSubjectModalProps {
 const getTeacherDisplayName = (teacher: teacherData & { teacher_name?: string; username?: string }): string =>
     teacher.teacher_name ?? teacher.name ?? teacher.username ?? "";
 
-const buildSubjectFormTemplate = (teachers: teacherData[], gradingSystems: GradingSystemData[]): DynamicFormTemplate[] => [
-    { title: "اسم المادة", key: "subject_name", type: "text" },
-    {
-        title: "نظام الدرجات",
-        key: "grading_system_name",
-        type: "select",
-        options: gradingSystems.map((system) => ({ label: system.name, value: system.name }))
-    },
-    {
-        title: "الدرجة العلمية", key: "degree",
-        type: "select", options: [
-            { label: "بكلوريوس", value: "بكلوريوس" },
-            { label: "ماجستير", value: "ماجستير" },
-            { label: "دكتوراه", value: "دكتوراه" }
-        ]
-    },
-    {
-        title: "المرحلة", key: "class", type: "select", options: [
-            { label: "الأولى", value: 1 },
-            { label: "الثانية", value: 2 },
-            { label: "الثالثة", value: 3 },
-            { label: "الرابعة", value: 4 }
-        ], condition: { key: "degree", value: "بكلوريوس" }
-    },
-    {
-        title: "الكورس", key: "semester", type: "select", options: [
-            { label: "الأول", value: 1 },
-            { label: "الثاني", value: 2 },
-        ]
-    },
-    { title: "عدد الساعات اسبوعياً", key: "hours_weekly", type: "number", min: 0 },
-    {
-        title: "التدريسي",
-        key: "teacher_name",
-        type: "select",
-        options: teachers
-            .map((teacher) => getTeacherDisplayName(teacher))
-            .filter((name) => name.length > 0)
-            .map((name) => ({ label: name, value: name }))
-    },
-];
+const buildSubjectFormTemplate = (teachers: teacherData[], gradingSystems: GradingSystemData[]): DynamicFormTemplate[] => {
+    const teacherOptions = teachers
+        .map((teacher) => getTeacherDisplayName(teacher))
+        .filter((name) => name.length > 0)
+        .map((name) => ({ label: name, value: name }));
+
+    return [
+        { title: "اسم المادة", key: "subject_name", type: "text" },
+        {
+            title: "نظام الدرجات",
+            key: "grading_system_name",
+            type: "select",
+            options: gradingSystems.map((system) => ({ label: system.name, value: system.name }))
+        },
+        {
+            title: "الدرجة العلمية", key: "degree",
+            type: "select", options: [
+                { label: "بكلوريوس", value: "بكلوريوس" },
+                { label: "ماجستير", value: "ماجستير" },
+                { label: "دكتوراه", value: "دكتوراه" }
+            ]
+        },
+        {
+            title: "المرحلة", key: "class", type: "select", options: [
+                { label: "الأولى", value: 1 },
+                { label: "الثانية", value: 2 },
+                { label: "الثالثة", value: 3 },
+                { label: "الرابعة", value: 4 }
+            ], condition: { key: "degree", value: "بكلوريوس" }
+        },
+        {
+            title: "الكورس", key: "semester", type: "select", options: [
+                { label: "الأول", value: 1 },
+                { label: "الثاني", value: 2 },
+            ]
+        },
+        { title: "عدد الساعات اسبوعياً", key: "hours_weekly", type: "number", min: 0 },
+        {
+            title: "التدريسي",
+            key: "teacher_name",
+            type: "select",
+            options: teacherOptions
+        },
+        { title: "مختبر", key: "has_lab", type: "checkbox", defaultValue: false },
+        {
+            title: "تدريسي المختبر",
+            key: "lab_teacher_name",
+            type: "select",
+            options: teacherOptions,
+            condition: { key: "has_lab", value: true }
+        },
+        {
+            title: "درجة المختبر",
+            key: "max_lab_grade",
+            type: "number",
+            min: 0,
+            condition: { key: "has_lab", value: true }
+        },
+        {
+            title: "عدد ساعات المختبر اسبوعياً",
+            key: "lab_weekly_hours",
+            type: "number",
+            min: 0,
+            condition: { key: "has_lab", value: true }
+        },
+        {
+            title: "حقل الدرجة",
+            key: "lab_grade_field",
+            type: "select",
+            options: (formData) => {
+                const selectedGradingSystemName = String(formData.grading_system_name || "");
+                const selectedSystem = gradingSystems.find((system) => system.name === selectedGradingSystemName);
+                if (!selectedSystem) {
+                    return [];
+                }
+
+                return selectedSystem.fields
+                    .map((field) => field.field_name)
+                    .filter((fieldName) => fieldName.length > 0)
+                    .map((fieldName) => ({ label: fieldName, value: fieldName }));
+            },
+            condition: { key: "has_lab", value: true }
+        },
+    ];
+};
 
 function AddSubjectModal({ isOpen, onClose, onSuccess, subjectFormTemplate }: AddSubjectModalProps) {
     const handleAddSubject = async (data: SubjectData) => {
@@ -107,6 +151,13 @@ function AddSubjectModal({ isOpen, onClose, onSuccess, subjectFormTemplate }: Ad
             );
             if (data.degree !== "بكلوريوس") {
                 data["class"] = 1;
+            }
+
+            if (!data.has_lab) {
+                data.lab_teacher_name = undefined;
+                data.max_lab_grade = undefined;
+                data.lab_grade_field = undefined;
+                data.lab_weekly_hours = 0;
             }
 
             await adminRPC.newSubject(data);

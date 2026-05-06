@@ -53,6 +53,24 @@ export async function fetchDailyAttendanceRecordsForTheSubject(metadata: Metadat
     }
 
     // access control
+    const uid = metadata.auth.user_id;
+    if (typeof uid !== "number") {
+        throw new Error("قم بتسجيل الدخول اولاً");
+    }
+
+    const teacher = await teaching_staff.fetchByUserId(uid);
+    if (!teacher) {
+        throw new Error("teacher not authorized");
+    }
+
+    const [subject] = await subjects.fetch(subject_id);
+    if (!subject || subject.deleted_at) {
+        throw new Error("Subject not found");
+    }
+
+    if (subject.teacher !== teacher.id) {
+        throw new Error("ليس لديك صلاحية للوصول لسجل الحضور لهذه المادة");
+    }
 
     const result = await attendance_record.findBySubject(subject_id);
     return result;
@@ -65,7 +83,24 @@ export async function fetchDailyLabAttendanceRecordsForTheSubject(metadata: Meta
         throw new Error("subject_id must be a number");
     }
 
-    // access control
+    const uid = metadata.auth.user_id;
+    if (typeof uid !== "number") {
+        throw new Error("قم بتسجيل الدخول اولاً");
+    }
+
+    const teacher = await teaching_staff.fetchByUserId(uid);
+    if (!teacher) {
+        throw new Error("teacher not authorized");
+    }
+
+    const [subject] = await subjects.fetch(subject_id);
+    if (!subject || subject.deleted_at) {
+        throw new Error("Subject not found");
+    }
+
+    if (subject.lab_teacher !== teacher.id) {
+        throw new Error("ليس لديك صلاحية للوصول لسجل حضور المختبر لهذه المادة");
+    }
 
     const result = await attendance_record.findByLabSubject(subject_id);
     return result;

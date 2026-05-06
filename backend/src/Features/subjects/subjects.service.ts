@@ -7,6 +7,35 @@ import type postgres from "postgres"
 import { normalize_arabic } from "../../helpers/normalize_arabic.js";
 import { loose_validate_params, validate_params } from "../../helpers/validate_params.js";
 
+const REQUIRED_SUBJECT_KEYS = [
+    "subject_name", "degree", "class", "hours_weekly", "teacher_name", "semester", "grading_system_name"
+];
+
+const ALLOWED_SUBJECT_KEYS = [
+    ...REQUIRED_SUBJECT_KEYS,
+    "has_lab", "lab_teacher_name", "max_lab_grade", "lab_grade_field", "lab_weekly_hours", "lab_hours_weekly"
+];
+
+function ensureAllowedSubjectKeys(data: Record<string, any>) {
+    for (const key of Object.keys(data)) {
+        if (!ALLOWED_SUBJECT_KEYS.includes(key)) {
+            throw new Error("invalid request: unexpected key " + key);
+        }
+    }
+}
+
+function resolveHasLabFlag(value: any): boolean {
+    if (typeof value === "boolean") {
+        return value;
+    }
+
+    if (typeof value === "string") {
+        return value === "true";
+    }
+
+    return false;
+}
+
 async function resolveGradingSystemId(data: Record<string, any>) {
     if (typeof data["grading_system_id"] === "number") {
         const [gradingSystem] = await grading_systems.fetch(data["grading_system_id"]);
@@ -35,9 +64,13 @@ async function resolveGradingSystemId(data: Record<string, any>) {
 
 export async function newSubject(metadata: Metadata, data: any) {
 
-    validate_params(data, [
-        "subject_name", "degree", "class", "hours_weekly", "teacher_name", "semester", "grading_system_name"
-    ]);
+    if (Object.prototype.hasOwnProperty.call(data, "lab_hours_weekly") && !Object.prototype.hasOwnProperty.call(data, "lab_weekly_hours")) {
+        data["lab_weekly_hours"] = data["lab_hours_weekly"];
+    }
+    delete data["lab_hours_weekly"];
+
+    ensureAllowedSubjectKeys(data);
+    validate_params(data, REQUIRED_SUBJECT_KEYS);
 
     
 
@@ -50,14 +83,15 @@ export async function newSubject(metadata: Metadata, data: any) {
     data["semester"] = Number(data["semester"]);
     data["class"] = Number(data["class"]);
     data["hours_weekly"] = Number(data["hours_weekly"]);
+    data["lab_weekly_hours"] = Number(data["lab_weekly_hours"] ?? 0);
     console.log(data);
 
     if (typeof data["semester"] !== "number" || data["semester"] < 1 || data["semester"] > 2) {
         throw new Error("Unexpected error: semester cannot be anythin but a number between 1 and 2");
     }
 
-    if (typeof data["hours_weekly"] !== "number" || data["hours_weekly"] <= 0 || data["hours_weekly"] > data["total_hours"]) {
-        throw new Error("Unexpected error: hours_weekly must be a positive number and not exceed total_hours");
+    if (typeof data["hours_weekly"] !== "number" || data["hours_weekly"] <= 0) {
+        throw new Error("Unexpected error: hours_weekly must be a positive number");
     }
 
     // check to which teacher the subject is assigned
@@ -75,8 +109,39 @@ export async function newSubject(metadata: Metadata, data: any) {
     data["grading_system_id"] = await resolveGradingSystemId(data);
     delete data["grading_system_name"];
 
+    const hasLab = resolveHasLabFlag(data["has_lab"]);
+    if (hasLab) {
+        if (typeof data["lab_teacher_name"] !== "string" || data["lab_teacher_name"].trim().length === 0) {
+            throw new Error("لم يتم تحديد تدريسي المختبر");
+        }
+        if (typeof data["max_lab_grade"] !== "number" || data["max_lab_grade"] <= 0) {
+            throw new Error("درجة المختبر يجب ان تكون اكبر من صفر");
+        }
+        if (typeof data["lab_grade_field"] !== "string" || data["lab_grade_field"].trim().length === 0) {
+            throw new Error("لم يتم تحديد حقل الدرجة");
+        }
+        if (typeof data["lab_weekly_hours"] !== "number" || data["lab_weekly_hours"] <= 0) {
+            throw new Error("عدد ساعات المختبر اسبوعياً يجب ان يكون اكبر من صفر");
+        }
+
+        const lab_teacher = await teaching_staff.findByName(normalize_arabic(data["lab_teacher_name"]));
+        if (!lab_teacher) {
+            throw new Error("لم يتم العثور على تدريسي المختبر");
+        }
+
+        data["lab_teacher"] = lab_teacher.id as number;
+    } else {
+        data["lab_teacher"] = null;
+        data["max_lab_grade"] = null;
+        data["lab_grade_field"] = null;
+        data["lab_weekly_hours"] = 0;
+    }
+
+    delete data["lab_teacher_name"];
+    delete data["has_lab"];
+
     data["subject_normalized_name"] = normalize_arabic(data["subject_name"]);
-    data["total_hours"] = data["hours_weekly"] * 15
+    data["total_hours"] = (data["hours_weekly"] + data["lab_weekly_hours"]) * 15
 
     const existingSubject = await subjects.findByName(data["subject_normalized_name"]);
     if (existingSubject) {
@@ -111,6 +176,11 @@ export async function newSubject(metadata: Metadata, data: any) {
 export async function updateSubject(metadata: Metadata, id: number, data: any) {
     console.log(data);
 
+    if (Object.prototype.hasOwnProperty.call(data, "lab_hours_weekly") && !Object.prototype.hasOwnProperty.call(data, "lab_weekly_hours")) {
+        data["lab_weekly_hours"] = data["lab_hours_weekly"];
+    }
+    delete data["lab_hours_weekly"];
+
     delete data["name"];
     delete data["id"];
 
@@ -119,29 +189,86 @@ export async function updateSubject(metadata: Metadata, id: number, data: any) {
     ]);
 
 
-    data["subject_normalized_name"] = normalize_arabic(data["subject_name"]);
+    const updateData: Record<string, any> = {
+        subject_name: data["subject_name"],
+        degree: data["degree"],
+        class: data["class"],
+        hours_weekly: data["hours_weekly"],
+        is_attending_required: data["is_attending_required"],
+        teacher_name: data["teacher_name"],
+        semester: data["semester"],
+        grading_system_name: data["grading_system_name"],
+        has_lab: data["has_lab"],
+        lab_teacher_name: data["lab_teacher_name"],
+        max_lab_grade: data["max_lab_grade"],
+        lab_grade_field: data["lab_grade_field"],
+        lab_weekly_hours: data["lab_weekly_hours"],
+    };
+
+    updateData["semester"] = Number(updateData["semester"]);
+    updateData["hours_weekly"] = Number(updateData["hours_weekly"]);
+    updateData["lab_weekly_hours"] = Number(updateData["lab_weekly_hours"] ?? 0);
+
+    updateData["subject_normalized_name"] = normalize_arabic(updateData["subject_name"]);
 
     // check to which teacher the subject is assigned
-    const teacher = await teaching_staff.findByName(data["teacher_name"]);
+    const teacher = await teaching_staff.findByName(updateData["teacher_name"]);
     if (!teacher) {
         throw new Error("Teacher not found");
     }
 
-    data["teacher"] = teacher.id as number;
-    delete data["teacher_name"];
+    updateData["teacher"] = teacher.id as number;
+    delete updateData["teacher_name"];
 
-    data["grading_system_id"] = await resolveGradingSystemId(data);
-    delete data["grading_system_name"];
+    updateData["grading_system_id"] = await resolveGradingSystemId(updateData);
+    delete updateData["grading_system_name"];
+
+    const hasLab = resolveHasLabFlag(updateData["has_lab"]);
+    if (hasLab) {
+        if (typeof updateData["lab_teacher_name"] !== "string" || updateData["lab_teacher_name"].trim().length === 0) {
+            throw new Error("لم يتم تحديد تدريسي المختبر");
+        }
+        if (typeof updateData["max_lab_grade"] !== "number" || updateData["max_lab_grade"] <= 0) {
+            throw new Error("درجة المختبر يجب ان تكون اكبر من صفر");
+        }
+        if (typeof updateData["lab_grade_field"] !== "string" || updateData["lab_grade_field"].trim().length === 0) {
+            throw new Error("لم يتم تحديد حقل الدرجة");
+        }
+        if (typeof updateData["lab_weekly_hours"] !== "number" || Number.isNaN(updateData["lab_weekly_hours"]) || updateData["lab_weekly_hours"] <= 0) {
+            throw new Error("عدد ساعات المختبر اسبوعياً يجب ان يكون اكبر من صفر");
+        }
+
+        const lab_teacher = await teaching_staff.findByName(normalize_arabic(updateData["lab_teacher_name"]));
+        if (!lab_teacher) {
+            throw new Error("لم يتم العثور على تدريسي المختبر");
+        }
+
+        updateData["lab_teacher"] = lab_teacher.id as number;
+    } else {
+        updateData["lab_teacher"] = null;
+        updateData["max_lab_grade"] = null;
+        updateData["lab_grade_field"] = null;
+        updateData["lab_weekly_hours"] = 0;
+    }
+
+    if (typeof updateData["hours_weekly"] !== "number" || updateData["hours_weekly"] <= 0) {
+        throw new Error("Unexpected error: hours_weekly must be a positive number");
+    }
+
+    delete updateData["lab_teacher_name"];
+    delete updateData["has_lab"];
+
+    updateData["total_hours"] = (updateData["hours_weekly"] + updateData["lab_weekly_hours"]) * 15;
 
     if (typeof id !== "number") {
         throw new Error("Unexpected error: user_id cannot be anythin but a number");
     }
 
-    if (typeof data["semester"] !== "number" || data["semester"] < 1 || data["semester"] > 2) {
+    if (typeof updateData["semester"] !== "number" || Number.isNaN(updateData["semester"]) || updateData["semester"] < 1 || updateData["semester"] > 2) {
         throw new Error("Unexpected error: semester cannot be anythin but a number between 1 and 2");
     }
 
-    await subjects.update(id, data);
+    await subjects.update(id, updateData);
     return id;
 }
 

@@ -83,7 +83,7 @@ function MainContent({ onRecordLoaded }: MainContentProps): JSX.Element {
             attendance_record_id: attendance_record_id,
             student_id,
             hours_absent: row.hours_absent,
-        }, false);
+        },true);
 
         await fetchData();
     };
@@ -117,7 +117,7 @@ function MainContent({ onRecordLoaded }: MainContentProps): JSX.Element {
                 attendance_record_id,
                 student_ids: Array.from(selectedIds),
                 hours_absent: bulkHoursRef.current,
-            }, false);
+            }, true);
             await fetchData();
             setSelectedIds(new Set());
             setBulkHours(0);
@@ -226,7 +226,7 @@ function MainContent({ onRecordLoaded }: MainContentProps): JSX.Element {
 
 
 
-export function TeachersAbsentedPage(): JSX.Element {
+export function TeachersLabAbsentedPage(): JSX.Element {
     useValidRoute(["teacher"], "/login");
 
     const [recordInfo, setRecordInfo] = useState<AttendanceRecordWithSubject | null>(null);
