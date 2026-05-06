@@ -19,7 +19,7 @@ export class Subjects extends PG_Table {
             "id", "subject_name", "subject_normalized_name", "teacher",
             "degree", "class", "total_hours", "hours_weekly",
             "is_attending_required", "semester", "grading_system_id",
-            "deleted_at", "lab_teacher"
+            "deleted_at", "lab_teacher", "max_lab_grade", "lab_grade_field"
         ]);
     }
 
@@ -48,6 +48,8 @@ export class Subjects extends PG_Table {
 
                     deleted_at                  TIMESTAMP DEFAULT NULL,
                     lab_teacher                 INTEGER DEFAULT NULL,
+                    max_lab_grade               integer,
+                    lab_grade_field             text,
 
                     FOREIGN KEY (lab_teacher) REFERENCES teaching_staff(id),
 

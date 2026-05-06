@@ -1,4 +1,4 @@
-import { attendance_record } from "../../db.js";
+import { attendance_record, subjects, teaching_staff } from "../../db.js";
 import type { Metadata } from "enders-sync";
 import type postgres from "postgres"
 
@@ -9,23 +9,42 @@ export async function createDailyAttendanceRecord(metadata: Metadata, subject_id
         throw new Error("subject_id must be a number");
     }
 
-    if (!lab_attendance) lab_attendance=false;
+    if (!lab_attendance) lab_attendance = false;
 
     // access control
     const uid = metadata.auth.user_id;
     if (typeof uid !== "number") {
-        throw new Error("You are not authenticated");
+        throw new Error("قم بتسجيل الدخول اولاً");
+    }
+
+    const teacher = await teaching_staff.fetchByUserId(uid);
+    if (!teacher) {
+        throw new Error("teacher not authorized");
+    }
+
+    const [subject] = await subjects.fetch(subject_id);
+    if (!subject || subject.deleted_at) {
+        throw new Error("Subject not found");
+    }
+
+    if (lab_attendance) {
+        if (subject.lab_teacher !== teacher.id) {
+            throw new Error("ليس لديك صلاحية لانشاء  سجل غياب جديد لهذه مادة");
+        }
+    } else {
+        if (subject.teacher !== teacher.id) {
+            throw new Error("ليس لديك صلاحية لانشاء سجل غياب جديد لهذه مادة");
+        }
     }
 
     const result = await attendance_record.insert({
         subject: subject_id,
-        date:date,
+        date: date,
         lab_attendance: lab_attendance,
     });
 
     return result;
 }
-
 
 
 export async function fetchDailyAttendanceRecordsForTheSubject(metadata: Metadata, subject_id: number): Promise<postgres.RowList<postgres.Row[]>> {
