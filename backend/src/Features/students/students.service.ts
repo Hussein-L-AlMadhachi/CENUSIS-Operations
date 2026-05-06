@@ -23,8 +23,6 @@ export async function newStudent(metadata: Metadata, data: any) {
     }
 
     data["student_normalized_name"] = normalize_arabic(data["student_name"]);
-
-    console.log(data);
     const [user] = await students.insert(data);
 
     if (!user) {
@@ -137,8 +135,6 @@ export async function autocompleteStudent(metadata: Metadata, name: string): Pro
 
 export async function findStudentByName(metadata: Metadata, name: string): Promise<postgres.Row> {
     const result = await students.findByName(normalize_arabic(name));
-
-    console.log(result);
     if (!result) {
         throw new Error("no user found");
     }

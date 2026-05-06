@@ -75,8 +75,6 @@ export async function registerAdmin(metadata: Metadata, name: string, password: 
 export async function updateUser(metadata: Metadata, teacher_id: number, data: any) {
     loose_validate_params(data, ["name", "password"]);
 
-    console.log(data)
-
     const teacher_normalized_name = normalize_arabic(data["name"]);
 
     let teacher = await teaching_staff.fetch( teacher_id )
@@ -142,9 +140,6 @@ export async function changeSelfPassword(metadata: Metadata, new_password: strin
 export async function changeTeacherPassword(
     metadata: Metadata, id: number, new_password: string
 ) {
-
-    console.log("new pass:", new_password)
-    console.log("tuid:", id)
     const uid = loggedin_users.updatePassword(id, new_password);
 
     if (!uid) {

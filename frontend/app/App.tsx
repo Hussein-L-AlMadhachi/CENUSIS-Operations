@@ -20,7 +20,7 @@ import { TeachersGradesPage } from "./pages/teacher/Grades";
 import { TeacherStudyingPage } from "./pages/teacher/Studying";
 import { TeachersLabAttendancePage } from "./pages/teacher/LabAttendance"
 import { TeachersLabAbsentedPage } from "./pages/teacher/LabAttended";
-
+import { TeachersLabGradesPage } from "./pages/teacher/LabGrades";
 
 import { SuperTeachersPage }  from "@/pages/superadmin/Teachers" ;
 import { SuperStudentsPage } from "@/pages/superadmin/Students";
@@ -34,6 +34,10 @@ import { SuperPermissionsPage } from "@/pages/superadmin/Permissions";
 import { SuperGradesPage } from "./pages/superadmin/Grades";
 import { SuperGradingSystemsPage } from "./pages/superadmin/GradingSystems";
 import { TeachersLabSubjectsPage } from "./pages/teacher/LabSubjects";
+import { SuperLabSubjectsPage } from "./pages/superadmin/LabSubjects";
+import { SuperLabAttendancePage } from "./pages/superadmin/LabAttendance";
+import { SuperLabAbsentedPage } from "./pages/superadmin/LabAbsented";
+import { SuperLabGradesPage } from "./pages/superadmin/LabGrades";
 
 
 
@@ -61,6 +65,7 @@ export default function App(): JSX.Element {
             <Route path="/teacher/lab/attendance/:subject_id" component={TeachersLabAttendancePage} />
             <Route path="teacher/lab/absented/:attendance_record" component={TeachersLabAbsentedPage} />
             <Route path="/teacher/lab/subjects" component={TeachersLabSubjectsPage} />
+            <Route path="/teacher/lab/grades/:studying_id" component={TeachersLabGradesPage} />
 
             <Route path="/superadmin/teachers" component={SuperTeachersPage} />
             <Route path="/superadmin/students" component={SuperStudentsPage} />
@@ -71,6 +76,10 @@ export default function App(): JSX.Element {
             <Route path="/superadmin/attendance/:subject_id" component={SuperAttendancePage} />
             <Route path="/superadmin/absented/:attendance_record" component={SuperAbsentedPage} />
             <Route path="/superadmin/grades/:studying_id" component={SuperGradesPage} />
+            <Route path="/superadmin/lab/subjects" component={SuperLabSubjectsPage} />
+            <Route path="/superadmin/lab/attendance/:subject_id" component={SuperLabAttendancePage} />
+            <Route path="/superadmin/lab/absented/:attendance_record" component={SuperLabAbsentedPage} />
+            <Route path="/superadmin/lab/grades/:studying_id" component={SuperLabGradesPage} />
 
 
 

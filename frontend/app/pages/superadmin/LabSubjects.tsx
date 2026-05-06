@@ -11,54 +11,47 @@ import { Section, Subsection } from "@/components/Section";
 import { useValidRoute } from "@/hooks/useValidRoute";
 
 // Globals
-import { type SubjectData, teacherRPC } from "@/rpc";
+import { type SubjectData, superAdminRPC } from "@/rpc";
 import { sidebar_pages } from "./sidebar_pages";
 
-
-
 function MainContent(): JSX.Element {
-
     const [data, setData] = useState<SubjectData[]>([]);
 
     const fetchData = () => {
-        teacherRPC.fetchSubjectsByLabTeacher().then((data) => setData(data));
-
+        superAdminRPC.fetchSubjects().then((subjects) => {
+            const labSubjects = subjects.filter((subject) => subject.has_lab);
+            setData(labSubjects);
+        });
     };
 
     useEffect(() => {
         fetchData();
     }, []);
 
-    const handleUpdateSubject = async (id: number, data: Partial<SubjectData>) => {
-        await teacherRPC.updateSubject(id, data).then(() => fetchData());
-    };
-
-    const handleDeleteSubject = async (id: number) => {
-        await teacherRPC.deleteSubject(id).then(() => fetchData());
-    };
-
     const table_headers = {
         "subject_name": "الاسم",
-        "grading_system_name": "نظام الدرجات",
-        "teacher_name": "التدريسي", "degree": "الدرجة العلمية", "class": "المرحلة",
-        "semester": "الكورس", "@view_students": ""
-    }
+        "teacher_name": "تدريسي المادة",
+        "lab_teacher_name": "تدريسي المختبر",
+        "degree": "الدرجة العلمية",
+        "class": "المرحلة",
+        "semester": "الكورس",
+        "@view_students": ""
+    };
 
     const customRenderers: Record<string, (row: SubjectData) => JSX.Element> = {
         "@view_students": (row: SubjectData) => {
-
             return (
                 <div className="flex flex-col flex-nowrap gap-1">
-                    <a href={`/teacher/lab/attendance/${row.id}`} className="btn btn-xs w-32">
-                        الغياب
+                    <a href={`/superadmin/lab/attendance/${row.id}`} className="btn btn-xs w-32">
+                        عرض الغياب
                     </a>
-                    <a href={`/teacher/lab/grades/${row.id}`} className="btn btn-xs w-32">
-                        الدرجات
+                    <a href={`/superadmin/lab/grades/${row.id}`} className="btn btn-xs w-32">
+                        عرض الدرجات
                     </a>
                 </div>
-            )
+            );
         },
-    }
+    };
 
     return <>
         <Section>
@@ -66,8 +59,6 @@ function MainContent(): JSX.Element {
                 <EditableTable
                     data={data || []}
                     headers={table_headers}
-                    onDelete={handleDeleteSubject}
-                    onSave={handleUpdateSubject}
                     customRenderers={customRenderers}
                 />
             </Subsection>
@@ -75,15 +66,14 @@ function MainContent(): JSX.Element {
     </>;
 }
 
-
-export function TeachersLabSubjectsPage(): JSX.Element {
-    useValidRoute(["teacher"], "/login");
+export function SuperLabSubjectsPage(): JSX.Element {
+    useValidRoute(["superadmin"], "/login");
 
     return <>
         <MainLayout
             main={MainContent}
-            title={"المواد المختبرية"}
+            title={"مواد المختبر"}
             sidebar={sidebar_pages}
         />
-    </>
+    </>;
 }

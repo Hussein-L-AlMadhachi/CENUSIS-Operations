@@ -8,7 +8,7 @@ import { normalize_arabic } from "../../helpers/normalize_arabic.js";
 import { loose_validate_params, validate_params } from "../../helpers/validate_params.js";
 
 const REQUIRED_SUBJECT_KEYS = [
-    "subject_name", "degree", "class", "hours_weekly", "teacher_name", "semester", "grading_system_name"
+    "subject_name", "degree", "class", "hours_weekly", "teacher_name", "semester", "grading_system_name", "number_of_units"
 ];
 
 const ALLOWED_SUBJECT_KEYS = [
@@ -74,8 +74,6 @@ export async function newSubject(metadata: Metadata, data: any) {
 
     
 
-    console.log(data)
-
     if (typeof data["teacher_name"] !== "string") {
         throw new Error("Unexpected error: teacher_name cannot be anythin but a string");
     }
@@ -83,9 +81,8 @@ export async function newSubject(metadata: Metadata, data: any) {
     data["semester"] = Number(data["semester"]);
     data["class"] = Number(data["class"]);
     data["hours_weekly"] = Number(data["hours_weekly"]);
+    data["number_of_units"] = Number(data["number_of_units"]);
     data["lab_weekly_hours"] = Number(data["lab_weekly_hours"] ?? 0);
-    console.log(data);
-
     if (typeof data["semester"] !== "number" || data["semester"] < 1 || data["semester"] > 2) {
         throw new Error("Unexpected error: semester cannot be anythin but a number between 1 and 2");
     }
@@ -93,11 +90,12 @@ export async function newSubject(metadata: Metadata, data: any) {
     if (typeof data["hours_weekly"] !== "number" || data["hours_weekly"] <= 0) {
         throw new Error("Unexpected error: hours_weekly must be a positive number");
     }
+    if (typeof data["number_of_units"] !== "number" || Number.isNaN(data["number_of_units"]) || data["number_of_units"] < 0) {
+        throw new Error("Unexpected error: number_of_units must be a non-negative number");
+    }
 
     // check to which teacher the subject is assigned
     const teacher = await teaching_staff.findByName(normalize_arabic(data["teacher_name"]));
-
-    console.log(teacher);
 
     if (!teacher) {
         throw new Error("لم يتم العثور على التدريسي");
@@ -148,7 +146,6 @@ export async function newSubject(metadata: Metadata, data: any) {
         throw new Error("المادة الدراسية موجودة بالفعل في النظام");
     }
 
-    console.log(data);
     let subject: postgres.Row | undefined;
     try {
         [subject] = await subjects.insert(data);
@@ -174,8 +171,6 @@ export async function newSubject(metadata: Metadata, data: any) {
 // update
 
 export async function updateSubject(metadata: Metadata, id: number, data: any) {
-    console.log(data);
-
     if (Object.prototype.hasOwnProperty.call(data, "lab_hours_weekly") && !Object.prototype.hasOwnProperty.call(data, "lab_weekly_hours")) {
         data["lab_weekly_hours"] = data["lab_hours_weekly"];
     }
@@ -185,7 +180,7 @@ export async function updateSubject(metadata: Metadata, id: number, data: any) {
     delete data["id"];
 
     loose_validate_params(data, [
-        "subject_name", "degree", "class", "total_hours", "hours_weekly", "is_attending_required", "teacher_name", "semester", "grading_system_name"
+        "subject_name", "degree", "class", "total_hours", "hours_weekly", "is_attending_required", "teacher_name", "semester", "grading_system_name", "number_of_units"
     ]);
 
 
@@ -194,6 +189,7 @@ export async function updateSubject(metadata: Metadata, id: number, data: any) {
         degree: data["degree"],
         class: data["class"],
         hours_weekly: data["hours_weekly"],
+        number_of_units: data["number_of_units"],
         is_attending_required: data["is_attending_required"],
         teacher_name: data["teacher_name"],
         semester: data["semester"],
@@ -207,12 +203,17 @@ export async function updateSubject(metadata: Metadata, id: number, data: any) {
 
     updateData["semester"] = Number(updateData["semester"]);
     updateData["hours_weekly"] = Number(updateData["hours_weekly"]);
+    updateData["number_of_units"] = Number(updateData["number_of_units"]);
     updateData["lab_weekly_hours"] = Number(updateData["lab_weekly_hours"] ?? 0);
 
     updateData["subject_normalized_name"] = normalize_arabic(updateData["subject_name"]);
 
+    if (typeof updateData["teacher_name"] !== "string" || updateData["teacher_name"].trim().length === 0) {
+        throw new Error("Teacher not found");
+    }
+
     // check to which teacher the subject is assigned
-    const teacher = await teaching_staff.findByName(updateData["teacher_name"]);
+    const teacher = await teaching_staff.findByName(normalize_arabic(updateData["teacher_name"]));
     if (!teacher) {
         throw new Error("Teacher not found");
     }
@@ -253,6 +254,9 @@ export async function updateSubject(metadata: Metadata, id: number, data: any) {
 
     if (typeof updateData["hours_weekly"] !== "number" || updateData["hours_weekly"] <= 0) {
         throw new Error("Unexpected error: hours_weekly must be a positive number");
+    }
+    if (typeof updateData["number_of_units"] !== "number" || Number.isNaN(updateData["number_of_units"]) || updateData["number_of_units"] < 0) {
+        throw new Error("Unexpected error: number_of_units must be a non-negative number");
     }
 
     delete updateData["lab_teacher_name"];

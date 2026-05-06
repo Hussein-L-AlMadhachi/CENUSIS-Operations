@@ -166,10 +166,16 @@ studentsXlsxRouter.post('/api/grades/import/:subjectid', upload.single('file'), 
         const grading_system_id = existingSubject?.grading_system_id;
 
         let fieldNames: string[] = [];
+        let fieldMaxGrades: Record<string, number> = {};
         if (grading_system_id) {
             const [gs] = await grading_systems.fetch(grading_system_id);
             if (gs?.fields) {
-                fieldNames = (gs.fields as { field_name: string }[]).map(f => f.field_name);
+                const fields = gs.fields as { field_name: string; max_grade: number }[];
+                fieldNames = fields.map(f => f.field_name);
+                fieldMaxGrades = fields.reduce<Record<string, number>>((acc, field) => {
+                    acc[field.field_name] = Number(field.max_grade);
+                    return acc;
+                }, {});
             }
         }
 
@@ -185,22 +191,38 @@ studentsXlsxRouter.post('/api/grades/import/:subjectid', upload.single('file'), 
             headerTranslations[fieldName] = fieldName;
         }
 
+        const labGradeField = typeof existingSubject?.lab_grade_field === "string"
+            ? existingSubject.lab_grade_field.trim()
+            : "";
+        const maxLabGrade = Number(existingSubject?.max_lab_grade ?? 0);
+
         const loaded_students_record_array = translateHeaders<any>(students_js_obj, headerTranslations);
 
         for (const row of loaded_students_record_array) {
             try {
+                const studentName = String(row.student_name ?? "").trim();
+                if (!studentName) {
+                    continue;
+                }
 
-                const existingStudent = await students.findByName(normalize_arabic(row.student_name) || "");
+                const existingStudent = await students.findByName(normalize_arabic(studentName) || "");
 
                 if (!existingStudent) {
                     const err_msg = `النظام لم يتمكن من قراءة الحقول بالملف. تأكد من وجود الحقول في هذه الحقول في السطر الأول من الملف: (${fieldNames},اسم الطالب)`
                     throw err_msg
                 }
 
-                const grade_fields = fieldNames.map(name => ({
-                    name,
-                    grade: Number(row[name] ?? 0)
-                }));
+                const grade_fields = fieldNames.map(name => {
+                    const grade = Number(row[name] ?? 0);
+                    let maxGrade = fieldMaxGrades[name];
+                    if (labGradeField && name === labGradeField && typeof maxGrade === "number" && !Number.isNaN(maxLabGrade)) {
+                        maxGrade = maxGrade - maxLabGrade;
+                    }
+                    if (typeof maxGrade === "number" && !Number.isNaN(maxGrade) && grade > maxGrade) {
+                        throw `درجة الحقل (${name}) للطالب (${studentName}) تتجاوز الدرجة الكاملة و هي من (${maxGrade})`
+                    }
+                    return { name, grade };
+                });
 
                 await studying.setGradeFields(grade_fields, existingSubject.id as number, existingStudent.id as number);
 
@@ -220,6 +242,106 @@ studentsXlsxRouter.post('/api/grades/import/:subjectid', upload.single('file'), 
     }
 });
 
+
+
+studentsXlsxRouter.post('/api/lab/grades/import/:subjectid', upload.single('file'), async (req, res) => {
+
+    if (!req.params.subjectid) return res.status(400).json({
+        success: false,
+        error: "No subject id provided"
+    });
+
+    const subject_id = parseInt(req.params.subjectid)
+    let existingSubject;
+    try {
+        [existingSubject] = await subjects.fetch(subject_id);
+    } catch (e) {
+        console.error(`Error processing subject ${subject_id}:`, e);
+        res.status(400).json({ success: false, error: "Invalid subject id" });
+        return
+    }
+
+    if (!existingSubject) {
+        res.status(400).json({ success: false, error: "Invalid subject id" });
+        return;
+    }
+
+    try {
+        const admin_auth = isValidAdminNoRPC(req, res);
+        const superadmin_auth = isValidSuperadminNoRPC(req, res);
+        const teacher_auth = isValidTeacherNoRPC(req, res);
+
+        if (!admin_auth && !superadmin_auth && !teacher_auth) {
+            res.status(401).json({
+                success: false,
+                error: "unauthorized"
+            })
+            return;
+        };
+
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                error: "No file uploaded"
+            });
+        }
+
+        // Cast to any to bypass TypeScript error
+        const buffer: any = req.file.buffer;
+
+        const students_js_obj = await decodeXlsx(buffer, [
+            "اسم الطالب",
+            "درجة المختبر",
+        ]);
+
+        const headerTranslations: Record<string, string> = {
+            "اسم الطالب": "student_name",
+            "درجة المختبر": "lab_grade",
+        };
+
+        const maxLabGrade = Number(existingSubject?.max_lab_grade ?? 0);
+
+        const loaded_students_record_array = translateHeaders<any>(students_js_obj, headerTranslations);
+
+        for (const row of loaded_students_record_array) {
+            try {
+                const studentName = String(row.student_name ?? "").trim();
+                if (!studentName) {
+                    continue;
+                }
+
+                const existingStudent = await students.findByName(normalize_arabic(studentName) || "");
+
+                if (!existingStudent) {
+                    const err_msg = "النظام لم يتمكن من قراءة الحقول بالملف. تأكد من وجود هذه الحقول في السطر الأول من الملف: (اسم الطالب,درجة المختبر)"
+                    throw err_msg
+                }
+
+                const lab_grade = Number(row.lab_grade ?? 0) || 0;
+                if (typeof maxLabGrade === "number" && !Number.isNaN(maxLabGrade) && lab_grade > maxLabGrade) {
+                    throw `درجة المختبر للطالب (${studentName}) تتجاوز الدرجة الكاملة لدرجة المختبر و هي من ${maxLabGrade}`
+                }
+                await app.sql`
+                    UPDATE studying
+                    SET lab_grade = ${lab_grade}
+                    WHERE subject = ${existingSubject.id as number} AND student = ${existingStudent.id as number}
+                `;
+
+            } catch (e) {
+                console.error(`Error processing student ${row.student_name}:`, e);
+                res.status(400).json({ success: true, err: `${e}` });
+                return
+            }
+        }
+
+        // Send the buffer
+        res.json({ success: true });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error extracting Excel file');
+    }
+});
 
 studentsXlsxRouter.get('/api/grades/export', async (req, res) => {
     try {
@@ -257,7 +379,7 @@ studentsXlsxRouter.get('/api/grades/export', async (req, res) => {
 
         const gradesData = await studying.getGradesByClassDegree(degree, class_number, grading_system);
 
-        const subjectFieldsMap: Map<number, { subject_name: string; fields: string[] }> = new Map();
+        const subjectFieldsMap: Map<number, { subject_name: string; fields: string[]; number_of_units: number; lab_grade_field: string | null }> = new Map();
 
         for (const subject of subjectsList) {
             let fieldNames: string[] = [];
@@ -269,7 +391,9 @@ studentsXlsxRouter.get('/api/grades/export', async (req, res) => {
             }
             subjectFieldsMap.set(subject.id as number, {
                 subject_name: subject.subject_name as string,
-                fields: fieldNames
+                fields: fieldNames,
+                number_of_units: Number(subject.number_of_units ?? 0),
+                lab_grade_field: (subject.lab_grade_field as string | null) ?? null
             });
         }
 
@@ -290,6 +414,21 @@ studentsXlsxRouter.get('/api/grades/export', async (req, res) => {
             const gradeRecord: Record<string, number> = {};
             for (const field of gradeFields) {
                 gradeRecord[field.name] = field.grade;
+            }
+
+            const subjectInfo = subjectFieldsMap.get(subjectId);
+            const labGradeField = subjectInfo?.lab_grade_field?.trim();
+            const hasValidLabGradeField = Boolean(
+                labGradeField &&
+                subjectInfo?.fields.includes(labGradeField) &&
+                Object.prototype.hasOwnProperty.call(gradeRecord, labGradeField)
+            );
+
+            if (hasValidLabGradeField && labGradeField) {
+                const labGrade = Number(row.lab_grade ?? 0);
+                if (!Number.isNaN(labGrade)) {
+                    gradeRecord[labGradeField] = (gradeRecord[labGradeField] ?? 0) + labGrade;
+                }
             }
 
             studentGradesMap.get(studentId)!.grades.set(subjectId, gradeRecord);
@@ -427,9 +566,21 @@ studentsXlsxRouter.get('/api/grades/export', async (req, res) => {
                 }
             });
 
-            const subjectTotalsArray = Array.from(subjectTotals.values());
-            const studentAvg = subjectTotalsArray.length > 0
-                ? Math.round((subjectTotalsArray.reduce((a, b) => a + b, 0) / subjectTotalsArray.length) * 100) / 100
+            let weightedTotal = 0;
+            let totalUnits = 0;
+            for (const [subjectId, subjectTotal] of subjectTotals) {
+                const subjectInfo = subjectFieldsMap.get(subjectId);
+                const units = Number(subjectInfo?.number_of_units ?? 0);
+                if (units <= 0) {
+                    continue;
+                }
+
+                weightedTotal += subjectTotal * units;
+                totalUnits += units;
+            }
+
+            const studentAvg = totalUnits > 0
+                ? Math.round((weightedTotal / totalUnits) * 100) / 100
                 : '';
             rowData.push(studentAvg);
 

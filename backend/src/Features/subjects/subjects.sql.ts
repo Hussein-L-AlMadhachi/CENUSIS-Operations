@@ -5,7 +5,7 @@ import { students, studying } from "../../db.js";
 
 const columns2select = [
     "subjects.id", "subjects.subject_name", "subjects.subject_normalized_name", "subjects.teacher",
-    "subjects.degree", "subjects.class", "subjects.total_hours", "subjects.hours_weekly",
+    "subjects.degree", "subjects.class", "subjects.total_hours", "subjects.hours_weekly", "subjects.number_of_units",
     "subjects.is_attending_required", "subjects.semester", "subjects.grading_system_id",
     "subjects.lab_teacher", "subjects.max_lab_grade", "subjects.lab_grade_field", "subjects.lab_weekly_hours",
     "main_teacher.teacher_name"
@@ -87,7 +87,8 @@ export class Subjects extends PG_Table {
                 ADD COLUMN IF NOT EXISTS lab_teacher INTEGER DEFAULT NULL,
                 ADD COLUMN IF NOT EXISTS max_lab_grade INTEGER,
                 ADD COLUMN IF NOT EXISTS lab_grade_field TEXT,
-                ADD COLUMN IF NOT EXISTS lab_weekly_hours INTEGER DEFAULT 0;
+                ADD COLUMN IF NOT EXISTS lab_weekly_hours INTEGER DEFAULT 0,
+                ADD COLUMN IF NOT EXISTS number_of_units INTEGER NOT NULL DEFAULT 0;
             `;
 
             await sql`

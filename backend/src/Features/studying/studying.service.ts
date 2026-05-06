@@ -31,8 +31,6 @@ export async function newEnrollment(metadata: Metadata, data: any) {
     delete data["student_id"];
     delete data["subject_id"];
 
-    console.log(data);
-
     // check to which teacher the subject is assigned
     const [studying_students] = await studying.insert(data);
     if (!studying_students) {

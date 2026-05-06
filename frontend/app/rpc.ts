@@ -51,6 +51,7 @@ export interface SubjectData {
     class: number;
     total_hours: number;
     hours_weekly: number;
+    number_of_units?: number;
     is_attending_required: boolean;
     teacher_name: string;
     teacher?: string;
@@ -115,6 +116,13 @@ export interface AbsentedData {
 export interface GradesDate {
     id?: number;
     grade_fields?: GradeField[];
+    teacher_name?: string;
+    student_name?: string;
+}
+
+export interface LabGradesData {
+    id?: number;
+    lab_grade?: number;
     teacher_name?: string;
     student_name?: string;
 }
@@ -237,6 +245,7 @@ interface AdminsRPC {
 
     // grading
     fetchStudentGradeFieldsPerStudying(studying_id: number): Promise<GradesDate[]>;
+    fetchStudentLabGradesPerStudying(studying_id: number): Promise<LabGradesData[]>;
 }
 
 interface TeachersRPC {
@@ -317,6 +326,7 @@ interface TeachersRPC {
 
     // grading
     fetchStudentGradeFieldsPerStudying(studying_id: number): Promise<GradesDate[]>;
+    fetchStudentLabGradesPerStudying(studying_id: number): Promise<LabGradesData[]>;
 
     fetchSubjectsByTeacher(degree: string, subject_class?: number): Promise<SubjectData[]>;
 }
@@ -384,6 +394,7 @@ interface SuperAdminRPC {
     // attendance records management
     createDailyAttendanceRecord(subject_id: number, date: string): Promise<number>;
     fetchDailyAttendanceRecordsForTheSubject(subject_id: number): Promise<AttendanceRecordData[]>;
+    fetchDailyLabAttendanceRecordsForTheSubject(subject_id: number): Promise<LabAttendanceRecordData[]>;
     fetchAttendanceRecordWithSubject(attendance_record_id: number): Promise<AttendanceRecordWithSubject>;
 
     // attendance management per student
@@ -394,6 +405,7 @@ interface SuperAdminRPC {
 
     // grading
     fetchStudentGradeFieldsPerStudying(studying_id: number): Promise<GradesDate[]>;
+    fetchStudentLabGradesPerStudying(studying_id: number): Promise<LabGradesData[]>;
 
     // TA access control
     fetchSubjectAccessControl(subject_id: number): Promise<SubjectAccessControlData[]>;

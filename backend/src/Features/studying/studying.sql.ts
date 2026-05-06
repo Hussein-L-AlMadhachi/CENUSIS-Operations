@@ -28,6 +28,7 @@ export class Studying extends PG_Table {
 
                     hours_missed                    INTEGER DEFAULT 0,
                     grade_fields                    JSONB NOT NULL DEFAULT '[]'::jsonb,
+                    lab_grade                       integer default 0,
 
                     is_submitted                    BOOLEAN DEFAULT FALSE,
 
@@ -90,6 +91,25 @@ export class Studying extends PG_Table {
         `;
     }
 
+    public async getLabGrades(subject_id: number) {
+        return await this.sql`
+            SELECT
+                STUDYING.id,
+                STUDENT.student_name,
+                SUBJECT.subject_name,
+                TEACHER.teacher_name,
+                STUDYING.lab_grade
+            FROM studying AS STUDYING
+            JOIN students AS STUDENT
+                ON STUDYING.student=STUDENT.id
+            JOIN subjects AS SUBJECT
+                ON STUDYING.subject=SUBJECT.id
+            JOIN teaching_staff AS TEACHER
+                ON STUDYING.teacher=TEACHER.id
+            WHERE STUDYING.subject = ${subject_id};
+        `;
+    }
+
     public async clearOldRecords(year: number) {
         return this.sql`
             DELETE FROM studying WHERE year_joined < ${year};
@@ -141,7 +161,8 @@ export class Studying extends PG_Table {
                 STUDENT.student_name,
                 SUBJECT.id AS subject_id,
                 SUBJECT.subject_name,
-                STUDYING.grade_fields
+                STUDYING.grade_fields,
+                STUDYING.lab_grade
             FROM studying AS STUDYING
             JOIN students AS STUDENT ON STUDYING.student = STUDENT.id
             JOIN subjects AS SUBJECT ON STUDYING.subject = SUBJECT.id
