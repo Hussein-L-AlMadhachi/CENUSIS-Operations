@@ -83,7 +83,6 @@ const buildSubjectFormTemplate = (teachers: teacherData[], gradingSystems: Gradi
             { label: "الثاني", value: 2 },
         ], condition: { key: "degree", value: "بكلوريوس" }
     },
-    { title: "عدد الوحدات", key: "number_of_units", type: "number", min: 0 },
     { title: "عدد الساعات اسبوعياً", key: "hours_weekly", type: "number", min: 0 },
     {
         title: "التدريسي",
@@ -101,7 +100,7 @@ function AddSubjectModal({ isOpen, onClose, onSuccess, subjectFormTemplate }: Ad
 
         try {
             validateParams(data as unknown as Record<string, unknown>, [
-                "subject_name", "degree", "class", "total_hours", "hours_weekly", "number_of_units",
+                "subject_name", "degree", "class", "total_hours", "hours_weekly",
                 "semester", "teacher_name", "grading_system_name"]
             );
             if (data.degree !== "بكلوريوس") {
@@ -207,13 +206,13 @@ function MainContent(): JSX.Element {
             return (
                 <div className="flex flex-col flex-nowrap gap-1">
                     <a href={`/superadmin/enrolled/${row.teacher}/${row.id}`} className="btn btn-xs  w-32">
-                        عرض الطلاب
+                        إدارة الطلاب
                     </a>
                     <a href={`/superadmin/attendance/${row.id}`} className="btn btn-xs w-32">
-                        عرض سجل الغياب
+                        إدارة الغياب
                     </a>
                     <a href={`/superadmin/grades/${row.id}`} className="btn btn-xs w-32">
-                        عرض و ادارة الدرجات
+                        إدارة الدرجات
                     </a>
                 </div>
             )

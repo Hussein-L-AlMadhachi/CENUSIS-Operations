@@ -8,7 +8,7 @@ export class StudentsTable extends PG_Table {
 
     constructor(app: PG_App) {
         super(app, "students", [
-            "id", "student_name", "student_normalized_name", "joined_year",
+            "id", "student_name", "student_normalized_name",
             "degree", "class"
         ]);
     }
@@ -27,7 +27,6 @@ export class StudentsTable extends PG_Table {
 
                     student_name                        VARCHAR(150) NOT NULL,
                     student_normalized_name     VARCHAR(150) UNIQUE NOT NULL,
-                    joined_year                 INTEGER NOT NULL,
 
                     degree                      VARCHAR(20) NOT NULL,
                     class                       INTEGER NOT NULL
@@ -64,7 +63,6 @@ export class StudentsTable extends PG_Table {
         const validatedData = data.map(item => ({
             student_name: String(item.student_name || ''),
             student_normalized_name: normalize_arabic(item.student_name!),
-            joined_year: Number(item.joined_year) || new Date().getFullYear(),
             degree: String(item.degree || ''),
             class: Number(item.class) || 1,
             sex: String(item.sex || ''),
@@ -83,7 +81,6 @@ export class StudentsTable extends PG_Table {
                 ON CONFLICT (student_normalized_name) DO UPDATE SET
                     student_name = EXCLUDED.student_name,
                     student_normalized_name = EXCLUDED.student_normalized_name,
-                    joined_year = EXCLUDED.joined_year,
                     degree = EXCLUDED.degree,
                     class = EXCLUDED.class,
                     sex = EXCLUDED.sex,
@@ -115,14 +112,13 @@ export class StudentsTable extends PG_Table {
         `;
     }
 
-    public async InsertOrUpdate( name:string, joined_year:string , degree:string, class_number:number ) {
+    public async InsertOrUpdate( name:string, degree:string, class_number:number ) {
         return await this.sql`
-            INSERT INTO ${this.sql(this.table_name)} (student_name, student_normalized_name, joined_year, degree, class)
-            VALUES (${name}, ${normalize_arabic(name)} , ${joined_year}, ${degree}, ${class_number})
+            INSERT INTO ${this.sql(this.table_name)} (student_name, student_normalized_name, degree, class)
+            VALUES (${name}, ${normalize_arabic(name)}, ${degree}, ${class_number})
             ON CONFLICT (student_normalized_name) 
             DO UPDATE SET
                 student_name = EXCLUDED.student_name,
-                joined_year = EXCLUDED.joined_year,
                 degree = EXCLUDED.degree,
                 class = EXCLUDED.class;
         `;

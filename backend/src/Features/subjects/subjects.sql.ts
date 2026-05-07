@@ -5,7 +5,7 @@ import { students, studying } from "../../db.js";
 
 const columns2select = [
     "subjects.id", "subjects.subject_name", "subjects.subject_normalized_name", "subjects.teacher",
-    "subjects.degree", "subjects.class", "subjects.total_hours", "subjects.hours_weekly", "subjects.number_of_units",
+    "subjects.degree", "subjects.class", "subjects.total_hours", "subjects.hours_weekly",
     "subjects.is_attending_required", "subjects.semester", "subjects.grading_system_id",
     "subjects.lab_teacher", "subjects.max_lab_grade", "subjects.lab_grade_field", "subjects.lab_weekly_hours",
     "main_teacher.teacher_name"
@@ -20,7 +20,7 @@ export class Subjects extends PG_Table {
             "id", "subject_name", "subject_normalized_name", "teacher",
             "degree", "class", "total_hours", "hours_weekly",
             "is_attending_required", "semester", "grading_system_id",
-            "deleted_at", "lab_teacher", "max_lab_grade", "lab_grade_field", "lab_weekly_hours", "number_of_units"
+            "deleted_at", "lab_teacher", "max_lab_grade", "lab_grade_field", "lab_weekly_hours"
         ]);
     }
 
@@ -48,11 +48,11 @@ export class Subjects extends PG_Table {
                     grading_system_id           INTEGER,
 
                     deleted_at                  TIMESTAMP DEFAULT NULL,
+
                     lab_teacher                 INTEGER DEFAULT NULL,
                     max_lab_grade               integer,
                     lab_grade_field             text,
                     lab_weekly_hours            INTEGER DEFAULT 0,
-                    number_of_units             integer not null default 0,
  
                     FOREIGN KEY (lab_teacher) REFERENCES teaching_staff(id),
 
@@ -78,34 +78,15 @@ export class Subjects extends PG_Table {
             `;
 
             await sql`
+            CREATE INDEX IF NOT EXISTS  ${sql(`idx_${this.table_name}_teacher`)}
+                ON ${sql(this.table_name)} (lab_teacher);
+            `;
+
+            await sql`
                 CREATE INDEX IF NOT EXISTS ${sql(`idx_${this.table_name}_grading_system_id`)}
                     ON ${sql(this.table_name)} (grading_system_id);
             `;
 
-            await sql`
-                ALTER TABLE ${sql(this.table_name)}
-                ADD COLUMN IF NOT EXISTS lab_teacher INTEGER DEFAULT NULL,
-                ADD COLUMN IF NOT EXISTS max_lab_grade INTEGER,
-                ADD COLUMN IF NOT EXISTS lab_grade_field TEXT,
-                ADD COLUMN IF NOT EXISTS lab_weekly_hours INTEGER DEFAULT 0,
-                ADD COLUMN IF NOT EXISTS number_of_units INTEGER NOT NULL DEFAULT 0;
-            `;
-
-            await sql`
-                DO $$
-                BEGIN
-                    IF EXISTS (
-                        SELECT 1
-                        FROM information_schema.columns
-                        WHERE table_name = ${this.table_name}
-                        AND column_name = 'lab_hours_weekly'
-                    ) THEN
-                        UPDATE ${sql(this.table_name)}
-                        SET lab_weekly_hours = COALESCE(lab_weekly_hours, lab_hours_weekly, 0)
-                        WHERE lab_weekly_hours IS NULL OR lab_weekly_hours = 0;
-                    END IF;
-                END $$;
-            `;
         });
     }
     

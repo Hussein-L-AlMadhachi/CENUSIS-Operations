@@ -25,6 +25,7 @@ adminRPC.add(getAccountInfo);
 
 export const superRPC = createRPC(app, '/api/superadmin', auth.superadmin);
 registerAdminCoreHandlers(superRPC);
+registerAbsenceAlertHandlers(superRPC);
 registerTeacherAttendanceHandlers(superRPC);
 superRPC.add(getAccountInfo);
 superRPC.add(changeSelfPassword);

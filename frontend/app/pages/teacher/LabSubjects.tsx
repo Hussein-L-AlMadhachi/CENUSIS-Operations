@@ -50,10 +50,10 @@ function MainContent(): JSX.Element {
             return (
                 <div className="flex flex-col flex-nowrap gap-1">
                     <a href={`/teacher/lab/attendance/${row.id}`} className="btn btn-xs w-32">
-                        الغياب
+                        إدارة الغياب
                     </a>
                     <a href={`/teacher/lab/grades/${row.id}`} className="btn btn-xs w-32">
-                        الدرجات
+                        إدارة الدرجات
                     </a>
                 </div>
             )

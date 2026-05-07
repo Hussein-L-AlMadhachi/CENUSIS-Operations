@@ -28,7 +28,6 @@ export interface teacherData {
 export interface studentData {
     id?: number;
     name: string;
-    year_joined: number;
     degree: string;
     class: number;
     years_retaken: number;
@@ -37,7 +36,6 @@ export interface studentData {
 
 export interface StudentUpdateData {
     student_name?: string;
-    joined_year?: number;
     degree?: string;
     class?: number;
     sex?: "ذكر" | "انثى";
@@ -51,7 +49,6 @@ export interface SubjectData {
     class: number;
     total_hours: number;
     hours_weekly: number;
-    number_of_units?: number;
     is_attending_required: boolean;
     teacher_name: string;
     teacher?: string;
@@ -386,6 +383,14 @@ interface SuperAdminRPC {
     deleteEnrollment(id: number): Promise<void>;
     fetchSingleEnrollment(id: number): Promise<EnrollmentData>;
     fetchEnrollmentsForSubject(subject_id: number): Promise<EnrollmentData[]>;
+
+    // absence alerts
+    newAbsenceAlertThreshold(data: AbsenceAlertThresholdData): Promise<number>;
+    updateAbsenceAlertThreshold(id: number, data: Partial<AbsenceAlertThresholdData>): Promise<number>;
+    deleteAbsenceAlertThreshold(id: number): Promise<void>;
+    fetchAbsenceAlertThresholds(filters?: AbsenceAlertsFilterData): Promise<AbsenceAlertThresholdData[]>;
+    recomputeAbsenceAlerts(): Promise<{ updated: number }>;
+    fetchAbsenceAlerts(filters?: AbsenceAlertsFilterData): Promise<AbsenceAlertRowData[]>;
 
     // attendance management per record
     markStudentAbsent(data: { attendance_record_id: number, hours_absent: number }): Promise<void>;

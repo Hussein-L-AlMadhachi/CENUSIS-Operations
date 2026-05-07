@@ -122,7 +122,6 @@ interface AddStudentModalProps {
 
 const studentFormTemplate: DynamicFormTemplate[] = [
     { title: "الاسم الكامل", key: "student_name", type: "text" },
-    { title: "السنة التسجيل", key: "joined_year", type: "number" },
     {
         title: "الدرجة العلمية", key: "degree",
         type: "select", options: [
@@ -142,11 +141,11 @@ const studentFormTemplate: DynamicFormTemplate[] = [
 ];
 
 function AddStudentModal({ isOpen, onClose, onSuccess }: AddStudentModalProps) {
-    type AddStudentFormData = Pick<StudentUpdateData, "student_name" | "joined_year" | "degree" | "class">;
+    type AddStudentFormData = Pick<StudentUpdateData, "student_name" | "degree" | "class">;
     const handleAddTeacher = async (data: AddStudentFormData) => {
 
         try {
-            validateParams(data, ["student_name", "joined_year", "degree"])
+            validateParams(data, ["student_name", "degree"])
             if (data.degree !== "بكلوريوس") {
                 data["class"] = 1;
             }
@@ -214,7 +213,7 @@ function MainContent(): JSX.Element {
     };
 
     const headers = {
-        "student_name": "الاسم", "joined_year": "السنة التسجيل",
+        "student_name": "الاسم",
         "degree": "الدرجة العلمية", "class": "المرحلة", ":edit:": ""
     };
 

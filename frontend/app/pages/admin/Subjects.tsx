@@ -91,7 +91,6 @@ const buildSubjectFormTemplate = (teachers: teacherData[], gradingSystems: Gradi
                 { label: "الثاني", value: 2 },
             ]
         },
-        { title: "عدد الوحدات", key: "number_of_units", type: "number", min: 0 },
         { title: "عدد الساعات اسبوعياً", key: "hours_weekly", type: "number", min: 0 },
         {
             title: "التدريسي",
@@ -122,7 +121,7 @@ const buildSubjectFormTemplate = (teachers: teacherData[], gradingSystems: Gradi
             condition: { key: "has_lab", value: true }
         },
         {
-            title: "حقل الدرجة",
+            title: "تحسب درجة المختبر من:",
             key: "lab_grade_field",
             type: "select",
             options: (formData) => {
@@ -147,7 +146,7 @@ function AddSubjectModal({ isOpen, onClose, onSuccess, subjectFormTemplate }: Ad
 
         try {
             validateParams(data as unknown as Record<string, unknown>, [
-                "subject_name", "degree", "class", "total_hours", "hours_weekly", "number_of_units",
+                "subject_name", "degree", "class", "total_hours", "hours_weekly",
                 "semester", "teacher_name", "grading_system_name"]
             );
             if (data.degree !== "بكلوريوس") {

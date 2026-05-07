@@ -110,12 +110,6 @@ export class Studying extends PG_Table {
         `;
     }
 
-    public async clearOldRecords(year: number) {
-        return this.sql`
-            DELETE FROM studying WHERE year_joined < ${year};
-        `;
-    }
-
     public async findBySubject(subject_id: number) {
         return await this.sql`
             SELECT 
@@ -167,9 +161,7 @@ export class Studying extends PG_Table {
             JOIN students AS STUDENT ON STUDYING.student = STUDENT.id
             JOIN subjects AS SUBJECT ON STUDYING.subject = SUBJECT.id
             JOIN grading_systems AS gs ON SUBJECT.grading_system_id = gs.id
-            WHERE STUDENT.degree = ${degree}
-              AND STUDENT.class = ${class_number}
-              AND SUBJECT.degree = ${degree}
+            WHERE SUBJECT.degree = ${degree}
               AND SUBJECT.class = ${class_number}
               AND SUBJECT.deleted_at IS NULL
               AND gs.name = ${grading_system}

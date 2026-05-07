@@ -18,21 +18,37 @@ if (!config.admin.username || !config.admin.password || !config.superadmin.usern
 
 
 
-const [uid_admin] = await loggedin_users.insert({
-    username: config.admin.username,
-    normalized_username: normalize_arabic(config.admin.username),
-    role: "admin",
-    password: config.admin.password
-})
+async function ensureRootAccount(username: string, password: string, role: "admin" | "superadmin") {
+    const normalized_username = normalize_arabic(username);
+    const existing = await loggedin_users.findByUserName(normalized_username);
+    if (existing) {
+        console.log(` [SKIP]  ${role.toUpperCase()} user already exists (id:${existing.id})`);
+        return existing;
+    }
 
-const [uid2_superadmin] = await loggedin_users.insert({
-    username: config.superadmin.username,
-    normalized_username: normalize_arabic(config.superadmin.username),
-    role: "superadmin",
-    password: config.superadmin.password
-})
+    const [created] = await loggedin_users.insert({
+        username,
+        normalized_username,
+        role,
+        password
+    });
+
+    return created!;
+}
+
+const uid_admin = await ensureRootAccount(
+    config.admin.username,
+    config.admin.password,
+    "admin"
+);
+
+const uid2_superadmin = await ensureRootAccount(
+    config.superadmin.username,
+    config.superadmin.password,
+    "superadmin"
+);
 
 
 
-console.log(` [DONE]  created ADMIN user (id:${uid_admin!.id})`);
-console.log(` [DONE]  created SUPERADMIN user (id:${uid2_superadmin!.id})`);
+console.log(` [DONE]  ADMIN user is ready (id:${uid_admin.id})`);
+console.log(` [DONE]  SUPERADMIN user is ready (id:${uid2_superadmin.id})`);

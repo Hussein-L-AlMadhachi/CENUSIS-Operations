@@ -15,7 +15,7 @@ import { loose_validate_params, validate_params } from "../../helpers/validate_p
 export async function newStudent(metadata: Metadata, data: any) {
 
     validate_params(data, [
-        "student_name", "joined_year", "degree", "class"
+        "student_name", "degree", "class"
     ]);
 
     if (data["degree"] !== "بكلوريوس" && data["degree"] !== "ماجستير" && data["degree"] !== "دكتوراه") {
@@ -38,7 +38,7 @@ export async function newStudent(metadata: Metadata, data: any) {
 
 export async function updateStudent(metadata: Metadata, uid: number, data: any) {
     loose_validate_params(data, [
-        "student_name", "joined_year", "degree", "class", "sex"
+        "student_name", "degree", "class", "sex"
     ]);
     if (data["sex"] !== "ذكر" && data["sex"] !== "انثى") {
         throw new Error("sex must be 'ذكر' or 'انثى'");

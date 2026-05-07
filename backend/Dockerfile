@@ -1,36 +1,39 @@
 # Backend Dockerfile
-FROM node:20-alpine AS builder
+FROM cgr.dev/chainguard/node:latest-dev AS builder
 
-WORKDIR /app
+WORKDIR /app/backend
 
 # Copy package files
-COPY package*.json ./
+COPY backend/package*.json ./
 
 # Install dependencies
 RUN npm ci
 
 # Copy source code
-COPY . .
+COPY backend/ ./
 
 # Compile TypeScript
 RUN npm run build || tsc
 
 # Production stage
-FROM node:20-alpine
+FROM node:current-alpine
 
-WORKDIR /app
+WORKDIR /app/backend
 
 # Copy package files
-COPY package*.json ./
+COPY backend/package*.json ./
 
 # Install production dependencies only
 RUN npm ci --only=production
 
 # Copy compiled code from builder
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/backend/dist ./dist
+
+# Copy default root-account configuration for db:admin script
+COPY .default_accounts.json /app/.default_accounts.json
 
 # Expose backend port
 EXPOSE 3000
 
 # Start the application
-CMD ["node", "./dist/src/main.js"]
+CMD ["sh", "-c", "npm run db:create && npm run db:admin && node ./dist/src/main.js"]

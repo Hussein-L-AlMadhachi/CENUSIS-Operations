@@ -33,6 +33,7 @@ import { SuperAbsentedPage } from "@/pages/superadmin/Absented";
 import { SuperPermissionsPage } from "@/pages/superadmin/Permissions";
 import { SuperGradesPage } from "./pages/superadmin/Grades";
 import { SuperGradingSystemsPage } from "./pages/superadmin/GradingSystems";
+import { SuperAbsenceAlertsPage } from "./pages/superadmin/AbsenceAlerts";
 import { TeachersLabSubjectsPage } from "./pages/teacher/LabSubjects";
 import { SuperLabSubjectsPage } from "./pages/superadmin/LabSubjects";
 import { SuperLabAttendancePage } from "./pages/superadmin/LabAttendance";
@@ -71,6 +72,7 @@ export default function App(): JSX.Element {
             <Route path="/superadmin/students" component={SuperStudentsPage} />
             <Route path="/superadmin/subjects" component={SuperSubjectsPage} />
             <Route path="/superadmin/grading-systems" component={SuperGradingSystemsPage} />
+            <Route path="/superadmin/absence-alerts" component={SuperAbsenceAlertsPage} />
             <Route path="/superadmin/enrolled/:teacher/:id" component={SuperStudyingPage} />
             <Route path="/superadmin/permissions/:subject_id" component={SuperPermissionsPage} />
             <Route path="/superadmin/attendance/:subject_id" component={SuperAttendancePage} />

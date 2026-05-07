@@ -1,7 +1,6 @@
 
 
 services:
-  # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
     container_name: cenusis-postgres
@@ -12,8 +11,6 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-12345678}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    # Database is NOT exposed externally - only accessible via internal network
-    # Uncomment the following lines if you need direct database access for debugging:
     ports:
       - "5432:5432"
     healthcheck:
@@ -24,11 +21,10 @@ services:
     networks:
       - cenusis-network
 
-  # Backend Service
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: cenusis-backend
     restart: unless-stopped
     environment:
@@ -39,42 +35,13 @@ services:
       DB_NAME: ${DB_NAME:-cenusis_ops}
       DB_USER: ${DB_USER:-dev}
       DB_PASSWORD: ${DB_PASSWORD:-12345678}
-    # Backend is NOT exposed externally - only accessible via nginx proxy
-    # Uncomment the following lines if you need direct backend access for debugging:
-    # ports:
-    #   - "3000:3000"
+    ports:
+      - "3000:3000"
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - cenusis-network
-
-  # Frontend/Nginx Service - ONLY service exposed to the network
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: cenusis-frontend
-    restart: unless-stopped
-    ports:
-      # HTTP - Always enabled
-      - "80:80"
-      # HTTPS - Uncomment when you have SSL certificates
-      # - "443:443"
-    depends_on:
-      - backend
-    networks:
-      - cenusis-network
-    environment:
-      # Optional: Set server name for nginx
-      NGINX_HOST: ${NGINX_HOST:-localhost}
-    # Uncomment to mount SSL certificates
-    # volumes:
-    #   # Option 1: Self-signed certificates (for testing)
-    #   - ./ssl/cert.crt:/etc/nginx/ssl/cert.crt:ro
-    #   - ./ssl/cert.key:/etc/nginx/ssl/cert.key:ro
-    #   # Option 2: Let's Encrypt certificates (for production)
-    #   # - /etc/letsencrypt:/etc/letsencrypt:ro
 
 volumes:
   postgres_data:

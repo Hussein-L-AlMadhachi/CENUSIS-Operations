@@ -50,7 +50,6 @@ studentsXlsxRouter.post('/api/students/import', upload.single('file'), async (re
         const loaded_students_record = translateHeaders<any>(students_js_obj, {
             "الاسم": "student_name",
             "الطالب": "student_name",
-            "سنة التسجيل": "joined_year",
             "الدرجة العلمية": "degree",
             "المرحلة": "class",
         })
@@ -68,17 +67,15 @@ studentsXlsxRouter.post('/api/students/import', upload.single('file'), async (re
                 }
 
                 const name = String(student.student_name);
-                const joined_year = String(student.joined_year ?? new Date().getFullYear());
                 const degree = String(student.degree ?? '');
                 const class_number = Number(student.class ?? 1);
 
                 await sql`
-                    INSERT INTO students (student_name, student_normalized_name, joined_year, degree, class)
-                    VALUES (${name}, ${normalize_arabic(name)}, ${joined_year}, ${degree}, ${class_number})
+                    INSERT INTO students (student_name, student_normalized_name, degree, class)
+                    VALUES (${name}, ${normalize_arabic(name)}, ${degree}, ${class_number})
                     ON CONFLICT (student_normalized_name) 
                     DO UPDATE SET
                         student_name = EXCLUDED.student_name,
-                        joined_year = EXCLUDED.joined_year,
                         degree = EXCLUDED.degree,
                         class = EXCLUDED.class;
                 `;
@@ -379,20 +376,30 @@ studentsXlsxRouter.get('/api/grades/export', async (req, res) => {
 
         const gradesData = await studying.getGradesByClassDegree(degree, class_number, grading_system);
 
-        const subjectFieldsMap: Map<number, { subject_name: string; fields: string[]; number_of_units: number; lab_grade_field: string | null }> = new Map();
+        const subjectFieldsMap: Map<number, {
+            subject_name: string;
+            fields: string[];
+            field_min_grades: Record<string, number>;
+            lab_grade_field: string | null;
+        }> = new Map();
 
         for (const subject of subjectsList) {
             let fieldNames: string[] = [];
+            const fieldMinGrades: Record<string, number> = {};
             if (subject.grading_system_id) {
                 const [gs] = await grading_systems.fetch(subject.grading_system_id);
                 if (gs?.fields) {
-                    fieldNames = (gs.fields as { field_name: string }[]).map(f => f.field_name);
+                    const fields = gs.fields as { field_name: string; min_grade: number }[];
+                    fieldNames = fields.map(f => f.field_name);
+                    for (const field of fields) {
+                        fieldMinGrades[field.field_name] = Number(field.min_grade ?? 0);
+                    }
                 }
             }
             subjectFieldsMap.set(subject.id as number, {
                 subject_name: subject.subject_name as string,
                 fields: fieldNames,
-                number_of_units: Number(subject.number_of_units ?? 0),
+                field_min_grades: fieldMinGrades,
                 lab_grade_field: (subject.lab_grade_field as string | null) ?? null
             });
         }
@@ -441,6 +448,7 @@ studentsXlsxRouter.get('/api/grades/export', async (req, res) => {
         const subjectHeaderRow: string[] = ['اسم الطالب'];
         const fieldHeaderRow: string[] = [''];
         const mergeRanges: { startCol: number; endCol: number }[] = [];
+        const subjectColumnRanges: Map<number, { startCol: number; endCol: number }> = new Map();
 
         let currentCol = 2;
         for (const [subjectId, subjectInfo] of subjectFieldsMap) {
@@ -457,20 +465,19 @@ studentsXlsxRouter.get('/api/grades/export', async (req, res) => {
                 columnKeys.push({ subjectId, fieldName });
             }
 
+            const startCol = currentCol;
+            const endCol = currentCol + fieldCount - 1;
+            subjectColumnRanges.set(subjectId, { startCol, endCol });
             if (fieldCount > 1) {
-                mergeRanges.push({ startCol: currentCol, endCol: currentCol + fieldCount - 1 });
+                mergeRanges.push({ startCol, endCol });
             }
             currentCol += fieldCount;
         }
-
-        subjectHeaderRow.push('المعدل');
-        const avgColIndex = currentCol;
 
         worksheet.addRow(subjectHeaderRow);
         worksheet.addRow(fieldHeaderRow);
 
         worksheet.mergeCells(1, 1, 2, 1);
-        worksheet.mergeCells(1, avgColIndex, 2, avgColIndex);
         for (const range of mergeRanges) {
             worksheet.mergeCells(1, range.startCol, 1, range.endCol);
         }
@@ -528,36 +535,17 @@ studentsXlsxRouter.get('/api/grades/export', async (req, res) => {
         studentNameCell2.font = { bold: true, color: { argb: 'FF1B5E20' } };
         studentNameCell2.border = thinBorder;
 
-        const avgHeaderCell1 = row1.getCell(avgColIndex);
-        const avgHeaderCell2 = row2.getCell(avgColIndex);
-        avgHeaderCell1.fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'FFE0E0E0' }
-        };
-        avgHeaderCell1.font = { bold: true, color: { argb: 'FFFF6600' } };
-        avgHeaderCell1.border = thinBorder;
-        avgHeaderCell2.fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'FFE0E0E0' }
-        };
-        avgHeaderCell2.font = { bold: true, color: { argb: 'FFFF6600' } };
-        avgHeaderCell2.border = thinBorder;
-
         const columnGrades: number[][] = columnKeys.map(() => []);
 
         let currentRowNum = 3;
         for (const [, studentData] of studentGradesMap) {
             const rowData: (string | number)[] = [studentData.student_name];
-            const subjectTotals: Map<number, number> = new Map();
 
             columnKeys.forEach(({ subjectId, fieldName }, colIdx) => {
                 const subjectGrades = studentData.grades.get(subjectId);
                 const grade = subjectGrades?.[fieldName];
                 if (typeof grade === 'number') {
                     rowData.push(grade);
-                    subjectTotals.set(subjectId, (subjectTotals.get(subjectId) ?? 0) + grade);
                     if (columnGrades[colIdx]) {
                         columnGrades[colIdx].push(grade);
                     }
@@ -565,24 +553,6 @@ studentsXlsxRouter.get('/api/grades/export', async (req, res) => {
                     rowData.push('');
                 }
             });
-
-            let weightedTotal = 0;
-            let totalUnits = 0;
-            for (const [subjectId, subjectTotal] of subjectTotals) {
-                const subjectInfo = subjectFieldsMap.get(subjectId);
-                const units = Number(subjectInfo?.number_of_units ?? 0);
-                if (units <= 0) {
-                    continue;
-                }
-
-                weightedTotal += subjectTotal * units;
-                totalUnits += units;
-            }
-
-            const studentAvg = totalUnits > 0
-                ? Math.round((weightedTotal / totalUnits) * 100) / 100
-                : '';
-            rowData.push(studentAvg);
 
             worksheet.addRow(rowData);
 
@@ -595,21 +565,53 @@ studentsXlsxRouter.get('/api/grades/export', async (req, res) => {
             studentNameCell.font = { color: { argb: 'FF1B5E20' } };
             studentNameCell.border = thinBorder;
 
-            const studentAvgCell = worksheet.getRow(currentRowNum).getCell(avgColIndex);
-            studentAvgCell.fill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: { argb: 'FFE0E0E0' }
-            };
-            studentAvgCell.font = { color: { argb: 'FFFF6600' } };
-            studentAvgCell.border = thinBorder;
-
             currentRowNum++;
         }
 
         const avgRow: (string | number)[] = ['المعدل'];
         const minRow: (string | number)[] = ['الحد الأدنى'];
         const maxRow: (string | number)[] = ['الحد الأعلى'];
+        const passRateBySubject = new Map<number, string>();
+
+        for (const [subjectId, subjectInfo] of subjectFieldsMap) {
+            if (subjectInfo.fields.length === 0) {
+                continue;
+            }
+
+            let totalStudents = 0;
+            let passedStudents = 0;
+
+            for (const [, studentData] of studentGradesMap) {
+                const subjectGrades = studentData.grades.get(subjectId);
+                if (!subjectGrades) {
+                    continue;
+                }
+
+                totalStudents += 1;
+
+                const passedAllFields = subjectInfo.fields.every((fieldName) => {
+                    const grade = Number(subjectGrades[fieldName]);
+                    const minGrade = Number(subjectInfo.field_min_grades[fieldName] ?? 0);
+
+                    if (Number.isNaN(grade)) {
+                        return false;
+                    }
+
+                    return grade >= minGrade;
+                });
+
+                if (passedAllFields) {
+                    passedStudents += 1;
+                }
+            }
+
+            if (totalStudents === 0) {
+                passRateBySubject.set(subjectId, '');
+            } else {
+                const passRate = Math.round((passedStudents / totalStudents) * 10000) / 100;
+                passRateBySubject.set(subjectId, `${passRate}%`);
+            }
+        }
 
         for (const grades of columnGrades) {
             if (grades.length > 0) {
@@ -626,15 +628,34 @@ studentsXlsxRouter.get('/api/grades/export', async (req, res) => {
             }
         }
 
-        avgRow.push('');
-        minRow.push('');
-        maxRow.push('');
+        const passRateRow: (string | number)[] = ['نسبة النجاح'];
+        for (const { subjectId, fieldName } of columnKeys) {
+            const range = subjectColumnRanges.get(subjectId);
+            if (!range) {
+                passRateRow.push('');
+                continue;
+            }
+
+            const columnIndex = passRateRow.length + 1;
+            if (columnIndex === range.startCol) {
+                passRateRow.push(passRateBySubject.get(subjectId) ?? '');
+            } else {
+                passRateRow.push('');
+            }
+        }
 
         const avgRowRef = worksheet.addRow(avgRow);
         const minRowRef = worksheet.addRow(minRow);
         const maxRowRef = worksheet.addRow(maxRow);
+        const passRateRowRef = worksheet.addRow(passRateRow);
 
-        const summaryRows = [avgRowRef, minRowRef, maxRowRef];
+        for (const [, range] of subjectColumnRanges) {
+            if (range.endCol > range.startCol) {
+                worksheet.mergeCells(passRateRowRef.number, range.startCol, passRateRowRef.number, range.endCol);
+            }
+        }
+
+        const summaryRows = [avgRowRef, minRowRef, maxRowRef, passRateRowRef];
         for (const row of summaryRows) {
             row.eachCell({ includeEmpty: false }, (cell) => {
                 cell.fill = {
