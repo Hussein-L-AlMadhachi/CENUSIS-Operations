@@ -21,7 +21,7 @@ export const app = new PG_App({
     host: process.env.DB_HOST || 'localhost',
     database: process.env.DB_NAME || 'cenusis_ops',
     username: process.env.DB_USER || 'dev',
-    password: process.env.DB_PASSWORD || '12345678'
+    password: process.env.DB_PASSWORD || 'dev123456'
 });
 
 

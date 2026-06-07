@@ -21,7 +21,7 @@ interface PublicRPC {
 
 export interface teacherData {
     id?: number;
-    name: string;
+    teacher_name: string;
     password?: string;
 }
 

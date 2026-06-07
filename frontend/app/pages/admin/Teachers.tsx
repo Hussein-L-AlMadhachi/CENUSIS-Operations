@@ -66,7 +66,7 @@ function AddTeacherModal({ isOpen, onClose, onSuccess }: AddTeacherModalProps) {
 
         try {
             await adminRPC.registerTeacher({
-                name: data.teacher_name,
+                teacher_name: data.teacher_name,
                 password: data.password
             });
             onSuccess();
@@ -126,7 +126,7 @@ function MainContent(): JSX.Element {
                     onSave={(id: number, rowData: TeacherUpdateFormData) => {
                         adminRPC.updateUser(String(rowData.id ?? id), {
                             id: rowData.id ?? id,
-                            name: rowData.teacher_name || "",
+                            teacher_name: rowData.teacher_name || "",
                             password: rowData.password
                         }).then(() => fetchData());
                     }}
