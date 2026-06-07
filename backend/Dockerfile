@@ -36,4 +36,4 @@ COPY .default_accounts.json /app/.default_accounts.json
 EXPOSE 3000
 
 # Start the application
-CMD ["sh", "-c", "npm run db:create && npm run db:admin && node ./dist/src/main.js"]
+CMD ["sh", "-c", "node ./dist/src/main.js"]
