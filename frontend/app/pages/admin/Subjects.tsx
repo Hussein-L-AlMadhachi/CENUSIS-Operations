@@ -53,7 +53,7 @@ interface AddSubjectModalProps {
 }
 
 const getTeacherDisplayName = (teacher: teacherData & { teacher_name?: string; username?: string }): string =>
-    teacher.teacher_name ?? teacher.name ?? teacher.username ?? "";
+    teacher.teacher_name ?? teacher.teacher_name ?? teacher.username ?? "";
 
 const buildSubjectFormTemplate = (teachers: teacherData[], gradingSystems: GradingSystemData[]): DynamicFormTemplate[] => {
     const teacherOptions = teachers

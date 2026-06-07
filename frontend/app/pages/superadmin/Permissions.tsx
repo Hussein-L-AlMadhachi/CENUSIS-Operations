@@ -64,7 +64,7 @@ interface PermissionEntryFormData {
 }
 
 const getTeacherDisplayName = (teacher: teacherData & { teacher_name?: string; username?: string }): string =>
-    teacher.teacher_name ?? teacher.name ?? teacher.username ?? "";
+    teacher.teacher_name ?? teacher.teacher_name ?? teacher.username ?? "";
 
 function AddPermissionEntryModal({ isOpen, onClose, onSuccess }: AddPermissionEntryModalProps) {
     const [teachers, setTeachers] = useState<teacherData[]>([]);

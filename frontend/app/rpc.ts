@@ -243,6 +243,11 @@ interface AdminsRPC {
     // grading
     fetchStudentGradeFieldsPerStudying(studying_id: number): Promise<GradesDate[]>;
     fetchStudentLabGradesPerStudying(studying_id: number): Promise<LabGradesData[]>;
+
+    // TA access control
+    fetchSubjectAccessControl(subject_id: number): Promise<SubjectAccessControlData[]>;
+    grantAccess(subject_name: string, user_name: string): Promise<void>;
+    revokeAccess(subject_id: number, user_id: number): Promise<void>;
 }
 
 interface TeachersRPC {
